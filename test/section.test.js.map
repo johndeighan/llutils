@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "section.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\section.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAqB;AAAA,IAAA,IAAA,EAAA,MAAA,EAAA;;AAErB,OAAA;EAAQ,KAAR;EAAe,OAAf;EAAwB,MAAxB;CAAA,MAAA;;AACA,OAAA;EAAQ,QAAR;CAAA,MAAA;;AACA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EAPqB;;;AAWrB,IAAA,GAAO,IAAI,OAAJ,CAAY,MAAZ,EAAoB,QAAA,CAAC,KAAD,CAAA;AAC1B,SAAO,OAAA,CAAQ,CAAC,OAAD,EAAU,QAAA,CAAS,KAAT,CAAV,EAA2B,QAA3B,CAAR;AADmB,CAApB;;AAGP,MAAA,CAAO,IAAI,CAAC,OAAL,CAAA,CAAP;;AACA,KAAA,CAAO,IAAI,CAAC,QAAL,CAAA,CAAP;;AAEA,IAAI,CAAC,GAAL,CAAS,gBAAT;;AACA,KAAA,CAAO,IAAI,CAAC,OAAL,CAAA,CAAP;;AACA,MAAA,CAAO,IAAI,CAAC,QAAL,CAAA,CAAP;;AAEA,IAAI,CAAC,GAAL,CAAS,aAAT;;AACA,KAAA,CAAO,IAAI,CAAC,OAAL,CAAA,CAAP;;AACA,MAAA,CAAO,IAAI,CAAC,QAAL,CAAA,CAAP;;AAEA,KAAA,CAAM,IAAI,CAAC,QAAL,CAAA,CAAN,EAAuB,CAAA;;;MAAA,CAAvB,EAzBqB;;;AAkCrB,IAAA,GAAO,QAAA,CAAC,KAAD,CAAA;AAAW,SAAO,CAAA,CAAA,CAAG,KAAH,EAAA;AAAlB;;AACP,MAAA,GAAS,IAAI,OAAJ,CAAY,QAAZ,EAAsB,IAAtB;;AACT,MAAM,CAAC,GAAP,CAAW,QAAX;;AACA,KAAA,CAAM,MAAM,CAAC,QAAP,CAAA,CAAN,EAAyB,SAAzB",
+  "sourcesContent": [
+    "# section.test.coffee\n\nimport {undef, toBlock, assert} from '@jdeighan/llutils'\nimport {indented} from '@jdeighan/llutils/indent'\nimport * as lib from '@jdeighan/llutils/section'\nObject.assign(global, lib)\nimport * as lib2 from '@jdeighan/llutils/utest'\nObject.assign(global, lib2)\n\n# ---------------------------------------------------------------------------\n\nhtml = new Section 'html', (block) ->\n\treturn toBlock(['<div>', indented(block), '</div>'])\n\ntruthy html.isEmpty()\nfalsy  html.nonEmpty()\n\nhtml.add '<h1>title</h1>'\nfalsy  html.isEmpty()\ntruthy html.nonEmpty()\n\nhtml.add '<p>para</p>'\nfalsy  html.isEmpty()\ntruthy html.nonEmpty()\n\nequal html.getBlock(), \"\"\"\n\t<div>\n\t\t<h1>title</h1>\n\t\t<p>para</p>\n\t</div>\n\t\"\"\"\n\n# ---------------------------------------------------------------------------\n\ntoJS = (block) -> return \"#{block};\"\nscript = new Section 'script', toJS\nscript.add \"x = 42\"\nequal script.getBlock(), \"x = 42;\"\n"
+  ]
+}

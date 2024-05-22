@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "metadata.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\lib\\metadata.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAiB;AAAA,IAAA;;AAEjB,OAAO,IAAP,MAAA;;AAEA,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;EAC6B,QAD7B;EACuC,QADvC;EACiD,MADjD;CAAA,MAAA;;AAIA,cAAA,GAAiB;EAChB,KAAA,EAAO,CAAC,KAAD,CAAA,GAAA;AACR,QAAA;IAAE,QAAA,GAAW;MACV,WAAA,EAAa;IADH;AAGX,WAAO,IAAI,CAAC,KAAL,CAAW,QAAA,CAAS,KAAT,EAAgB,CAAhB,CAAX,EAA+B,QAA/B;EAJD;AADS,EARA;;;AAkBjB,OAAA,IAAO,eAAA,GAAkB,CAAC,KAAD,EAAQ,SAAR,CAAA,GAAA;EAExB,MAAA,CAAO,QAAA,CAAS,KAAT,CAAP,EAAwB,CAAA,cAAA,CAAA,CAAiB,OAAO,KAAxB,CAAA,CAAxB;EACA,MAAA,CAAQ,KAAK,CAAC,MAAN,KAAgB,CAAxB,EAA4B,CAAA,iBAAA,CAAA,CAAoB,KAApB,CAAA,CAA5B;EACA,MAAA,CAAO,CAAC,KAAK,CAAC,CAAD,CAAL,KAAY,KAAK,CAAC,CAAD,CAAlB,CAAA,IAA0B,CAAC,KAAK,CAAC,CAAD,CAAL,KAAY,KAAK,CAAC,CAAD,CAAlB,CAAjC,EACC,CAAA,iBAAA,CAAA,CAAoB,KAApB,CAAA,CADD;EAGA,MAAA,CAAQ,OAAO,SAAP,KAAoB,UAA5B,EAAyC,wBAAzC;EACA,cAAc,CAAC,KAAD,CAAd,GAAwB;AARA,EAlBR;;;AA+BjB,OAAA,IAAO,eAAA,GAAkB,CAAC,GAAD,CAAA,GAAA;AAExB,SAAO,OAAA,CAAQ,cAAc,CAAC,GAAD,CAAtB;AAFiB,EA/BR;;;;AAsCjB,OAAA,IAAO,eAAA,GAAkB,CAAC,SAAD,EAAY,KAAZ,CAAA,GAAA;AAEzB,MAAA;EAAC,MAAA,CAAO,eAAA,CAAgB,SAAhB,CAAP,EAAmC,cAAnC;EACA,SAAA,GAAY,cAAc,CAAC,SAAD;AAC1B,SAAO,SAAA,CAAU,KAAV;AAJiB",
+  "sourcesContent": [
+    "# metadata.coffee\r\n\r\nimport YAML from 'yaml'\r\n\r\nimport {\r\n\tundef, defined, notdefined, isString, untabify, assert,\r\n\t} from '@jdeighan/llutils'\r\n\r\nhMetaDataTypes = {\r\n\t'---': (block) =>\r\n\t\thOptions = {\r\n\t\t\tskipInvalid: true\r\n\t\t\t}\r\n\t\treturn YAML.parse(untabify(block, 2), hOptions)\r\n\t}\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport addMetaDataType = (start, converter) =>\r\n\r\n\tassert isString(start), \"Not a string: #{typeof start}\"\r\n\tassert (start.length == 3), \"Bad 'start' key: #{start}\"\r\n\tassert (start[1] == start[0]) && (start[2] == start[0]),\r\n\t\t\"Bad 'start' key: #{start}\"\r\n\r\n\tassert (typeof converter == 'function'), \"Non-function converter\"\r\n\thMetaDataTypes[start] = converter\r\n\treturn\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport isMetaDataStart = (str) =>\r\n\r\n\treturn defined(hMetaDataTypes[str])\r\n\r\n# ---------------------------------------------------------------------------\r\n# --- block does NOT contain the metadata start line\r\n\r\nexport convertMetaData = (firstLine, block) =>\r\n\r\n\tassert isMetaDataStart(firstLine), \"Bad metadata\"\r\n\tconverter = hMetaDataTypes[firstLine]\r\n\treturn converter(block)\r\n"
+  ]
+}
