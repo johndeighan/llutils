@@ -19,8 +19,7 @@ class Counter extends NodeWalker
 	init: () ->
 		@hCounts = {}
 
-	visit: (hNode, level) ->
-		{type} = hNode
+	visit: (type, hNode) ->
 		if hasKey(hNode, type)
 			@hCounts[type] += 1
 		else
@@ -77,8 +76,9 @@ class Counter extends NodeWalker
 
 	class Patcher extends NodeWalker
 
-		visit: (hNode) ->
-			if lLiterals.includes(hNode.type)
+		visit: (type, hNode) ->
+
+			if lLiterals.includes(type)
 				hNode.type = 'Literal'
 
 	hAST = {
@@ -169,7 +169,7 @@ class Counter extends NodeWalker
 			@lKeys = words('loc extra range start end tokens')
 			return
 
-		visit: (hNode, level) ->
+		visit: (type, hNode) ->
 			for key in @lKeys
 				if hasKey(hNode, key)
 					delete hNode[key]

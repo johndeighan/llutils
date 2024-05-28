@@ -5,7 +5,7 @@ import {compile} from 'coffeescript'
 
 import {
 	pass, undef, defined, notdefined, gen2block, words,
-	assert, croak, DUMP, OL, dclone, getOptions,
+	assert, croak, DUMP, OL, dclone, getOptions, listdiff,
 	isString, isArray, isHash, isFunction, removeKeys,
 	} from '@jdeighan/llutils'
 import {indented, splitLine} from '@jdeighan/llutils/indent'
@@ -13,7 +13,7 @@ import {
 	readTextFile, barf, withExt, isFile,
 	} from '@jdeighan/llutils/fs'
 import {LineFetcher} from '@jdeighan/llutils/fetcher'
-import {NodeWalker} from '@jdeighan/llutils/node-walker'
+import {ASTWalker} from '@jdeighan/llutils/ast-walker'
 import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
 
 # ---------------------------------------------------------------------------
@@ -131,5 +131,3 @@ export toASTFile = (code, filePath, hOptions={}) ->
 	hAST = toAST(code, hOptions)
 	barfAST hAST, filePath
 	return
-
-# ---------------------------------------------------------------------------

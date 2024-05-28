@@ -37,9 +37,7 @@ Counter = class Counter extends NodeWalker {
     return this.hCounts = {};
   }
 
-  visit(hNode, level) {
-    var type;
-    ({type} = hNode);
+  visit(type, hNode) {
     if (hasKey(hNode, type)) {
       return this.hCounts[type] += 1;
     } else {
@@ -104,8 +102,8 @@ Counter = class Counter extends NodeWalker {
   var Patcher, hAST, lLiterals, pat;
   lLiterals = ['NumericLiteral', 'StringLiteral'];
   Patcher = class Patcher extends NodeWalker {
-    visit(hNode) {
-      if (lLiterals.includes(hNode.type)) {
+    visit(type, hNode) {
+      if (lLiterals.includes(type)) {
         return hNode.type = 'Literal';
       }
     }
@@ -195,7 +193,7 @@ Counter = class Counter extends NodeWalker {
       this.lKeys = words('loc extra range start end tokens');
     }
 
-    visit(hNode, level) {
+    visit(type, hNode) {
       var i, key, len, ref, results;
       ref = this.lKeys;
       results = [];

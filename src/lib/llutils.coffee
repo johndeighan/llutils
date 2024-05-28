@@ -521,6 +521,13 @@ export toBlock = (strOrArray) =>
 
 # ---------------------------------------------------------------------------
 
+export listdiff = (lItems, lItemsToRemove) =>
+
+	return lItems.filter((item) =>
+		return ! lItemsToRemove.includes(item))
+
+# ---------------------------------------------------------------------------
+
 export untabify = (str, numSpaces=3) =>
 
 	return str.replace(/\t/g, ' '.repeat(numSpaces))

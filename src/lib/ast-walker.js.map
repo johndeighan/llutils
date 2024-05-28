@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "ast-walker.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\lib\\ast-walker.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAmB;AAEnB,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;EAC6B,QAD7B;CAAA,MAAA;;AAGA,OAAA;EAAQ,UAAR;CAAA,MAAA,gCALmB;;;AASnB,OAAA,IAAa,YAAN,MAAA,UAAA,QAAwB,WAAxB;EAEN,IAAM,CAAA,CAAA;IAEL,IAAC,CAAA,QAAD,GAAY;IACZ,IAAC,CAAA,QAAD,GAAY;WACZ,IAAC,CAAA,KAAD,GAAS;EAJJ;;EAMN,UAAY,CAAA,CAAA;AAAM,WAAO,IAAC,CAAA;EAAd;;EACZ,UAAY,CAAA,CAAA;AAAM,WAAO,IAAC,CAAA;EAAd;;EACZ,OAAS,CAAA,CAAA;AAAM,WAAO,IAAC,CAAA;EAAd;;EACT,SAAW,CAAA,CAAA;AAAM,WAAO,QAAA,CAAS,IAAC,CAAA,KAAV,EAAiB,IAAC,CAAA,QAAlB;EAAb,CATZ;;;;;EAeC,KAAO,CAAC,IAAD,EAAO,KAAP,CAAA;gBAAP,CAAA,KAEC,CAAM,IAAN,EAAY,KAAZ;EAFM;;AAjBD",
+  "sourcesContent": [
+    "# ast-walker.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined, listdiff,\r\n\t} from '@jdeighan/llutils'\r\nimport {NodeWalker} from '@jdeighan/llutils/node-walker'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport class ASTWalker extends NodeWalker\r\n\r\n\tinit: () ->\r\n\r\n\t\t@lImports = []\r\n\t\t@lExports = []\r\n\t\t@lUsed = []\r\n\r\n\tgetImports: () -> return @lImports\r\n\tgetExports: () -> return @lExports\r\n\tgetUsed: () -> return @lUsed\r\n\tgetNeeded: () -> return listdiff(@lUsed, @lImports)\r\n\r\n\t# ..........................................................\r\n\t#    @level() gives you the level\r\n\t#    @lStack is stack of {key, hNode} to get parents\r\n\r\n\tvisit: (type, hNode) ->\r\n\r\n\t\tsuper type, hNode\r\n"
+  ]
+}

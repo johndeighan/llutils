@@ -18,6 +18,7 @@ import {
   OL,
   dclone,
   getOptions,
+  listdiff,
   isString,
   isArray,
   isHash,
@@ -42,8 +43,8 @@ import {
 } from '@jdeighan/llutils/fetcher';
 
 import {
-  NodeWalker
-} from '@jdeighan/llutils/node-walker';
+  ASTWalker
+} from '@jdeighan/llutils/ast-walker';
 
 import {
   replaceHereDocs
@@ -159,7 +160,5 @@ export var toASTFile = function(code, filePath, hOptions = {}) {
   hAST = toAST(code, hOptions);
   barfAST(hAST, filePath);
 };
-
-// ---------------------------------------------------------------------------
 
 //# sourceMappingURL=coffee.js.map

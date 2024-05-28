@@ -655,6 +655,11 @@ def`), `abc
 def`);
 
 // ---------------------------------------------------------------------------
+symbol("listdiff(lItems, lItemsToRemove)");
+
+equal(listdiff(['a', 'b', 'c', 'd'], ['a', 'd']), ['b', 'c']);
+
+// ---------------------------------------------------------------------------
 symbol("untabify(str)"); // --- convert TAB to n chars
 
 equal(untabify("abc\n\tdef"), "abc\n   def");

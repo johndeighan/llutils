@@ -6,6 +6,7 @@
 	"exports": {
 		".": "./src/lib/llutils.js",
 		"./node-walker": "./src/lib/node-walker.js",
+		"./ast-walker": "./src/lib/ast-walker.js",
 		"./fs": "./src/lib/fs.js",
 		"./indent": "./src/lib/indent.js",
 		"./metadata": "./src/lib/metadata.js",

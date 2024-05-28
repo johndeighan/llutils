@@ -591,6 +591,13 @@ export var toBlock = (strOrArray) => {
 };
 
 // ---------------------------------------------------------------------------
+export var listdiff = (lItems, lItemsToRemove) => {
+  return lItems.filter((item) => {
+    return !lItemsToRemove.includes(item);
+  });
+};
+
+// ---------------------------------------------------------------------------
 export var untabify = (str, numSpaces = 3) => {
   return str.replace(/\t/g, ' '.repeat(numSpaces));
 };

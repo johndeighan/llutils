@@ -73,7 +73,7 @@ export var NodeWalker = class NodeWalker {
   walk(hAST) {
     assert(this.isNode(hAST), `Not a node: ${OL(hAST)}`);
     this.init();
-    this.visit(hAST);
+    this.visit(hAST.type, hAST);
     this.visitChildren(hAST);
     this.end(hAST);
     return this; // allow chaining
@@ -88,13 +88,13 @@ export var NodeWalker = class NodeWalker {
       value = hNode[key];
       this.lStack.push({key, hNode});
       if (this.isNode(value)) {
-        this.visit(value);
+        this.visit(value.type, value);
         this.visitChildren(value);
         this.end(value);
       } else if (this.isArrayOfNodes(value)) {
         for (i = 0, len = value.length; i < len; i++) {
           hNode = value[i];
-          this.visit(hNode);
+          this.visit(hNode.type, hNode);
           this.visitChildren(hNode);
           this.end(hNode);
         }
@@ -110,13 +110,15 @@ export var NodeWalker = class NodeWalker {
   }
 
   // ..........................................................
-  visit(hNode) {
-    this.dbg(indented(`VISIT ${hNode.type}`));
-    this.lLines.push(indented(this.stringify(hNode), this.level()));
+  visit(type, hNode) {
+    var str;
+    this.dbg(indented(`VISIT ${type}`));
+    str = this.stringifyNode(hNode);
+    this.lLines.push(indented(str, this.level()));
   }
 
   // ..........................................................
-  stringify(hNode) {
+  stringifyNode(hNode) {
     var key;
     if (this.lStack.length === 0) {
       return hNode.type;

@@ -60,7 +60,7 @@ export class NodeWalker
 
 		assert @isNode(hAST), "Not a node: #{OL(hAST)}"
 		@init()
-		@visit hAST
+		@visit hAST.type, hAST
 		@visitChildren hAST
 		@end hAST
 		return this    # allow chaining
@@ -72,12 +72,12 @@ export class NodeWalker
 		for own key,value of hNode
 			@lStack.push {key, hNode}
 			if @isNode(value)
-				@visit value
+				@visit value.type, value
 				@visitChildren value
 				@end value
 			else if @isArrayOfNodes(value)
 				for hNode in value
-					@visit hNode
+					@visit hNode.type, hNode
 					@visitChildren hNode
 					@end hNode
 			@lStack.pop()
@@ -93,15 +93,16 @@ export class NodeWalker
 
 	# ..........................................................
 
-	visit: (hNode) ->
+	visit: (type, hNode) ->
 
-		@dbg indented("VISIT #{hNode.type}")
-		@lLines.push indented(@stringify(hNode), @level())
+		@dbg indented("VISIT #{type}")
+		str = @stringifyNode(hNode)
+		@lLines.push indented(str, @level())
 		return
 
 	# ..........................................................
 
-	stringify: (hNode) ->
+	stringifyNode: (hNode) ->
 
 		if (@lStack.length == 0)
 			return hNode.type
