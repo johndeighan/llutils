@@ -9,25 +9,65 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
+symbol "normalize(path)"
 
 equal normalize("C:\\temp"), "c:/temp"
+equal normalize("c:\\temp/to/file.txt"), "c:/temp/to/file.txt"
+
+# ---------------------------------------------------------------------------
+symbol "mkpath(...lParts)"
+
 equal mkpath('.', 'test'), "c:/Users/johnd/llutils/test"
 equal mkpath('C:\\temp', 'work'), "c:/temp/work"
+
+# ---------------------------------------------------------------------------
+symbol "relpath(...lParts)"
+
 equal relpath(".", "temp"), "temp"
+
+# ---------------------------------------------------------------------------
+symbol "isDir(dirPath)"
 
 (() =>
 	dir = "c:/Users/johnd/llutils/test/fs"
 
 	truthy isDir(dir)
 	truthy isDir(mkpath(dir, 'dir'))
+	)()
+
+# ---------------------------------------------------------------------------
+symbol "isFile(filePath)"
+
+(() =>
+	dir = "c:/Users/johnd/llutils/test/fs"
+
 	truthy isFile(mkpath(dir, 'test.txt'))
+	)()
+
+# ---------------------------------------------------------------------------
+symbol "getFileStats(filePath)"
+
+(() =>
+	dir = "c:/Users/johnd/llutils/test/fs"
+
 	like getFileStats("./test/fs/test.txt"), {
 			size: 35
 			}
+	)()
+
+# ---------------------------------------------------------------------------
+symbol "pathType(path)"
+
+(() =>
+	dir = "c:/Users/johnd/llutils/test/fs"
+
 	equal pathType(mkpath(dir, 'dir')), 'dir'
 	equal pathType(mkpath(dir, 'test.txt')), 'file'
 	equal pathType(mkpath(dir, 'nowhere.txt')), 'missing'
 	)()
+
+# ---------------------------------------------------------------------------
+symbol "parsePath(filePath)"
 
 like parsePath("./test/fs/test.txt"), {
 	filePath: "c:/Users/johnd/llutils/test/fs/test.txt"
@@ -45,6 +85,9 @@ like parsePath('./test/fs/file.test.txt'), {
 	purpose: 'test'
 	size: 35
 	}
+
+# ---------------------------------------------------------------------------
+symbol "readTextFile(filePath)"
 
 (() =>
 	filePath = './test/fs/meta.txt'
@@ -96,3 +139,14 @@ like parsePath('./test/fs/file.test.txt'), {
 		def
 		"""
 	)()
+
+# ---------------------------------------------------------------------------
+symbol "pathTo(fileName)"
+
+equal mkpath(pathTo('cielo.coffee')), mkpath("src/lib/cielo.coffee")
+
+# ---------------------------------------------------------------------------
+symbol "allPathsTo(fileName)"
+
+lPaths = Array.from(allPathsTo('.symbols'), (x) => relpath(x))
+equal lPaths, ['.symbols', '../.symbols']

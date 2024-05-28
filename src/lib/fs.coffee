@@ -515,3 +515,93 @@ export readTextFile = (filePath) =>
 			else
 				0
 		}
+
+# ---------------------------------------------------------------------------
+#    Get path to parent directory of a directory
+
+export getParentDir = (dir) =>
+
+	hParts = pathLib.parse(dir)
+	if (hParts.dir == hParts.root)
+		return undef
+	return mkpath(pathLib.resolve(dir, '..'))
+
+# ---------------------------------------------------------------------------
+#    Get all subdirectories of a directory
+#       don't return hidden or system subdirectories
+#    Return value is just a name, not full paths
+
+export getSubDirs = (dir) =>
+
+	assert isDir(dir), "not a directory: #{OL(dir)}"
+
+	doInclude = (d) ->
+		if ! d.isDirectory()
+			return false
+		dirName = d.name
+		if dir in ['$Recycle.Bin', '$WinREAgent']
+			return false
+		if (dirName.indexOf('.') == 0)
+			return false
+		return true
+
+	hOptions = {
+		withFileTypes: true
+		recursive: false
+		}
+	return fs.readdirSync(dir, hOptions) \
+			.filter(doInclude) \
+			.map((d) -> d.name) \
+			.sort()
+
+# ---------------------------------------------------------------------------
+# searches downward. Returns a single path or undef
+
+export pathTo = (fileName, hOptions={}) =>
+
+	{dir} = getOptions hOptions, {
+		dir: undef
+		}
+	if defined(dir)
+		assert isDir(dir), "Not a directory: #{OL(dir)}"
+	else
+		dir = process.cwd()
+
+	# --- first check if the file is in dir
+
+	filePath = mkpath(dir, fileName)
+	if isFile(filePath)
+		return filePath
+
+	# --- Search all directories in this directory
+	#     getSubDirs() returns dirs sorted alphabetically
+
+	for subdir in getSubDirs(dir)
+		filePath = pathTo fileName, {dir: mkpath(dir, subdir)}
+		if defined(filePath)
+			return filePath
+	return undef
+
+# ---------------------------------------------------------------------------
+# searches upward. Yields multiple files
+
+export allPathsTo = (fileName, hOptions={}) ->
+
+	{dir} = getOptions hOptions, {
+		dir: undef
+		}
+	if defined(dir)
+		assert isDir(dir), "Not a directory: #{OL(dir)}"
+	else
+		dir = process.cwd()
+
+	# --- first check if the file is in dir
+	filePath = mkpath(dir, fileName)
+	if isFile(filePath)
+		yield filePath
+
+	while defined(dir = getParentDir(dir))
+		filePath = mkpath(dir, fileName)
+		if isFile(filePath)
+			yield filePath
+	return

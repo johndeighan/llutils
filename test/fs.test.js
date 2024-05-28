@@ -1,4 +1,6 @@
-  // fs.test.coffee
+// fs.test.coffee
+var lPaths;
+
 import {
   undef,
   gen2array,
@@ -14,27 +16,67 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
+symbol("normalize(path)");
+
 equal(normalize("C:\\temp"), "c:/temp");
+
+equal(normalize("c:\\temp/to/file.txt"), "c:/temp/to/file.txt");
+
+// ---------------------------------------------------------------------------
+symbol("mkpath(...lParts)");
 
 equal(mkpath('.', 'test'), "c:/Users/johnd/llutils/test");
 
 equal(mkpath('C:\\temp', 'work'), "c:/temp/work");
 
+// ---------------------------------------------------------------------------
+symbol("relpath(...lParts)");
+
 equal(relpath(".", "temp"), "temp");
+
+// ---------------------------------------------------------------------------
+symbol("isDir(dirPath)");
 
 (() => {
   var dir;
   dir = "c:/Users/johnd/llutils/test/fs";
   truthy(isDir(dir));
-  truthy(isDir(mkpath(dir, 'dir')));
-  truthy(isFile(mkpath(dir, 'test.txt')));
-  like(getFileStats("./test/fs/test.txt"), {
+  return truthy(isDir(mkpath(dir, 'dir')));
+})();
+
+// ---------------------------------------------------------------------------
+symbol("isFile(filePath)");
+
+(() => {
+  var dir;
+  dir = "c:/Users/johnd/llutils/test/fs";
+  return truthy(isFile(mkpath(dir, 'test.txt')));
+})();
+
+// ---------------------------------------------------------------------------
+symbol("getFileStats(filePath)");
+
+(() => {
+  var dir;
+  dir = "c:/Users/johnd/llutils/test/fs";
+  return like(getFileStats("./test/fs/test.txt"), {
     size: 35
   });
+})();
+
+// ---------------------------------------------------------------------------
+symbol("pathType(path)");
+
+(() => {
+  var dir;
+  dir = "c:/Users/johnd/llutils/test/fs";
   equal(pathType(mkpath(dir, 'dir')), 'dir');
   equal(pathType(mkpath(dir, 'test.txt')), 'file');
   return equal(pathType(mkpath(dir, 'nowhere.txt')), 'missing');
 })();
+
+// ---------------------------------------------------------------------------
+symbol("parsePath(filePath)");
 
 like(parsePath("./test/fs/test.txt"), {
   filePath: "c:/Users/johnd/llutils/test/fs/test.txt",
@@ -52,6 +94,9 @@ like(parsePath('./test/fs/file.test.txt'), {
   purpose: 'test',
   size: 35
 });
+
+// ---------------------------------------------------------------------------
+symbol("readTextFile(filePath)");
 
 (() => {
   var filePath, hMetaData, iter, nLines, reader;
@@ -97,5 +142,19 @@ like(parsePath('./test/fs/file.test.txt'), {
   return equal(gen2block(reader), `abc
 def`);
 })();
+
+// ---------------------------------------------------------------------------
+symbol("pathTo(fileName)");
+
+equal(mkpath(pathTo('cielo.coffee')), mkpath("src/lib/cielo.coffee"));
+
+// ---------------------------------------------------------------------------
+symbol("allPathsTo(fileName)");
+
+lPaths = Array.from(allPathsTo('.symbols'), (x) => {
+  return relpath(x);
+});
+
+equal(lPaths, ['.symbols', '../.symbols']);
 
 //# sourceMappingURL=fs.test.js.map

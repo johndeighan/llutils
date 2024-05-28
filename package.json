@@ -10,6 +10,7 @@
 		"./indent": "./src/lib/indent.js",
 		"./metadata": "./src/lib/metadata.js",
 		"./coffee": "./src/lib/coffee.js",
+		"./cielo": "./src/lib/cielo.js",
 		"./fetcher": "./src/lib/fetcher.js",
 		"./section": "./src/lib/section.js",
 		"./section-map": "./src/lib/section-map.js",

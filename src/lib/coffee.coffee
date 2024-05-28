@@ -18,28 +18,6 @@ import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
 
 # ---------------------------------------------------------------------------
 
-export cieloPreProcess = (code, hOptions) =>
-
-	{debug} = getOptions hOptions, {
-		debug: false
-		}
-
-	if debug
-		console.log "IN cieloPreProcess()"
-	lLines = []
-	src = new LineFetcher(code)
-	while src.moreLines()
-		[level, str] = splitLine(src.fetch())
-		if (level == 0) && (str == '__END__')
-			break
-		if debug
-			console.log "GOT: #{OL(str)} at level #{level}"
-		str = replaceHereDocs(level, str, src)
-		lLines.push indented(str, level)
-	return lLines.join("\n")
-
-# ---------------------------------------------------------------------------
-
 export brew = (code, hMetaData={}, hOptions={}) ->
 
 	# --- metadata can be used to add a shebang line
@@ -110,21 +88,6 @@ export brewFile = (filePath) ->
 
 # ---------------------------------------------------------------------------
 
-export blessFile = (filePath) ->
-
-	assert isFile(filePath), "No such file: #{filePath}"
-	{hMetaData, reader} = readTextFile(filePath)
-	code = gen2block(reader)
-	{js, sourceMap} = brew code, hMetaData, {
-		filePath
-		preprocess: cieloPreProcess
-		}
-	barf js, withExt(filePath, '.js')
-	barf sourceMap, withExt(filePath, '.js.map')
-	return {js, sourceMap}
-
-# ---------------------------------------------------------------------------
-
 export getShebang = (hMetaData) =>
 
 	shebang = hMetaData.shebang
@@ -145,7 +108,6 @@ export toAST = (coffeeCode, hOptions={}) =>
 
 	hAST = compile(coffeeCode, {ast: true})
 	if minimal
-		console.log "REMOVING KEYS"
 		removeKeys hAST, words(
 			'loc range extra start end',
 			'directives comments tokens',
