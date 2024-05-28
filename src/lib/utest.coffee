@@ -34,9 +34,13 @@ export class UnitTester
 	# ........................................................................
 	# --- returns, e.g. "test 1"
 
-	getLabel: () =>
+	getLabel: (tag=undef) =>
 
-		label = "test #{nextID}"
+		if defined(tag)
+			assert isString(tag), "tag = #{OL(tag)}"
+			label = "test #{nextID} (#{tag})"
+		else
+			label = "test #{nextID}"
 		nextID += 1
 		return label
 
@@ -47,12 +51,15 @@ export class UnitTester
 
 	# ........................................................................
 
-	begin: (val=undef, expected=undef) ->
+	begin: (val=undef, expected=undef, tag=undef) ->
+
+		if (tag == 'symbol')
+			return ["===== #{val} ====="]
 
 		if (@depth == 0)
 			@beforeEachTest()
 		@depth += 1
-		label = @getLabel()
+		label = @getLabel(tag)
 		if defined(val)
 			val = @transformValue(val)
 		if defined(expected)
@@ -89,9 +96,19 @@ export class UnitTester
 	# ..........................................................
 	# ..........................................................
 
+	symbol: (label) ->
+
+		[label] = @begin(label, undef, 'symbol')
+		test label, (t) =>
+			t.is(1, 1)
+		@end()
+		return
+
+	# ..........................................................
+
 	equal: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected)
+		[label, val, expected] = @begin(val, expected, 'equal')
 		test label, (t) =>
 			t.deepEqual(val, expected)
 		@end()
@@ -101,7 +118,7 @@ export class UnitTester
 
 	notequal: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected)
+		[label, val, expected] = @begin(val, expected, 'notequal')
 		test label, (t) =>
 			t.notDeepEqual(val, expected)
 		@end()
@@ -111,7 +128,7 @@ export class UnitTester
 
 	like: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected)
+		[label, val, expected] = @begin(val, expected, 'like')
 		if isString(val) && isString(expected)
 			test label, (t) =>
 				t.is(@norm(val), @norm(expected))
@@ -130,7 +147,7 @@ export class UnitTester
 
 		assert isString(val), "not a string: #{OL(val)}"
 		assert isString(expected), "not a string: #{OL(expected)}"
-		[label, val, expected] = @begin(val, expected)
+		[label, val, expected] = @begin(val, expected, 'samelines')
 
 		lValLines = blockToArray(val).filter((line) => return nonEmpty(line)).sort()
 		lExpLines = blockToArray(expected).filter((line) => return nonEmpty(line)).sort()
@@ -144,7 +161,7 @@ export class UnitTester
 
 	truthy: (bool) ->
 
-		[label] = @begin()
+		[label] = @begin(undef, undef, 'truthy')
 		test label, (t) =>
 			t.truthy(bool)
 		@end()
@@ -154,7 +171,7 @@ export class UnitTester
 
 	falsy: (bool) ->
 
-		[label] = @begin()
+		[label] = @begin(undef, undef, 'falsy')
 		test label, (t) =>
 			t.falsy(bool)
 		@end()
@@ -165,7 +182,7 @@ export class UnitTester
 
 	includes: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected)
+		[label, val, expected] = @begin(val, expected, 'includes')
 		assert isString(val) || isArray(val), "Not a string or array: #{OL(val)}"
 		test label, (t) =>
 			t.truthy(val.includes(expected))
@@ -177,7 +194,7 @@ export class UnitTester
 	matches: (val, regexp) ->
 
 		assert isString(val), "Not a string: #{OL(val)}"
-		[label, val] = @begin(val)
+		[label, val] = @begin(val, undef, 'matches')
 
 		# --- convert strings to regular expressions
 		if isString(regexp)
@@ -192,7 +209,7 @@ export class UnitTester
 
 	fails: (func) ->
 
-		[label] = @begin()
+		[label] = @begin(undef, undef, 'fails')
 		assert isFunction(func), "Not a function: #{OL(func)}"
 		try
 			func()
@@ -212,7 +229,7 @@ export class UnitTester
 		if notdefined(errClass)
 			return @fails(func)
 
-		[label] = @begin()
+		[label] = @begin(undef, undef, 'throws')
 		assert isFunction(func), "Not a function: #{OL(func)}"
 		assert isClass(errClass) || isFunction(errClass),
 			"Not a class or function: #{OL(errClass)}"
@@ -234,7 +251,7 @@ export class UnitTester
 	succeeds: (func) ->
 
 		assert (typeof func == 'function'), "function expected"
-		[label] = @begin()
+		[label] = @begin(undef, undef, 'succeeds')
 		try
 			func()
 			ok = true
@@ -249,6 +266,7 @@ export class UnitTester
 # ---------------------------------------------------------------------------
 
 export u = new UnitTester()
+export symbol = (arg1) => return u.symbol(arg1)
 export equal = (arg1, arg2) => return u.equal(arg1, arg2)
 export notequal = (arg1, arg2) => return u.notequal(arg1, arg2)
 export like = (arg1, arg2) => return u.like(arg1, arg2)

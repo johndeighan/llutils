@@ -46,9 +46,14 @@ export var UnitTester = class UnitTester {
     this.depth = 0;
   }
 
-  getLabel() {
+  getLabel(tag = undef) {
     var label;
-    label = `test ${nextID}`;
+    if (defined(tag)) {
+      assert(isString(tag), `tag = ${OL(tag)}`);
+      label = `test ${nextID} (${tag})`;
+    } else {
+      label = `test ${nextID}`;
+    }
     nextID += 1;
     return label;
   }
@@ -63,13 +68,16 @@ export var UnitTester = class UnitTester {
   }
 
   // ........................................................................
-  begin(val = undef, expected = undef) {
+  begin(val = undef, expected = undef, tag = undef) {
     var label;
+    if (tag === 'symbol') {
+      return [`===== ${val} =====`];
+    }
     if (this.depth === 0) {
       this.beforeEachTest();
     }
     this.depth += 1;
-    label = this.getLabel();
+    label = this.getLabel(tag);
     if (defined(val)) {
       val = this.transformValue(val);
     }
@@ -100,9 +108,18 @@ export var UnitTester = class UnitTester {
 
   // ..........................................................
   // ..........................................................
+  symbol(label) {
+    [label] = this.begin(label, undef, 'symbol');
+    test(label, (t) => {
+      return t.is(1, 1);
+    });
+    this.end();
+  }
+
+  // ..........................................................
   equal(val, expected) {
     var label;
-    [label, val, expected] = this.begin(val, expected);
+    [label, val, expected] = this.begin(val, expected, 'equal');
     test(label, (t) => {
       return t.deepEqual(val, expected);
     });
@@ -112,7 +129,7 @@ export var UnitTester = class UnitTester {
   // ..........................................................
   notequal(val, expected) {
     var label;
-    [label, val, expected] = this.begin(val, expected);
+    [label, val, expected] = this.begin(val, expected, 'notequal');
     test(label, (t) => {
       return t.notDeepEqual(val, expected);
     });
@@ -122,7 +139,7 @@ export var UnitTester = class UnitTester {
   // ..........................................................
   like(val, expected) {
     var label;
-    [label, val, expected] = this.begin(val, expected);
+    [label, val, expected] = this.begin(val, expected, 'like');
     if (isString(val) && isString(expected)) {
       test(label, (t) => {
         return t.is(this.norm(val), this.norm(expected));
@@ -144,7 +161,7 @@ export var UnitTester = class UnitTester {
     var lExpLines, lValLines, label;
     assert(isString(val), `not a string: ${OL(val)}`);
     assert(isString(expected), `not a string: ${OL(expected)}`);
-    [label, val, expected] = this.begin(val, expected);
+    [label, val, expected] = this.begin(val, expected, 'samelines');
     lValLines = blockToArray(val).filter((line) => {
       return nonEmpty(line);
     }).sort();
@@ -160,7 +177,7 @@ export var UnitTester = class UnitTester {
   // ..........................................................
   truthy(bool) {
     var label;
-    [label] = this.begin();
+    [label] = this.begin(undef, undef, 'truthy');
     test(label, (t) => {
       return t.truthy(bool);
     });
@@ -170,7 +187,7 @@ export var UnitTester = class UnitTester {
   // ..........................................................
   falsy(bool) {
     var label;
-    [label] = this.begin();
+    [label] = this.begin(undef, undef, 'falsy');
     test(label, (t) => {
       return t.falsy(bool);
     });
@@ -181,7 +198,7 @@ export var UnitTester = class UnitTester {
   // --- NOTE: both strings and arrays have an includes() method
   includes(val, expected) {
     var label;
-    [label, val, expected] = this.begin(val, expected);
+    [label, val, expected] = this.begin(val, expected, 'includes');
     assert(isString(val) || isArray(val), `Not a string or array: ${OL(val)}`);
     test(label, (t) => {
       return t.truthy(val.includes(expected));
@@ -193,7 +210,7 @@ export var UnitTester = class UnitTester {
   matches(val, regexp) {
     var label;
     assert(isString(val), `Not a string: ${OL(val)}`);
-    [label, val] = this.begin(val);
+    [label, val] = this.begin(val, undef, 'matches');
     // --- convert strings to regular expressions
     if (isString(regexp)) {
       regexp = new RegExp(regexp);
@@ -208,7 +225,7 @@ export var UnitTester = class UnitTester {
   // ..........................................................
   fails(func) {
     var err, label, ok;
-    [label] = this.begin();
+    [label] = this.begin(undef, undef, 'fails');
     assert(isFunction(func), `Not a function: ${OL(func)}`);
     try {
       func();
@@ -230,7 +247,7 @@ export var UnitTester = class UnitTester {
     if (notdefined(errClass)) {
       return this.fails(func);
     }
-    [label] = this.begin();
+    [label] = this.begin(undef, undef, 'throws');
     assert(isFunction(func), `Not a function: ${OL(func)}`);
     assert(isClass(errClass) || isFunction(errClass), `Not a class or function: ${OL(errClass)}`);
     errObj = undef;
@@ -252,7 +269,7 @@ export var UnitTester = class UnitTester {
   succeeds(func) {
     var err, label, ok;
     assert(typeof func === 'function', "function expected");
-    [label] = this.begin();
+    [label] = this.begin(undef, undef, 'succeeds');
     try {
       func();
       ok = true;
@@ -271,6 +288,10 @@ export var UnitTester = class UnitTester {
 
 // ---------------------------------------------------------------------------
 export var u = new UnitTester();
+
+export var symbol = (arg1) => {
+  return u.symbol(arg1);
+};
 
 export var equal = (arg1, arg2) => {
   return u.equal(arg1, arg2);

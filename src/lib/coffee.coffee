@@ -1,37 +1,82 @@
 # coffee.coffee
 
 import fs from 'fs'
-import CoffeeScript from 'coffeescript'
+import {compile} from 'coffeescript'
 
 import {
-	undef, defined, notdefined, gen2block, words,
-	assert, croak, DUMP, OL,
-	isString, isArray, isHash, removeKeys,
+	pass, undef, defined, notdefined, gen2block, words,
+	assert, croak, DUMP, OL, dclone, getOptions,
+	isString, isArray, isHash, isFunction, removeKeys,
 	} from '@jdeighan/llutils'
+import {indented, splitLine} from '@jdeighan/llutils/indent'
 import {
 	readTextFile, barf, withExt, isFile,
 	} from '@jdeighan/llutils/fs'
+import {LineFetcher} from '@jdeighan/llutils/fetcher'
+import {NodeWalker} from '@jdeighan/llutils/node-walker'
+import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
 
 # ---------------------------------------------------------------------------
 
-export brew = (code, hMetaData={}, filePath=undef) ->
+export cieloPreProcess = (code, hOptions) =>
 
-	# --- metadata is used to add a shebang line
+	{debug} = getOptions hOptions, {
+		debug: false
+		}
+
+	if debug
+		console.log "IN cieloPreProcess()"
+	lLines = []
+	src = new LineFetcher(code)
+	while src.moreLines()
+		[level, str] = splitLine(src.fetch())
+		if (level == 0) && (str == '__END__')
+			break
+		if debug
+			console.log "GOT: #{OL(str)} at level #{level}"
+		str = replaceHereDocs(level, str, src)
+		lLines.push indented(str, level)
+	return lLines.join("\n")
+
+# ---------------------------------------------------------------------------
+
+export brew = (code, hMetaData={}, hOptions={}) ->
+
+	# --- metadata can be used to add a shebang line
 	#     if true, use "#!/usr/bin/env node"
 	#     else use value of shebang key
+
 	# --- filePath is used to check for a source map
 	#     without it, no source map is produced
+	# --- if key preprocess is set, it must be a function
+	#     that converts one block of code to another
+	#     block of code
 
 	assert isString(code), "code: #{OL(code)}"
+	{filePath, preprocess, debug} = getOptions hOptions, {
+		filePath: undef
+		preprocess: undef
+		debug: false
+		}
+
+	if defined(preprocess)
+		assert isFunction(preprocess),
+				"Not a function: #{OL(preprocess)}"
+		if debug
+			console.log "pre-processing code"
+		preprocCode = preprocess(code, {debug})
+		if debug
+			DUMP preprocCode, 'PreProcessed code'
+
 	if defined(filePath)
-		{js, v3SourceMap} = CoffeeScript.compile code, {
+		{js, v3SourceMap} = compile (preprocCode || code), {
 			sourceMap: true
 			bare: true
 			header: false
 			filename: filePath
 			}
 	else
-		js = CoffeeScript.compile code, {
+		js = compile (preprocCode || code), {
 			bare: true
 			header: false
 			}
@@ -45,6 +90,8 @@ export brew = (code, hMetaData={}, filePath=undef) ->
 	else
 		js = js.trim()
 	return {
+		orgCode: code
+		preprocCode
 		js
 		sourceMap: v3SourceMap
 		}
@@ -56,7 +103,22 @@ export brewFile = (filePath) ->
 	assert isFile(filePath), "No such file: #{filePath}"
 	{hMetaData, reader} = readTextFile(filePath)
 	code = gen2block(reader)
-	{js, sourceMap} = brew code, hMetaData, filePath
+	{js, sourceMap} = brew code, hMetaData, {filePath}
+	barf js, withExt(filePath, '.js')
+	barf sourceMap, withExt(filePath, '.js.map')
+	return {js, sourceMap}
+
+# ---------------------------------------------------------------------------
+
+export blessFile = (filePath) ->
+
+	assert isFile(filePath), "No such file: #{filePath}"
+	{hMetaData, reader} = readTextFile(filePath)
+	code = gen2block(reader)
+	{js, sourceMap} = brew code, hMetaData, {
+		filePath
+		preprocess: cieloPreProcess
+		}
 	barf js, withExt(filePath, '.js')
 	barf sourceMap, withExt(filePath, '.js.map')
 	return {js, sourceMap}
@@ -75,10 +137,15 @@ export getShebang = (hMetaData) =>
 
 # ---------------------------------------------------------------------------
 
-export toAST = (code, hOptions={minimal: true}) ->
+export toAST = (coffeeCode, hOptions={}) =>
 
-	hAST = CoffeeScript.compile(code, {ast: true})
-	if hOptions.minimal
+	{minimal} = getOptions hOptions, {
+		minimal: false
+		}
+
+	hAST = compile(coffeeCode, {ast: true})
+	if minimal
+		console.log "REMOVING KEYS"
 		removeKeys hAST, words(
 			'loc range extra start end',
 			'directives comments tokens',
@@ -102,3 +169,5 @@ export toASTFile = (code, filePath, hOptions={}) ->
 	hAST = toAST(code, hOptions)
 	barfAST hAST, filePath
 	return
+
+# ---------------------------------------------------------------------------

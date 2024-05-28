@@ -1,15 +1,14 @@
 // metadata.coffee
 var hMetaDataTypes;
 
-import YAML from 'yaml';
-
 import {
   undef,
   defined,
   notdefined,
   isString,
   untabify,
-  assert
+  assert,
+  fromTAML
 } from '@jdeighan/llutils';
 
 hMetaDataTypes = {
@@ -18,7 +17,7 @@ hMetaDataTypes = {
     hOptions = {
       skipInvalid: true
     };
-    return YAML.parse(untabify(block, 2), hOptions);
+    return fromTAML(`---\n${block}`);
   }
 };
 

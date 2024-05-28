@@ -4,10 +4,25 @@
 
 
 
+	var mkString2;
+
+	mkString2 = (...lItems) => {
+	  var i, item, lStrings, len;
+	  lStrings = [];
+	  for (i = 0, len = lItems.length; i < len; i++) {
+	    item = lItems[i];
+	    if (isString(item)) {
+	      lStrings.push(item);
+	    } else if (isArray(item)) {
+	      lStrings.push(mkString(...item));
+	    }
+	  }
+	  return lStrings.join('');
+	};
 	var func0, func1, func2, func3, func4;
 
 	import {
-	  join
+	  mkString
 	} from '@jdeighan/llutils';
 
 	func0 = (left, op, right) => {
@@ -32,13 +47,13 @@
 
 	func3 = (digits) => {
 	  var str;
-	  str = join(digits);
+	  str = mkString(digits);
 	  return parseInt(str);
 	};
 
 	func4 = (digits, decimal) => {
 	  var str;
-	  str = join(digits, '.', decimal);
+	  str = mkString(digits, '.', decimal);
 	  return parseFloat(str);
 	};
 

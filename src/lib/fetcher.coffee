@@ -3,36 +3,100 @@
 import {
 	undef, defined, notdefined, OL, escapeStr, DUMP,
 	blockToArray, arrayToBlock, getOptions,
+	assert, croak, isEmpty, nonEmpty,
 	} from '@jdeighan/llutils'
-import {indentLevel, undented} from '@jdeighan/llutils/indent'
+import {
+	indentLevel, indented, undented, splitLine,
+	} from '@jdeighan/llutils/indent'
 
 # ---------------------------------------------------------------------------
+# --- extract string => transform string => filter => return
 
-export class Fetcher
+export class LineFetcher
 
-	constructor: (block, hOptions={}) ->
+	constructor: (@block, hOptions={}) ->
 
-		{filterFunc, debug} = getOptions hOptions, {
-			filterFunc: undef
+		{debug: @debug} = getOptions hOptions, {
 			debug: false
 			}
-
-		@lLines = blockToArray(block)
-		if defined(filterFunc)
-			@lLines = @lLines.filter(filterFunc)
-		@debug = debug
+		@curPos = 0
+		@buffer = undef
 
 	# ..........................................................
 
-	numLines: () ->
+	EOF: () ->
 
-		return @lLines.length
+		if (@curPos == -1)
+			return true
+		@fillBuffer()
+		return (@curPos == -1) && notdefined(@buffer)
 
 	# ..........................................................
 
-	dump: (label='BLOCK') ->
+	moreLines: () ->
 
-		DUMP @lLines, label
+		return defined(@peek())
+
+	# ..........................................................
+
+	transform: (str) ->
+
+		return str.replaceAll("\r", "")
+
+	# ..........................................................
+
+	filter: (str) ->
+
+		return true
+
+	# ..........................................................
+	# --- extract the next string, advancing @curPos
+	#     transform string and return result
+
+	extract: () ->
+
+		assert (@curPos >= 0), "extract() when EOF"
+		nlPos = @block.indexOf("\n", @curPos)
+		if (nlPos == -1)
+			str = @block.substring(@curPos)
+			@curPos = -1
+		else
+			str = @block.substring(@curPos, nlPos)
+			@curPos = nlPos + 1
+		return @transform(str)
+
+	# ..........................................................
+
+	fillBuffer: () ->
+
+		while (@curPos >= 0) && notdefined(@buffer)
+			str = @extract()
+			if @filter(str)
+				@buffer = str
+		return
+
+	# ..........................................................
+
+	peek: () ->
+
+		if notdefined(@buffer)
+			@fillBuffer()
+		return @buffer     # will be undef if at EOF
+
+	# ..........................................................
+
+	fetch: () ->
+
+		item = @peek()
+		@buffer = undef
+		return item
+
+	# ..........................................................
+
+	skip: () ->
+
+		@fetch()
+		return
 
 	# ..........................................................
 
@@ -46,61 +110,41 @@ export class Fetcher
 
 	# ..........................................................
 
-	moreLines: () ->
+	dump: (label='BLOCK') ->
 
-		result = (@lLines.length > 0)
-		@dbg "MORE_LINES => #{OL(result)}"
-		return result
-
-	# ..........................................................
-
-	next: () ->
-
-		if (@lLines.length == 0)
-			@dbg "NEXT => undef"
-			return undef
-		else
-			@dbg "NEXT => #{escapeStr(@lLines[0])}"
-			return @lLines[0]
-
-	# ..........................................................
-
-	nextLevel: () ->
-
-		if (@next() == undef)
-			level = 0
-		else
-			level = indentLevel(@lLines[0])
-		@dbg "NEXT LEVEL => #{OL(level)}"
-		return level
-
-	# ..........................................................
-
-	get: () ->
-
-		line = @lLines.shift()
-		@dbg "GET => #{escapeStr(line)}"
-		return line
-
-	# ..........................................................
-
-	skip: () ->
-
-		@lLines.shift()
-		@dbg "SKIP =>"
+		DUMP @block, label
 		return
 
+# ---------------------------------------------------------------------------
+# --- Returns pairs, e.g. [3, 'abc']
+
+export class PLLFetcher extends LineFetcher
+
+	transform: (line) ->
+
+		return splitLine(line)
+
 	# ..........................................................
-	# --- returns undented block
 
-	getBlock: (minLevel) ->
+	filter: ([level, str]) ->
 
-		lBlockLines = while (@nextLevel() >= minLevel)
-			@get()
-		if (lBlockLines.length == 0)
-			@dbg "GET BLOCK (#{minLevel}) => undef"
-			return undef
-		else
-			block = arrayToBlock(undented(lBlockLines))
-			@dbg "GET BLOCK (#{minLevel}) =>", block
-			return block
+		return (level > 0) || nonEmpty(str)
+
+	# ..........................................................
+
+	peekLevel: () ->
+
+		result = @peek()
+		if notdefined(result)
+			return -1
+		return result[0]
+
+	# ..........................................................
+
+	getBlock: (level) ->
+
+		lLines = []
+		while (@peekLevel() >= level)
+			[lvl, str] = @fetch()
+			lLines.push indented(str, lvl-level)
+		return lLines.join("\n")

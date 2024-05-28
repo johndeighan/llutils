@@ -1,5 +1,5 @@
 // coffee.test.coffee
-import test from 'ava';
+var bsl;
 
 import {
   undef
@@ -14,7 +14,43 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-//symbol brew(code) - compile coffee code
+symbol("cieloPreProcess(code)");
+
+bsl = "\\";
+
+equal(cieloPreProcess(`import {undef} from '@jdeighan/llutils'
+
+equal fromTAML(<<<), <<<
+	a: 1
+	b: 2
+
+	---
+	a: 1
+	b: 2
+
+console.log 'DONE'`), `import {undef} from '@jdeighan/llutils'
+
+equal fromTAML("a: 1${bsl}nb: 2"), {"a":1,"b":2}
+console.log 'DONE'`);
+
+equal(cieloPreProcess(`import {undef} from '@jdeighan/llutils'
+
+equal fromTAML(<<<), <<<
+	a: 1
+	b: 2
+
+	---
+	a: 1
+	b: 2
+
+__END__
+console.log 'DONE'`), `import {undef} from '@jdeighan/llutils'
+
+equal fromTAML("a: 1${bsl}nb: 2"), {"a":1,"b":2}`);
+
+// ---------------------------------------------------------------------------
+symbol("brew(code)");
+
 succeeds(() => {
   return brew('v = 5');
 });
@@ -42,7 +78,8 @@ var v;
 v = 5;`);
 
 // ---------------------------------------------------------------------------
-//symbol brewFile(filePath) - compile coffee code
+symbol("brewFile(filePath)");
+
 (() => {
   var filePath;
   filePath = './test/coffee/test1.coffee';
@@ -52,7 +89,8 @@ v = 5;`);
 })();
 
 // ---------------------------------------------------------------------------
-//symbol toAST(code) - compile coffee code to an AST
+symbol("toAST(code)");
+
 succeeds(() => {
   return toAST('v = 5');
 });

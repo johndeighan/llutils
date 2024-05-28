@@ -1,5 +1,5 @@
 GLOBAL
-	import {join} from '@jdeighan/llutils'
+	import {mkString} from '@jdeighan/llutils'
 
 expr
 	left:term ws op:addOp ws right:expr
@@ -35,12 +35,12 @@ ws
 
 integer
 	digits:[0-9]+
-		str = join(digits)
+		str = mkString(digits)
 		return parseInt(str)
 
 float
 	digits:[0-9]+ '.' decimal:[0-9]+
-		str = join(digits, '.', decimal)
+		str = mkString(digits, '.', decimal)
 		return parseFloat(str)
 
 number

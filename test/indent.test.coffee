@@ -6,53 +6,66 @@ Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
-# --- clear value of oneIndent before each test
-u.afterEachTest = () ->
-	resetOneIndent()
-	return
-
 # ---------------------------------------------------------------------------
-#symbol indentLevel(str)
+symbol "indentLevel(str)"
 
-equal indentLevel('abc'), 0
-equal indentLevel('\tabc'), 1
-equal indentLevel('\t\tabc'), 2
-equal indentLevel('      abc'), 1
-fails () => indentLevel('\t abc')
-equal indentLevel('abc'), 0
-equal indentLevel('\tabc'), 1
-equal indentLevel('\t\tabc'), 2
+(() =>
+	equal indentLevel('abc'), 0
+	equal indentLevel('\tabc'), 1
+	equal indentLevel('\t\tabc'), 2
+	fails () => indentLevel('\t abc')
+	equal indentLevel('abc'), 0
+	equal indentLevel('\tabc'), 1
+	equal indentLevel('\t\tabc'), 2
+	resetOneIndent()
+	)()
 
-# --- we don't want resetOneIndent() called
-#     for the subtests, just for succeeds
-succeeds () =>
+(() =>
+	equal indentLevel('      abc'), 1
+	resetOneIndent()
+	)()
+
+(() =>
 	equal indentLevel('abc'), 0
 	equal indentLevel('   abc'), 1
 	equal indentLevel('      abc'), 2
+	resetOneIndent()
+	)()
 
 # ---------------------------------------------------------------------------
-#symbol splitLine(line, oneIndent)
+symbol "splitLine(line, oneIndent)"
 
-equal splitLine('abc'), [0, 'abc']
-equal splitLine('\t\tabc'), [2, 'abc']
+(() =>
+	equal splitLine('abc'), [0, 'abc']
+	equal splitLine('\t\tabc'), [2, 'abc']
+	resetOneIndent()
+	)()
 
-# --- we don't want resetOneIndent() called
-#     for the subtests, just for succeeds
-succeeds () =>
+(() =>
 	equal splitLine('   abc'), [1, 'abc']
 	fails () =>  splitLine('\t\tabc')
+	resetOneIndent()
+	)()
 
 # ---------------------------------------------------------------------------
-#symbol indented(input, level, oneIndent)
+symbol "indented(input, level, oneIndent)"
 
-equal indented('abc'), '\tabc'
-equal indented('abc', 2), '\t\tabc'
+(() =>
+	equal indented('abc'), '\tabc'
+	equal indented('abc', 2), '\t\tabc'
+	resetOneIndent()
+	)()
 
-succeeds () =>
+(() =>
 	equal indentLevel('   abc'), 1
 	equal indented('abc', 2), spaces(6) + 'abc'
+	resetOneIndent()
+	)()
 
-equal indented('abc', 2), tabs(2) + 'abc'
+(() =>
+	equal indented('abc', 2), tabs(2) + 'abc'
+	resetOneIndent()
+	)()
 
 # --- Test with blocks
 
@@ -99,7 +112,7 @@ equal indented([
 	]
 
 # ---------------------------------------------------------------------------
-#symbol undented(input)
+symbol "undented(input)"
 
 equal undented("""
 	\t\tabc

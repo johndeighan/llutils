@@ -8,7 +8,7 @@ import {
 	undef, defined, notdefined, gen2block, hasKey, isEmpty, nonEmpty,
 	isString, isHash, isArray, isFunction, isInteger,
 	blockToArray, arrayToBlock, escapeStr, getOptions,
-	assert, croak, OL, DUMP, js2uri, ML, keys, pass,
+	assert, croak, OL, DUMP, js2uri, ML, keys, pass, eq,
 	} from '@jdeighan/llutils'
 import {
 	indentLevel, indented, undented,
@@ -18,7 +18,7 @@ import {
 	normalize, mkpath, fileDir,
 	} from '@jdeighan/llutils/fs'
 import {brew} from '@jdeighan/llutils/coffee'
-import {Fetcher} from '@jdeighan/llutils/fetcher'
+import {PLLFetcher} from '@jdeighan/llutils/fetcher'
 import {SectionMap} from '@jdeighan/llutils/section-map'
 
 # --- code converter is applied to each code block in a peggy file
@@ -40,7 +40,7 @@ export getParser = (filePath, hOptions={}) =>
 
 	fullPath = mkpath(filePath)
 	if debug
-		console.log "PG file = #{OL(fullPath)}"
+		console.log "PEGGY file = #{OL(fullPath)}"
 	assert isFile(fullPath), "No such file: #{OL(filePath)}"
 	assert (fileExt(fullPath)=='.peggy'), "Not a peggy file: #{OL(filePath)}"
 
@@ -95,12 +95,19 @@ export peggify = (code, hMetaData={}, filePath=undef) =>
 		trace: true
 		}
 
+	if debug
+		console.log "peggify() #{OL(filePath)}"
+
 	# --- preprocess code if required
 	if defined(type)
 		if debug
 			console.log "TYPE: #{OL(type)}"
 		assert isFunction(hCodeConverters[type]), "Bad type #{type}"
 		peggyCode = PreProcessPeggy(code, hMetaData)
+		if defined(filePath) && debug
+			filePath = "./test/temp.txt"
+			barf peggyCode, filePath
+			console.log "Preprocessed code saved to #{OL(filePath)}"
 	else
 		peggyCode = code
 
@@ -122,10 +129,7 @@ export peggifyFile = (filePath) =>
 
 	{hMetaData, reader} = readTextFile(filePath)
 	code = gen2block(reader)
-	{js, sourceMap} = peggify code, hMetaData, {
-		filePath
-		output: "source"
-		}
+	{js, sourceMap} = peggify code, hMetaData, filePath
 	jsFilePath = withExt(filePath, '.js')
 	barf js, jsFilePath
 	if defined(sourceMap)
@@ -138,17 +142,6 @@ export peggifyFile = (filePath) =>
 
 # ---------------------------------------------------------------------------
 
-getVars = (matchExpr) =>
-
-	lVars = []
-	for match from matchExpr.matchAll(/(\S+)\:/g)
-		str = match[1]
-		if nonEmpty(str) && (str.indexOf('$') != 0)
-			lVars.push str
-	return lVars
-
-# ---------------------------------------------------------------------------
-
 export PreProcessPeggy = (code, hMetaData) =>
 
 	assert isString(code), "not a string: #{typeof code}"
@@ -157,10 +150,7 @@ export PreProcessPeggy = (code, hMetaData) =>
 		debug: false
 		}
 
-	src = new Fetcher(code, {
-		filterFunc: (line) =>
-			nonEmpty(line) && !line.match(/^\s*#\s/)
-		})
+	src = new PLLFetcher(code)
 
 	if debug
 		src.dump 'ALL CODE'
@@ -175,16 +165,35 @@ export PreProcessPeggy = (code, hMetaData) =>
 		header: (block) =>
 			try
 				{js, sourceMap} = hCodeConverters[type](block)
+
 			catch err
 				console.log "ERROR: Unable to convert #{OL(type)} code to JS"
 				console.log err
 				js = ''
 
-			if nonEmpty(js)
-				return ['{{', indented(js), '}}'].join("\n")
-				# return "{{\n#{js}\n}}\n"
-			else
-				return undef
+			return [
+				'{{'
+
+				# --- If we add an import for mkString(), users will get
+				#     and error if they also import it. So, instead,
+				#     we define our own version, though it's identical
+				# indented("import {mkString} from '@jdeighan/llutils';")
+
+				indented(brew("""
+					mkString2 = (lItems...) =>
+
+						lStrings = []
+						for item in lItems
+							if isString(item)
+								lStrings.push item
+							else if isArray(item)
+								lStrings.push mkString(item...)
+						return lStrings.join('')
+					""").js)
+
+				indented(js)
+				'}}'
+				].join("\n")
 
 		# --- 'init' section will already be JavaScript
 		init: (block) =>
@@ -200,7 +209,7 @@ export PreProcessPeggy = (code, hMetaData) =>
 
 	numFuncs = 0    # used to construct unique function names
 
-	if (src.next() == 'GLOBAL')
+	if eq(src.peek(), [0, 'GLOBAL'])
 		src.skip()
 		coffeeCode = src.getBlock(1)
 		if nonEmpty(coffeeCode)
@@ -208,7 +217,7 @@ export PreProcessPeggy = (code, hMetaData) =>
 				DUMP coffeeCode, 'GLOBAL CODE'
 			sm.section('header').add(coffeeCode)
 
-	if (src.next() == 'PER_PARSE')
+	if eq(src.peek(), [0, 'PER_PARSE'])
 		src.skip()
 		coffeeCode = src.getBlock(1)
 		if nonEmpty(coffeeCode)
@@ -223,8 +232,8 @@ export PreProcessPeggy = (code, hMetaData) =>
 	while src.moreLines()
 
 		# --- Get rule name - must be left aligned, no whitespace
-		assert (src.nextLevel() == 0), "Next level not 0"
-		name = src.get()
+		[level, name] = src.fetch()
+		assert (level == 0), "Next level not 0"
 		if debug
 			console.log "RULE: #{name}"
 		assert name.match(/^[A-Za-z][A-Za-z0-9_-]*$/),
@@ -233,18 +242,36 @@ export PreProcessPeggy = (code, hMetaData) =>
 		sm.section('rules').add(name)
 		hRules[name] = 0   # number of options
 
-		while (src.nextLevel() == 1)
+		while (src.peekLevel() == 1)
 
 			# --- Get match expression
-			matchExpr = src.get().trim()
+			[level, matchExpr] = src.fetch()
+			assert (level == 1), "BAD - level not 1"
 
 			# --- Extract names of new variables
-			strVars = getVars(matchExpr).join(',')
+			lVars = []
+			hJoin = {}
+			re = /([A-Za-z][A-Za-z_-]*)\:(\:)?/g
+			for match from matchExpr.matchAll(re)
+				[_, str, flag] = match
+				lVars.push str
+				if flag
+					hJoin[str] = true
+
+			strParms = lVars.join(',')
+			strArgs = (
+				for v in lVars
+					if hJoin[v]
+						"mkString2(#{v})"
+					else
+						v
+				).join(',')
 
 			# --- output the match expression
 			ch = if (hRules[name] == 0) then '=' else '/'
 			hRules[name] += 1
 
+			matchExpr = matchExpr.replaceAll('::', ':')
 			sm.section('rules').add(1, "#{ch} #{matchExpr}")
 
 			coffeeCode = src.getBlock(2)
@@ -254,11 +281,11 @@ export PreProcessPeggy = (code, hMetaData) =>
 				funcName = "func#{numFuncs}"
 				numFuncs += 1
 
-				line = "#{funcName} = (#{strVars}) =>"
+				line = "#{funcName} = (#{strParms}) =>"
 				sm.section('header').add(line)
 				sm.section('header').add(1, coffeeCode)
 
-				line = "{ return #{funcName}(#{strVars}); }"
+				line = "{ return #{funcName}(#{strArgs}); }"
 				sm.section('rules').add(2, line)
 
 	if debug

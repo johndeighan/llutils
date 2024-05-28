@@ -270,8 +270,6 @@ elem = (tag, content) =>
 	map.section('html').add    "<p> hello </p>"
 	map.section('code').add    "LOG 'Done'"
 
-	map.dump()
-
 	equal map.getBlock(), """
 		<h1> title </h1>
 		<p> hello </p>

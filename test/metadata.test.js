@@ -10,7 +10,8 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-//symbol isMetaDataStart(str)
+symbol("isMetaDataStart(str)");
+
 truthy(isMetaDataStart('---'));
 
 falsy(isMetaDataStart('==='));

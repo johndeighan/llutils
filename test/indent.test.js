@@ -13,66 +13,70 @@ import * as lib2 from '@jdeighan/llutils/utest';
 
 Object.assign(global, lib2);
 
-// --- clear value of oneIndent before each test
-u.afterEachTest = function() {
-  resetOneIndent();
-};
-
 // ---------------------------------------------------------------------------
-//symbol indentLevel(str)
-equal(indentLevel('abc'), 0);
+symbol("indentLevel(str)");
 
-equal(indentLevel('\tabc'), 1);
+(() => {
+  equal(indentLevel('abc'), 0);
+  equal(indentLevel('\tabc'), 1);
+  equal(indentLevel('\t\tabc'), 2);
+  fails(() => {
+    return indentLevel('\t abc');
+  });
+  equal(indentLevel('abc'), 0);
+  equal(indentLevel('\tabc'), 1);
+  equal(indentLevel('\t\tabc'), 2);
+  return resetOneIndent();
+})();
 
-equal(indentLevel('\t\tabc'), 2);
+(() => {
+  equal(indentLevel('      abc'), 1);
+  return resetOneIndent();
+})();
 
-equal(indentLevel('      abc'), 1);
-
-fails(() => {
-  return indentLevel('\t abc');
-});
-
-equal(indentLevel('abc'), 0);
-
-equal(indentLevel('\tabc'), 1);
-
-equal(indentLevel('\t\tabc'), 2);
-
-// --- we don't want resetOneIndent() called
-//     for the subtests, just for succeeds
-succeeds(() => {
+(() => {
   equal(indentLevel('abc'), 0);
   equal(indentLevel('   abc'), 1);
-  return equal(indentLevel('      abc'), 2);
-});
+  equal(indentLevel('      abc'), 2);
+  return resetOneIndent();
+})();
 
 // ---------------------------------------------------------------------------
-//symbol splitLine(line, oneIndent)
-equal(splitLine('abc'), [0, 'abc']);
+symbol("splitLine(line, oneIndent)");
 
-equal(splitLine('\t\tabc'), [2, 'abc']);
+(() => {
+  equal(splitLine('abc'), [0, 'abc']);
+  equal(splitLine('\t\tabc'), [2, 'abc']);
+  return resetOneIndent();
+})();
 
-// --- we don't want resetOneIndent() called
-//     for the subtests, just for succeeds
-succeeds(() => {
+(() => {
   equal(splitLine('   abc'), [1, 'abc']);
-  return fails(() => {
+  fails(() => {
     return splitLine('\t\tabc');
   });
-});
+  return resetOneIndent();
+})();
 
 // ---------------------------------------------------------------------------
-//symbol indented(input, level, oneIndent)
-equal(indented('abc'), '\tabc');
+symbol("indented(input, level, oneIndent)");
 
-equal(indented('abc', 2), '\t\tabc');
+(() => {
+  equal(indented('abc'), '\tabc');
+  equal(indented('abc', 2), '\t\tabc');
+  return resetOneIndent();
+})();
 
-succeeds(() => {
+(() => {
   equal(indentLevel('   abc'), 1);
-  return equal(indented('abc', 2), spaces(6) + 'abc');
-});
+  equal(indented('abc', 2), spaces(6) + 'abc');
+  return resetOneIndent();
+})();
 
-equal(indented('abc', 2), tabs(2) + 'abc');
+(() => {
+  equal(indented('abc', 2), tabs(2) + 'abc');
+  return resetOneIndent();
+})();
 
 // --- Test with blocks
 equal(indented(`first line
@@ -93,7 +97,8 @@ equal(indented(['first line', '\tsecond line', '\t\tthird line']), ['\tfirst lin
 equal(indented(['first line', '\tsecond line', '\t\tthird line'], 2), ['\t\tfirst line', '\t\t\tsecond line', '\t\t\t\tthird line']);
 
 // ---------------------------------------------------------------------------
-//symbol undented(input)
+symbol("undented(input)");
+
 equal(undented(`\t\tabc
 \t\t\tdef
 \t\t\t\tghi`), `abc

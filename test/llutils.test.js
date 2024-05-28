@@ -10,23 +10,68 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-//symbol undef - a synonym for undefined
+symbol("undef"); // --- a synonym for undefined
+
 equal(undef, void 0);
 
 notequal(undef, 23);
 
 // ---------------------------------------------------------------------------
-//symbol pass() - do nothing
+symbol("eq()"); // --- deep equality
+
+truthy(eq('abc', 'abc'));
+
+truthy(eq(13, 13));
+
+truthy(eq(['a', 'b'], ['a', 'b']));
+
+truthy(eq({
+  a: 1,
+  b: 2
+}, {
+  b: 2,
+  a: 1
+}));
+
+falsy(eq('abc', ['abc']));
+
+falsy(eq(['a', 'b'], ['b', 'a']));
+
+falsy(eq({
+  a: 1,
+  b: 2
+}, {
+  a: 1,
+  b: 2,
+  c: 3
+}));
+
+// ---------------------------------------------------------------------------
+symbol("dclone()"); // --- deep clone
+
+equal(dclone({
+  a: 1,
+  b: ['a', 3, 'z']
+}), {
+  a: 1,
+  b: ['a', 3, 'z']
+});
+
+// ---------------------------------------------------------------------------
+symbol("pass()"); // --- do nothing
+
 succeeds(() => {
   return pass();
 });
 
 // ---------------------------------------------------------------------------
-//symbol range(n) - build iterable of ints
+symbol("range(n)"); // --- build iterable of ints
+
 equal(Array.from(range(10)), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
 // ---------------------------------------------------------------------------
-//symbol add_s(n) - add an 's' for plural
+symbol("add_s(n)"); // --- add an 's' for plural things
+
 equal(add_s(0), 's');
 
 equal(add_s(1), '');
@@ -36,7 +81,8 @@ equal(add_s(2), 's');
 equal(add_s(99), 's');
 
 // ---------------------------------------------------------------------------
-//symbol assert(cond, msg) - assert some condition
+symbol("assert(cond, msg)"); // --- assert some condition
+
 fails(() => {
   return assert(2 === 3);
 });
@@ -46,7 +92,8 @@ succeeds(() => {
 });
 
 // ---------------------------------------------------------------------------
-//symbol croak(msg) - throw an exception
+symbol("croak(msg)"); // --- throw an exception
+
 fails(() => {
   return croak("bad");
 });
@@ -95,7 +142,8 @@ g = function*() {
 };
 
 // ---------------------------------------------------------------------------
-//symbol defined(obj) - equal a value defined
+symbol("defined(obj)"); // --- equal a value defined
+
 truthy(defined(s));
 
 truthy(defined(i));
@@ -115,7 +163,8 @@ falsy(defined(undef));
 falsy(defined(null));
 
 // ---------------------------------------------------------------------------
-//symbol notdefined(obj) - equal a value not defined
+symbol("notdefined(obj)"); // --- equal a value not defined
+
 truthy(notdefined(undef));
 
 truthy(notdefined(null));
@@ -138,13 +187,15 @@ falsy(notdefined(c));
 falsy(notdefined(o));
 
 // ---------------------------------------------------------------------------
-//symbol words(str...) - extract words from 1 or more strings
+symbol("words(str...)"); // --- extract words from 1 or more strings
+
 equal(words(), []);
 
 equal(words(' ab cd', 'ef gh '), ['ab', 'cd', 'ef', 'gh']);
 
 // ---------------------------------------------------------------------------
-//symbol isString(obj) - test if obj equal a string
+symbol("isString(obj)"); // --- test if obj equal a string
+
 truthy(isString('abc'));
 
 truthy(isString('abc', {
@@ -160,7 +211,8 @@ falsy(isString('', {
 }));
 
 // ---------------------------------------------------------------------------
-//symbol isBoolean(obj) - test if obj equal a boolean
+symbol("isBoolean(obj)"); // --- test if obj equal a boolean
+
 truthy(isBoolean(true));
 
 truthy(isBoolean(false));
@@ -170,7 +222,8 @@ truthy(isBoolean(new Boolean(true)));
 falsy(isBoolean(s));
 
 // ---------------------------------------------------------------------------
-//symbol isNumber(obj) - test if obj equal a number
+symbol("isNumber(obj)"); // --- test if obj equal a number
+
 truthy(isNumber(i));
 
 truthy(isNumber(n));
@@ -182,7 +235,8 @@ falsy(isNumber(undef));
 falsy(isNumber(['abc']));
 
 // ---------------------------------------------------------------------------
-//symbol isInteger(obj) - test if obj equal n integer
+symbol("isInteger(obj)"); // --- test if obj equal n integer
+
 truthy(isInteger(i));
 
 falsy(isInteger(n));
@@ -194,7 +248,8 @@ falsy(isInteger(undef));
 falsy(isInteger(['abc']));
 
 // ---------------------------------------------------------------------------
-//symbol isArray(obj) - test if obj equal an array
+symbol("isArray(obj)"); // --- test if obj equal an array
+
 truthy(isArray(['abc']));
 
 truthy(isArray(['abc'], 'nonempty'));
@@ -218,7 +273,8 @@ falsy(isArray(['abc', []], {
 falsy(isArray(['abc', []], 'allStrings'));
 
 // ---------------------------------------------------------------------------
-//symbol isHash(obj) - test if obj equal a hash
+symbol("isHash(obj)"); // --- test if obj equal a hash
+
 truthy(isHash({
   a: 1,
   b: 2
@@ -231,7 +287,8 @@ falsy(isHash(undef));
 falsy(isHash(o));
 
 // ---------------------------------------------------------------------------
-//symbol isFunction(obj) - test if obj equal a function
+symbol("isFunction(obj)"); // --- test if obj equal a function
+
 truthy(isFunction(function() {
   return 'abc';
 }));
@@ -239,31 +296,36 @@ truthy(isFunction(function() {
 falsy(isFunction(s));
 
 // ---------------------------------------------------------------------------
-//symbol isRegExp(obj) - test if obj equal a regular expression
+symbol("isRegExp(obj)"); // --- test if obj equal a regular expression
+
 truthy(isRegExp(/^abc$/));
 
 falsy(isRegExp(s));
 
 // ---------------------------------------------------------------------------
-//symbol isClass(obj) - test if obj equal a class
+symbol("isClass(obj)"); // --- test if obj equal a class
+
 truthy(isClass(NewClass = class NewClass {}));
 
 falsy(isClass(s));
 
 // ---------------------------------------------------------------------------
-//symbol isPromise(obj) - test if obj equal a promise
+symbol("isPromise(obj)"); // --- test if obj equal a promise
+
 truthy(isPromise(p));
 
 falsy(isPromise(s));
 
 // ---------------------------------------------------------------------------
-//symbol isClassInstance(obj) - test if obj equal a class instance
+symbol("isClassInstance(obj)"); // --- test if obj equal a class instance
+
 truthy(isClassInstance(o));
 
 falsy(isClassInstance(s));
 
 // ---------------------------------------------------------------------------
-//symbol escapeStr(str)
+symbol("escapeStr(str)");
+
 equal(escapeStr("\t\tabc def"), "→→abc˳def");
 
 equal(escapeStr("\t\tabc def\r\n"), "→→abc˳def◄▼");
@@ -272,7 +334,8 @@ equal(escapeStr("\t\tabc def\r\nghi", 'escNoNL'), `→→abc˳def◄
 ghi`);
 
 // ---------------------------------------------------------------------------
-//symbol OL(x)
+symbol("OL(x)");
+
 equal(OL(undef), 'undef');
 
 equal(OL(null), 'null');
@@ -292,7 +355,17 @@ equal(OL({
 }), '{"a":"a","b":"b"}');
 
 // ---------------------------------------------------------------------------
-//symbol ML(x)
+symbol("CWS"); // --- trim & collapse whitespace to ' '
+
+equal(CWS(`
+abc
+def
+		ghi
+`), "abc def ghi");
+
+// ---------------------------------------------------------------------------
+symbol("ML(x)");
+
 equal(ML(undef), '.undef.');
 
 equal(ML(null), '.null.');
@@ -335,7 +408,8 @@ equal(ML({
 }`);
 
 // ---------------------------------------------------------------------------
-//symbol OLS(lItems)
+symbol("OLS(lItems)");
+
 equal(OLS([
   [1,
   2],
@@ -346,7 +420,8 @@ equal(OLS([
 ]), '[1,2],{"a":1,"b":2}');
 
 // ---------------------------------------------------------------------------
-//symbol isEmpty(obj)
+symbol("isEmpty(obj)");
+
 truthy(isEmpty(undef));
 
 truthy(isEmpty(null));
@@ -372,7 +447,8 @@ falsy(isEmpty(l));
 falsy(isEmpty(h));
 
 // ---------------------------------------------------------------------------
-//symbol nonEmpty(obj)
+symbol("nonEmpty(obj)");
+
 truthy(nonEmpty(s));
 
 truthy(nonEmpty(i));
@@ -398,17 +474,20 @@ falsy(nonEmpty([]));
 falsy(nonEmpty({}));
 
 // ---------------------------------------------------------------------------
-//symbol execCmd(str) - execute a command
+symbol("execCmd(str)"); // --- execute a command
+
 equal(execCmd('echo this'), "this\n");
 
 // ---------------------------------------------------------------------------
-//symbol chomp(str) - remove trailing \r and/or \n
+symbol("chomp(str)"); // --- remove trailing \r and/or \n
+
 equal(chomp("abc\n"), "abc");
 
 equal(chomp("abc\r\n"), "abc");
 
 // ---------------------------------------------------------------------------
-//symbol hasKey(h, key)
+symbol("hasKey(h, key)");
+
 truthy(hasKey({
   a: 1,
   b: 2,
@@ -421,7 +500,8 @@ falsy(hasKey({
 }, 'b'));
 
 // ---------------------------------------------------------------------------
-//symbol removeKeys(h, lKeys)
+symbol("removeKeys(h, lKeys)");
+
 equal(removeKeys({
   a: 1,
   b: 2,
@@ -530,13 +610,15 @@ equal(removeKeys(hAST2, ['start', 'end']), {
 });
 
 // ---------------------------------------------------------------------------
-//symbol npmLogLevel() - get NPM log level
+symbol("npmLogLevel()"); // --- get NPM log level
+
 logLevel = npmLogLevel();
 
 truthy((logLevel === 'silent') || (logLevel === 'warn'));
 
 // ---------------------------------------------------------------------------
-//symbol blockToArray(block) - split string on \r?\n
+symbol("blockToArray(block)"); // --- split string on \r?\n
+
 equal(blockToArray(''), []);
 
 equal(blockToArray("a\nb\nc"), ['a', 'b', 'c']);
@@ -549,18 +631,21 @@ def`);
 equal(l, ['abc', 'def']);
 
 // ---------------------------------------------------------------------------
-//symbol toArray(strOrArray)
+symbol("toArray(strOrArray)");
+
 equal(toArray(['a', 'b', 'c']), ['a', 'b', 'c']);
 
 equal(toArray(`abc
 def`), ['abc', 'def']);
 
 // ---------------------------------------------------------------------------
-//symbol arrayToBlock(lItems) - join lines with \n
+symbol("arrayToBlock(lItems)"); // --- join lines with \n
+
 equal(arrayToBlock(['a', 'b', 'c']), "a\nb\nc");
 
 // ---------------------------------------------------------------------------
-//symbol toBlock(strOrArray)
+symbol("toBlock(strOrArray)");
+
 equal(toBlock(['a', 'b', 'c']), `a
 b
 c`);
@@ -570,17 +655,20 @@ def`), `abc
 def`);
 
 // ---------------------------------------------------------------------------
-//symbol untabify(str) - convert TAB to n chars
+symbol("untabify(str)"); // --- convert TAB to n chars
+
 equal(untabify("abc\n\tdef"), "abc\n   def");
 
 // ---------------------------------------------------------------------------
-//symbol splitPrefix(str) - separate into indentation and rest
+symbol("splitPrefix(str)"); // --- separate into indentation and rest
+
 equal(splitPrefix("   abc"), ["   ", "abc"]);
 
 equal(splitPrefix("\t\tabc"), ["\t\t", "abc"]);
 
 // ---------------------------------------------------------------------------
-//symbol tabify(str) - convert leading spaces to TABs
+symbol("tabify(str)"); // --- convert leading spaces to TABs
+
 str = `abc
   def
     ghi`;
@@ -588,25 +676,30 @@ str = `abc
 equal(tabify(str), "abc\n\tdef\n\t\tghi");
 
 // ---------------------------------------------------------------------------
-//symbol gen2array(generator)
+symbol("gen2array(generator)");
+
 equal(gen2array(g), ['a', 'b', 'c']);
 
 // ---------------------------------------------------------------------------
-//symbol gen2block(generator)
+symbol("gen2block(generator)");
+
 equal(gen2block(g), `a
 b
 c`);
 
 // ---------------------------------------------------------------------------
-//symbol spaces(n) - create a string of n spaces
+symbol("spaces(n)"); // --- create a string of n spaces
+
 equal(spaces(3), '   ');
 
 // ---------------------------------------------------------------------------
-//symbol tabs(n) - create a string of n TAB chars
+symbol("tabs(n)"); // --- create a string of n TAB chars
+
 equal(tabs(3), "\t\t\t");
 
 // ---------------------------------------------------------------------------
-//symbol centered(n) - create a string of n TAB chars
+symbol("centered(n)"); // --- create a string of n TAB chars
+
 equal(centered('abcdefg', 5), 'abcdefg');
 
 equal(centered('abc', 5), ' abc ');
@@ -616,7 +709,8 @@ equal(centered('ab', 10, {
 }), '--  ab  --');
 
 // ---------------------------------------------------------------------------
-//symbol countChars(str, ch)
+symbol("countChars(str, ch)");
+
 equal(countChars("abc,def", ","), 1);
 
 equal(countChars(",abc,def", ","), 2);
@@ -626,7 +720,8 @@ equal(countChars("abc,def,", ","), 2);
 equal(countChars(",abc,def,", ","), 3);
 
 // ---------------------------------------------------------------------------
-//symbol rtrim(str)
+symbol("rtrim(str)");
+
 equal(rtrim("abc  "), "abc");
 
 equal(rtrim("abc\t\t"), "abc");
@@ -636,29 +731,73 @@ equal(rtrim("abc \t"), "abc");
 equal(rtrim("abc"), "abc");
 
 // ---------------------------------------------------------------------------
-//symbol join(lItems)
-equal(join('abc'), 'abc');
+symbol("now()");
 
-equal(join(['a', 'b', 'c']), 'abc');
-
-equal(join(['a', ['b', 'c']]), 'abc');
-
-equal(join(['a', ['b', 'c']], ['d', 'e', 'f'], 'g'), 'abcdefg');
-
-equal(join(['1'], ['.', ['3']]), '1.3');
-
-// ---------------------------------------------------------------------------
-//symbol now()
 succeeds(() => {
   return now();
 });
 
 // ---------------------------------------------------------------------------
-//symbol timeit(func, numReps=100)
+symbol("timeit(func, numReps=100)");
+
 succeeds(() => {
   return timeit(function() {
     return 42;
   });
 });
+
+// ---------------------------------------------------------------------------
+symbol("mkString(item...)");
+
+equal(mkString('abc'), 'abc');
+
+equal(mkString(['abc']), 'abc');
+
+equal(mkString(['a', 'b', 'c']), 'abc');
+
+equal(mkString(['a', 'b'], 'c'), 'abc');
+
+equal(mkString(['a', 'b'], ['c']), 'abc');
+
+equal(mkString([['a', 'b'], ['c']]), 'abc');
+
+// ---------------------------------------------------------------------------
+symbol("behead(block)"); // --- separate out first line
+
+equal(behead(`---
+- a
+- b`), [
+  '---',
+  `- a
+- b`
+]);
+
+// ---------------------------------------------------------------------------
+symbol("isTAML(block)"); // --- must start with '---'
+
+truthy(isTAML('---\n23'));
+
+truthy(isTAML('---\n{\na:1\n}'));
+
+falsy(isTAML('abc'));
+
+// ---------------------------------------------------------------------------
+symbol("fromTAML(block)");
+
+equal(fromTAML(`---
+- a
+- b`), ['a', 'b']);
+
+equal(fromTAML(`---
+a: 1`), {
+  a: 1
+});
+
+// ---------------------------------------------------------------------------
+symbol("toTAML(ds)");
+
+equal(toTAML([1, 2]), `---
+- 1
+- 2`);
 
 //# sourceMappingURL=llutils.test.js.map

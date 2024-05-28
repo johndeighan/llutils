@@ -8,37 +8,106 @@ import {
   DUMP,
   blockToArray,
   arrayToBlock,
-  getOptions
+  getOptions,
+  assert,
+  croak,
+  isEmpty,
+  nonEmpty
 } from '@jdeighan/llutils';
 
 import {
   indentLevel,
-  undented
+  indented,
+  undented,
+  splitLine
 } from '@jdeighan/llutils/indent';
 
 // ---------------------------------------------------------------------------
-export var Fetcher = class Fetcher {
-  constructor(block, hOptions = {}) {
-    var debug, filterFunc;
-    ({filterFunc, debug} = getOptions(hOptions, {
-      filterFunc: undef,
+// --- extract string => transform string => filter => return
+export var LineFetcher = class LineFetcher {
+  constructor(block1, hOptions = {}) {
+    this.block = block1;
+    ({
+      debug: this.debug
+    } = getOptions(hOptions, {
       debug: false
     }));
-    this.lLines = blockToArray(block);
-    if (defined(filterFunc)) {
-      this.lLines = this.lLines.filter(filterFunc);
+    this.curPos = 0;
+    this.buffer = undef;
+  }
+
+  // ..........................................................
+  EOF() {
+    if (this.curPos === -1) {
+      return true;
     }
-    this.debug = debug;
+    this.fillBuffer();
+    return (this.curPos === -1) && notdefined(this.buffer);
   }
 
   // ..........................................................
-  numLines() {
-    return this.lLines.length;
+  moreLines() {
+    return defined(this.peek());
   }
 
   // ..........................................................
-  dump(label = 'BLOCK') {
-    return DUMP(this.lLines, label);
+  transform(str) {
+    return str.replaceAll("\r", "");
+  }
+
+  // ..........................................................
+  filter(str) {
+    return true;
+  }
+
+  // ..........................................................
+  // --- extract the next string, advancing @curPos
+  //     transform string and return result
+  extract() {
+    var nlPos, str;
+    assert(this.curPos >= 0, "extract() when EOF");
+    nlPos = this.block.indexOf("\n", this.curPos);
+    if (nlPos === -1) {
+      str = this.block.substring(this.curPos);
+      this.curPos = -1;
+    } else {
+      str = this.block.substring(this.curPos, nlPos);
+      this.curPos = nlPos + 1;
+    }
+    return this.transform(str);
+  }
+
+  // ..........................................................
+  fillBuffer() {
+    var str;
+    while ((this.curPos >= 0) && notdefined(this.buffer)) {
+      str = this.extract();
+      if (this.filter(str)) {
+        this.buffer = str;
+      }
+    }
+  }
+
+  // ..........................................................
+  peek() {
+    if (notdefined(this.buffer)) {
+      this.fillBuffer();
+    }
+    return this.buffer; // will be undef if at EOF
+  }
+
+  
+    // ..........................................................
+  fetch() {
+    var item;
+    item = this.peek();
+    this.buffer = undef;
+    return item;
+  }
+
+  // ..........................................................
+  skip() {
+    this.fetch();
   }
 
   // ..........................................................
@@ -53,70 +122,43 @@ export var Fetcher = class Fetcher {
   }
 
   // ..........................................................
-  moreLines() {
+  dump(label = 'BLOCK') {
+    DUMP(this.block, label);
+  }
+
+};
+
+// ---------------------------------------------------------------------------
+// --- Returns pairs, e.g. [3, 'abc']
+export var PLLFetcher = class PLLFetcher extends LineFetcher {
+  transform(line) {
+    return splitLine(line);
+  }
+
+  // ..........................................................
+  filter([level, str]) {
+    return (level > 0) || nonEmpty(str);
+  }
+
+  // ..........................................................
+  peekLevel() {
     var result;
-    result = this.lLines.length > 0;
-    this.dbg(`MORE_LINES => ${OL(result)}`);
-    return result;
-  }
-
-  // ..........................................................
-  next() {
-    if (this.lLines.length === 0) {
-      this.dbg("NEXT => undef");
-      return undef;
-    } else {
-      this.dbg(`NEXT => ${escapeStr(this.lLines[0])}`);
-      return this.lLines[0];
+    result = this.peek();
+    if (notdefined(result)) {
+      return -1;
     }
+    return result[0];
   }
 
   // ..........................................................
-  nextLevel() {
-    var level;
-    if (this.next() === undef) {
-      level = 0;
-    } else {
-      level = indentLevel(this.lLines[0]);
+  getBlock(level) {
+    var lLines, lvl, str;
+    lLines = [];
+    while (this.peekLevel() >= level) {
+      [lvl, str] = this.fetch();
+      lLines.push(indented(str, lvl - level));
     }
-    this.dbg(`NEXT LEVEL => ${OL(level)}`);
-    return level;
-  }
-
-  // ..........................................................
-  get() {
-    var line;
-    line = this.lLines.shift();
-    this.dbg(`GET => ${escapeStr(line)}`);
-    return line;
-  }
-
-  // ..........................................................
-  skip() {
-    this.lLines.shift();
-    this.dbg("SKIP =>");
-  }
-
-  // ..........................................................
-  // --- returns undented block
-  getBlock(minLevel) {
-    var block, lBlockLines;
-    lBlockLines = (function() {
-      var results;
-      results = [];
-      while (this.nextLevel() >= minLevel) {
-        results.push(this.get());
-      }
-      return results;
-    }).call(this);
-    if (lBlockLines.length === 0) {
-      this.dbg(`GET BLOCK (${minLevel}) => undef`);
-      return undef;
-    } else {
-      block = arrayToBlock(undented(lBlockLines));
-      this.dbg(`GET BLOCK (${minLevel}) =>`, block);
-      return block;
-    }
+    return lLines.join("\n");
   }
 
 };

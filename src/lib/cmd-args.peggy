@@ -7,8 +7,8 @@ GLOBAL
 
 	import {
 		undef, defined, notdefined, pass, isEmpty,
-		hasKey, keys, join, OL, words, add_s,
-		assert, croak, getOptions,
+		hasKey, keys, OL, DUMP, words, add_s,
+		assert, croak, getOptions, mkString,
 		isString, isFunction, isBoolean, isArray,
 		} from '@jdeighan/llutils'
 	import {getTracer} from '@jdeighan/llutils/peggy'
@@ -21,6 +21,7 @@ GLOBAL
 	#                         - <type> is 'boolean','string',
 	#                           'number','integer'
 	#        _: [min, max]    - min/max may be undef
+	#        }
 	#
 	# --- If hDesc is undef, no checking is done
 
@@ -99,7 +100,7 @@ arg
 			for ch in lChars
 				hOptions[ch] = true
 		else
-			hOptions[join(lChars)] = value[1]
+			hOptions[mkString(lChars)] = value[1]
 
 	val:stringVal
 
@@ -110,14 +111,14 @@ arg
 
 stringVal
 
-	'"'  lChars:[^"]*  '"'
-		return join(lChars)
+	'"'  str::[^"]*  '"'
+		return str
 
-	"'"  lChars:[^']*  "'"
-		return join(lChars)
+	"'"  str::[^']*  "'"
+		return str
 
-	!'-' lChars:[^ \t]+
-		return join(lChars)
+	!'-' str::[^ \t]+
+		return str
 
 ws
 	[ \t]+

@@ -1,5 +1,5 @@
 // peggy.coffee
-var MyTracer, Tracer, getVars, hCodeConverters;
+var MyTracer, Tracer, hCodeConverters;
 
 import pathLib from 'node:path';
 
@@ -33,7 +33,8 @@ import {
   js2uri,
   ML,
   keys,
-  pass
+  pass,
+  eq
 } from '@jdeighan/llutils';
 
 import {
@@ -59,7 +60,7 @@ import {
 } from '@jdeighan/llutils/coffee';
 
 import {
-  Fetcher
+  PLLFetcher
 } from '@jdeighan/llutils/fetcher';
 
 import {
@@ -88,7 +89,7 @@ export var getParser = async(filePath, hOptions = {}) => {
   }));
   fullPath = mkpath(filePath);
   if (debug) {
-    console.log(`PG file = ${OL(fullPath)}`);
+    console.log(`PEGGY file = ${OL(fullPath)}`);
   }
   assert(isFile(fullPath), `No such file: ${OL(filePath)}`);
   assert(fileExt(fullPath) === '.peggy', `Not a peggy file: ${OL(filePath)}`);
@@ -144,6 +145,9 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
     debug: false,
     trace: true
   }));
+  if (debug) {
+    console.log(`peggify() ${OL(filePath)}`);
+  }
   // --- preprocess code if required
   if (defined(type)) {
     if (debug) {
@@ -151,6 +155,11 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
     }
     assert(isFunction(hCodeConverters[type]), `Bad type ${type}`);
     peggyCode = PreProcessPeggy(code, hMetaData);
+    if (defined(filePath) && debug) {
+      filePath = "./test/temp.txt";
+      barf(peggyCode, filePath);
+      console.log(`Preprocessed code saved to ${OL(filePath)}`);
+    }
   } else {
     peggyCode = code;
   }
@@ -172,10 +181,7 @@ export var peggifyFile = (filePath) => {
   var code, hMetaData, js, jsFilePath, reader, sourceMap, sourceMapFilePath;
   ({hMetaData, reader} = readTextFile(filePath));
   code = gen2block(reader);
-  ({js, sourceMap} = peggify(code, hMetaData, {
-    filePath,
-    output: "source"
-  }));
+  ({js, sourceMap} = peggify(code, hMetaData, filePath));
   jsFilePath = withExt(filePath, '.js');
   barf(js, jsFilePath);
   if (defined(sourceMap)) {
@@ -186,32 +192,14 @@ export var peggifyFile = (filePath) => {
 };
 
 // ---------------------------------------------------------------------------
-getVars = (matchExpr) => {
-  var lVars, match, ref, str;
-  lVars = [];
-  ref = matchExpr.matchAll(/(\S+)\:/g);
-  for (match of ref) {
-    str = match[1];
-    if (nonEmpty(str) && (str.indexOf('$') !== 0)) {
-      lVars.push(str);
-    }
-  }
-  return lVars;
-};
-
-// ---------------------------------------------------------------------------
 export var PreProcessPeggy = (code, hMetaData) => {
-  var ch, coffeeCode, debug, funcName, hRules, line, matchExpr, name, numFuncs, peggyCode, sm, src, strVars, type;
+  var _, ch, coffeeCode, debug, flag, funcName, hJoin, hRules, lVars, level, line, match, matchExpr, name, numFuncs, peggyCode, re, ref, sm, src, str, strArgs, strParms, type, v;
   assert(isString(code), `not a string: ${typeof code}`);
   ({type, debug} = getOptions(hMetaData, {
     type: 'coffee',
     debug: false
   }));
-  src = new Fetcher(code, {
-    filterFunc: (line) => {
-      return nonEmpty(line) && !line.match(/^\s*#\s/);
-    }
-  });
+  src = new PLLFetcher(code);
   if (debug) {
     src.dump('ALL CODE');
   }
@@ -232,12 +220,24 @@ export var PreProcessPeggy = (code, hMetaData) => {
         console.log(err);
         js = '';
       }
-      if (nonEmpty(js)) {
-        return ['{{', indented(js), '}}'].join("\n");
-      } else {
-        // return "{{\n#{js}\n}}\n"
-        return undef;
-      }
+      return [
+        '{{',
+        // --- If we add an import for mkString(), users will get
+        //     and error if they also import it. So, instead,
+        //     we define our own version, though it's identical
+        // indented("import {mkString} from '@jdeighan/llutils';")
+        indented(brew(`mkString2 = (lItems...) =>
+
+	lStrings = []
+	for item in lItems
+		if isString(item)
+			lStrings.push item
+		else if isArray(item)
+			lStrings.push mkString(item...)
+	return lStrings.join('')`).js),
+        indented(js),
+        '}}'
+      ].join("\n");
     },
     // --- 'init' section will already be JavaScript
     init: (block) => {
@@ -251,7 +251,7 @@ ${block}
     }
   });
   numFuncs = 0; // used to construct unique function names
-  if (src.next() === 'GLOBAL') {
+  if (eq(src.peek(), [0, 'GLOBAL'])) {
     src.skip();
     coffeeCode = src.getBlock(1);
     if (nonEmpty(coffeeCode)) {
@@ -261,7 +261,7 @@ ${block}
       sm.section('header').add(coffeeCode);
     }
   }
-  if (src.next() === 'PER_PARSE') {
+  if (eq(src.peek(), [0, 'PER_PARSE'])) {
     src.skip();
     coffeeCode = src.getBlock(1);
     if (nonEmpty(coffeeCode)) {
@@ -276,8 +276,8 @@ ${block}
   hRules = {}; // { <ruleName>: <numMatchExpr>, ... }
   while (src.moreLines()) {
     // --- Get rule name - must be left aligned, no whitespace
-    assert(src.nextLevel() === 0, "Next level not 0");
-    name = src.get();
+    [level, name] = src.fetch();
+    assert(level === 0, "Next level not 0");
     if (debug) {
       console.log(`RULE: ${name}`);
     }
@@ -285,14 +285,40 @@ ${block}
     assert(!hasKey(hRules, name), `duplicate rule ${name}`);
     sm.section('rules').add(name);
     hRules[name] = 0; // number of options
-    while (src.nextLevel() === 1) {
+    while (src.peekLevel() === 1) {
       // --- Get match expression
-      matchExpr = src.get().trim();
+      [level, matchExpr] = src.fetch();
+      assert(level === 1, "BAD - level not 1");
       // --- Extract names of new variables
-      strVars = getVars(matchExpr).join(',');
+      lVars = [];
+      hJoin = {};
+      re = /([A-Za-z][A-Za-z_-]*)\:(\:)?/g;
+      ref = matchExpr.matchAll(re);
+      for (match of ref) {
+        [_, str, flag] = match;
+        lVars.push(str);
+        if (flag) {
+          hJoin[str] = true;
+        }
+      }
+      strParms = lVars.join(',');
+      strArgs = ((function() {
+        var i, len, results;
+        results = [];
+        for (i = 0, len = lVars.length; i < len; i++) {
+          v = lVars[i];
+          if (hJoin[v]) {
+            results.push(`mkString2(${v})`);
+          } else {
+            results.push(v);
+          }
+        }
+        return results;
+      })()).join(',');
       // --- output the match expression
       ch = (hRules[name] === 0) ? '=' : '/';
       hRules[name] += 1;
+      matchExpr = matchExpr.replaceAll('::', ':');
       sm.section('rules').add(1, `${ch} ${matchExpr}`);
       coffeeCode = src.getBlock(2);
       if (nonEmpty(coffeeCode)) {
@@ -301,10 +327,10 @@ ${block}
         }
         funcName = `func${numFuncs}`;
         numFuncs += 1;
-        line = `${funcName} = (${strVars}) =>`;
+        line = `${funcName} = (${strParms}) =>`;
         sm.section('header').add(line);
         sm.section('header').add(1, coffeeCode);
-        line = `{ return ${funcName}(${strVars}); }`;
+        line = `{ return ${funcName}(${strArgs}); }`;
         sm.section('rules').add(2, line);
       }
     }

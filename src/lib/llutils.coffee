@@ -2,8 +2,23 @@
 
 import assertLib from 'node:assert'
 import {execSync} from 'node:child_process'
+import YAML from 'yaml'
+module = await import('deep-equal')
+deepEqual = module.default
 
 `export const undef = void 0`
+
+# ---------------------------------------------------------------------------
+
+export eq = (x, y) =>
+
+	return deepEqual(x, y, {strict: true})
+
+# ---------------------------------------------------------------------------
+
+export dclone = (x) =>
+
+	return structuredClone(x)
 
 # ---------------------------------------------------------------------------
 
@@ -192,7 +207,7 @@ export isPromise = (x) =>
 
 # ---------------------------------------------------------------------------
 
-export isClassInstance = (x) =>
+export isClassInstance = (x, lReqKeys=undef) =>
 
 	if (typeof x != 'object')
 		return false
@@ -205,6 +220,18 @@ export isClassInstance = (x) =>
 			|| isHash(x) \
 			|| isPromise(x)
 		return false
+	if defined(lReqKeys)
+		if isString(lReqKeys)
+			lReqKeys = words(lReqKeys)
+		assert isArray(lReqKeys), "lReqKeys not an array: #{OL(lReqKeys)}"
+		for key in lReqKeys
+			type = undef
+			if lMatches = key.match(///^ (\&) (.*) $///)
+				[_, type, key] = lMatches
+			if notdefined(x[key])
+				return false
+			if (type == '&') && (typeof x[key] != 'function')
+				return false
 	return true
 
 # ---------------------------------------------------------------------------
@@ -268,7 +295,7 @@ export OL = (obj, hOptions={}) =>
 		if isHash(obj) then return 'HASH'
 		if isArray(obj) then return 'ARRAY'
 		if isFunction(obj) then return 'FUNCTION'
-		if isObject(obj) then return 'OBJECT'
+		if isClassInstance(obj) then return 'CLASS INSTANCE'
 
 	myReplacer = (key, x) =>
 		type = typeof x
@@ -304,6 +331,13 @@ export OL = (obj, hOptions={}) =>
 	finalResult = result \
 		.replaceAll('"«','«').replaceAll('»"','»')
 	return finalResult
+
+# ---------------------------------------------------------------------------
+
+export CWS = (str) =>
+
+	assert isString(str), "CWS(): parameter not a string"
+	return str.trim().replace(/\s+/sg, ' ')
 
 # ---------------------------------------------------------------------------
 
@@ -413,6 +447,8 @@ export chomp = (str) =>
 		return str
 
 # ---------------------------------------------------------------------------
+#        HASH utilities
+# ---------------------------------------------------------------------------
 
 export keys = Object.keys
 
@@ -440,6 +476,7 @@ export removeKeys = (item, lKeys) =>
 			removeKeys value, lKeys
 	return item
 
+# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 
 export npmLogLevel = () =>
@@ -487,6 +524,12 @@ export toBlock = (strOrArray) =>
 export untabify = (str, numSpaces=3) =>
 
 	return str.replace(/\t/g, ' '.repeat(numSpaces))
+
+# ---------------------------------------------------------------------------
+
+export LOG = (str) =>
+
+	console.log untabify(str)
 
 # ---------------------------------------------------------------------------
 
@@ -609,16 +652,17 @@ export DUMP = (block, label='RESULT', hOptions={}) =>
 		block = arrayToBlock(block)
 
 	label = label.replace('_',' ')
-	header = centered(label, width, 'char=-')
-	console.log header
 	if isString(block)
+		header = centered(label, width, 'char=-')
+		console.log header
 		if esc
 			console.log escapeBlock(block)
 		else
 			console.log untabify(block)
 	else
-		console.log "JSON:"
-		console.log JSON.stringify(block, null, 3)
+		header = centered("#{label} as JSON", width, 'char=-')
+		console.log header
+		console.log untabify(toTAML(block))
 	console.log '-'.repeat(width)
 	return
 
@@ -657,8 +701,8 @@ export hashFromString = (str) =>
 					(.*)
 					)?
 				$///)
-			[_, neg, ident, eq, str] = lMatches
-			if nonEmpty(eq)
+			[_, neg, ident, eqSign, str] = lMatches
+			if nonEmpty(eqSign)
 				assert isEmpty(neg), "negation with string value"
 
 				# --- check if str is a valid number
@@ -675,25 +719,6 @@ export hashFromString = (str) =>
 		else
 			croak "Invalid word #{OL(word)}"
 	return h
-
-# ---------------------------------------------------------------------------
-
-export joinOne = (item) =>
-
-	if isString(item)
-		return item
-	else
-		lStrings = for subitem in item
-			joinOne(subitem)
-		return lStrings.join('')
-
-# ---------------------------------------------------------------------------
-
-export join = (lItems...) =>
-
-	lStrings = for item in lItems
-		joinOne(item)
-	return lStrings.join('')
 
 # ---------------------------------------------------------------------------
 
@@ -717,3 +742,53 @@ export timeit = (func, nReps=100) =>
 		func()
 	diff = now() - t0
 	return diff / nReps
+
+# ---------------------------------------------------------------------------
+
+export mkString = (lItems...) =>
+
+	lStrings = []
+	for item in lItems
+		if isString(item)
+			lStrings.push item
+		else if isArray(item)
+			lStrings.push mkString(item...)
+	return lStrings.join('')
+
+# ---------------------------------------------------------------------------
+
+export behead = (block) ->
+
+	nlPos = block.indexOf("\n")
+	if  (nlPos == -1)
+		return [block, '']
+	return [
+		chomp(block.substring(0, nlPos))
+		chomp(block.substring(nlPos+1))
+		]
+
+# ---------------------------------------------------------------------------
+
+export isTAML = (block) ->
+
+	[head, rest] = behead(block)
+	return (head == '---')
+
+# ---------------------------------------------------------------------------
+
+export fromTAML = (block) ->
+
+	[head, rest] = behead(block)
+	hOptions = {
+		skipInvalid: true
+		}
+	return YAML.parse(untabify(rest, 2), hOptions)
+
+# ---------------------------------------------------------------------------
+
+export toTAML = (ds) ->
+
+	return chomp("---\n" + tabify(YAML.stringify(ds)))
+
+# ---------------------------------------------------------------------------
+

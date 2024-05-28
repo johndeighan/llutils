@@ -1,5 +1,6 @@
-// llutils.coffee
-var hasProp = {}.hasOwnProperty;
+  // llutils.coffee
+var deepEqual, module,
+  hasProp = {}.hasOwnProperty;
 
 import assertLib from 'node:assert';
 
@@ -7,7 +8,25 @@ import {
   execSync
 } from 'node:child_process';
 
+import YAML from 'yaml';
+
+module = (await import('deep-equal'));
+
+deepEqual = module.default;
+
 export const undef = void 0;
+
+// ---------------------------------------------------------------------------
+export var eq = (x, y) => {
+  return deepEqual(x, y, {
+    strict: true
+  });
+};
+
+// ---------------------------------------------------------------------------
+export var dclone = (x) => {
+  return structuredClone(x);
+};
 
 // ---------------------------------------------------------------------------
 export var pass = () => {}; // do nothing
@@ -212,12 +231,32 @@ export var isPromise = (x) => {
 };
 
 // ---------------------------------------------------------------------------
-export var isClassInstance = (x) => {
+export var isClassInstance = (x, lReqKeys = undef) => {
+  var _, j, key, lMatches, len1, type;
   if (typeof x !== 'object') {
     return false;
   }
   if ((x instanceof String) || (x instanceof Number) || (x instanceof Boolean) || (x instanceof RegExp) || (x instanceof Function) || isArray(x) || isHash(x) || isPromise(x)) {
     return false;
+  }
+  if (defined(lReqKeys)) {
+    if (isString(lReqKeys)) {
+      lReqKeys = words(lReqKeys);
+    }
+    assert(isArray(lReqKeys), `lReqKeys not an array: ${OL(lReqKeys)}`);
+    for (j = 0, len1 = lReqKeys.length; j < len1; j++) {
+      key = lReqKeys[j];
+      type = undef;
+      if (lMatches = key.match(/^(\&)(.*)$/)) {
+        [_, type, key] = lMatches;
+      }
+      if (notdefined(x[key])) {
+        return false;
+      }
+      if ((type === '&') && (typeof x[key] !== 'function')) {
+        return false;
+      }
+    }
   }
   return true;
 };
@@ -297,8 +336,8 @@ export var OL = (obj, hOptions = {}) => {
     if (isFunction(obj)) {
       return 'FUNCTION';
     }
-    if (isObject(obj)) {
-      return 'OBJECT';
+    if (isClassInstance(obj)) {
+      return 'CLASS INSTANCE';
     }
   }
   myReplacer = (key, x) => {
@@ -341,6 +380,12 @@ export var OL = (obj, hOptions = {}) => {
   //     we remove them when using « and »
   finalResult = result.replaceAll('"«', '«').replaceAll('»"', '»');
   return finalResult;
+};
+
+// ---------------------------------------------------------------------------
+export var CWS = (str) => {
+  assert(isString(str), "CWS(): parameter not a string");
+  return str.trim().replace(/\s+/sg, ' ');
 };
 
 // ---------------------------------------------------------------------------
@@ -466,6 +511,8 @@ export var chomp = (str) => {
 };
 
 // ---------------------------------------------------------------------------
+//        HASH utilities
+// ---------------------------------------------------------------------------
 export var keys = Object.keys;
 
 // ---------------------------------------------------------------------------
@@ -499,6 +546,7 @@ export var removeKeys = (item, lKeys) => {
   return item;
 };
 
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 export var npmLogLevel = () => {
   var result;
@@ -545,6 +593,11 @@ export var toBlock = (strOrArray) => {
 // ---------------------------------------------------------------------------
 export var untabify = (str, numSpaces = 3) => {
   return str.replace(/\t/g, ' '.repeat(numSpaces));
+};
+
+// ---------------------------------------------------------------------------
+export var LOG = (str) => {
+  return console.log(untabify(str));
 };
 
 // ---------------------------------------------------------------------------
@@ -673,17 +726,18 @@ export var DUMP = (block, label = 'RESULT', hOptions = {}) => {
     block = arrayToBlock(block);
   }
   label = label.replace('_', ' ');
-  header = centered(label, width, 'char=-');
-  console.log(header);
   if (isString(block)) {
+    header = centered(label, width, 'char=-');
+    console.log(header);
     if (esc) {
       console.log(escapeBlock(block));
     } else {
       console.log(untabify(block));
     }
   } else {
-    console.log("JSON:");
-    console.log(JSON.stringify(block, null, 3));
+    header = centered(`${label} as JSON`, width, 'char=-');
+    console.log(header);
+    console.log(untabify(toTAML(block)));
   }
   console.log('-'.repeat(width));
 };
@@ -712,7 +766,7 @@ export var getOptions = (options = undef, hDefault = {}) => {
 
 // ---------------------------------------------------------------------------
 export var hashFromString = (str) => {
-  var _, eq, h, ident, j, lMatches, len1, neg, num, ref, word;
+  var _, eqSign, h, ident, j, lMatches, len1, neg, num, ref, word;
   assert(isString(str), `not a string: ${OL(str)}`);
   h = {};
   ref = words(str);
@@ -720,8 +774,8 @@ export var hashFromString = (str) => {
     word = ref[j];
     if (lMatches = word.match(/^(\!)?([A-Za-z][A-Za-z_0-9]*)(?:(=)(.*))?$/)) { // negate value
       // identifier
-      [_, neg, ident, eq, str] = lMatches;
-      if (nonEmpty(eq)) {
+      [_, neg, ident, eqSign, str] = lMatches;
+      if (nonEmpty(eqSign)) {
         assert(isEmpty(neg), "negation with string value");
         // --- check if str is a valid number
         num = parseFloat(str);
@@ -741,40 +795,6 @@ export var hashFromString = (str) => {
     }
   }
   return h;
-};
-
-// ---------------------------------------------------------------------------
-export var joinOne = (item) => {
-  var lStrings, subitem;
-  if (isString(item)) {
-    return item;
-  } else {
-    lStrings = (function() {
-      var j, len1, results;
-      results = [];
-      for (j = 0, len1 = item.length; j < len1; j++) {
-        subitem = item[j];
-        results.push(joinOne(subitem));
-      }
-      return results;
-    })();
-    return lStrings.join('');
-  }
-};
-
-// ---------------------------------------------------------------------------
-export var join = (...lItems) => {
-  var item, lStrings;
-  lStrings = (function() {
-    var j, len1, results;
-    results = [];
-    for (j = 0, len1 = lItems.length; j < len1; j++) {
-      item = lItems[j];
-      results.push(joinOne(item));
-    }
-    return results;
-  })();
-  return lStrings.join('');
 };
 
 // ---------------------------------------------------------------------------
@@ -799,5 +819,54 @@ export var timeit = (func, nReps = 100) => {
   diff = now() - t0;
   return diff / nReps;
 };
+
+// ---------------------------------------------------------------------------
+export var mkString = (...lItems) => {
+  var item, j, lStrings, len1;
+  lStrings = [];
+  for (j = 0, len1 = lItems.length; j < len1; j++) {
+    item = lItems[j];
+    if (isString(item)) {
+      lStrings.push(item);
+    } else if (isArray(item)) {
+      lStrings.push(mkString(...item));
+    }
+  }
+  return lStrings.join('');
+};
+
+// ---------------------------------------------------------------------------
+export var behead = function(block) {
+  var nlPos;
+  nlPos = block.indexOf("\n");
+  if (nlPos === -1) {
+    return [block, ''];
+  }
+  return [chomp(block.substring(0, nlPos)), chomp(block.substring(nlPos + 1))];
+};
+
+// ---------------------------------------------------------------------------
+export var isTAML = function(block) {
+  var head, rest;
+  [head, rest] = behead(block);
+  return head === '---';
+};
+
+// ---------------------------------------------------------------------------
+export var fromTAML = function(block) {
+  var hOptions, head, rest;
+  [head, rest] = behead(block);
+  hOptions = {
+    skipInvalid: true
+  };
+  return YAML.parse(untabify(rest, 2), hOptions);
+};
+
+// ---------------------------------------------------------------------------
+export var toTAML = function(ds) {
+  return chomp("---\n" + tabify(YAML.stringify(ds)));
+};
+
+// ---------------------------------------------------------------------------
 
 //# sourceMappingURL=llutils.js.map

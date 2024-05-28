@@ -4,6 +4,21 @@
 
 
 
+	var mkString2;
+
+	mkString2 = (...lItems) => {
+	  var i, item, lStrings, len;
+	  lStrings = [];
+	  for (i = 0, len = lItems.length; i < len; i++) {
+	    item = lItems[i];
+	    if (isString(item)) {
+	      lStrings.push(item);
+	    } else if (isArray(item)) {
+	      lStrings.push(mkString(...item));
+	    }
+	  }
+	  return lStrings.join('');
+	};
 	var check, func0, func1, func2, func3, func4, func5, hOptions, init;
 
 	import {
@@ -14,13 +29,14 @@
 	  isEmpty,
 	  hasKey,
 	  keys,
-	  join,
 	  OL,
+	  DUMP,
 	  words,
 	  add_s,
 	  assert,
 	  croak,
 	  getOptions,
+	  mkString,
 	  isString,
 	  isFunction,
 	  isBoolean,
@@ -33,7 +49,15 @@
 
 	hOptions = {};
 
+	// ------------------------------------------------------------------------
+	// --- hDesc is: {
+	//        <tag>: <type>    - <tag>s are allowed names
+	//                         - <type> is 'boolean','string',
+	//                           'number','integer'
+	//        _: [min, max]    - min/max may be undef
+	//        }
 
+	// --- If hDesc is undef, no checking is done
 	export var getArgs = (argStr = undef, hDesc = undef, tracer = 'none') => {
 	  var hParseOptions, hResult;
 	  if (notdefined(argStr)) {
@@ -54,8 +78,10 @@
 	  return hResult;
 	};
 
+	// ..........................................................
 	check = (hResult, hDesc) => {
 	  var i, key, lLimits, lNonOptions, len, max, min, n, ref, type, value;
+	  // --- Check number of non-options
 	  lLimits = hDesc._;
 	  if (defined(lLimits)) {
 	    assert(isArray(lLimits), `Not an array: ${OL(lLimits)}`);
@@ -66,6 +92,7 @@
 	    if (notdefined(max)) {
 	      max = 2e308;
 	    }
+	    // --- How many non-options were provided?
 	    lNonOptions = hResult._;
 	    if (defined(lNonOptions)) {
 	      assert(isArray(lNonOptions), `Not an array: ${OL(lNonOptions)}`);
@@ -120,7 +147,7 @@
 	    }
 	    return results;
 	  } else {
-	    return hOptions[join(lChars)] = value[1];
+	    return hOptions[mkString(lChars)] = value[1];
 	  }
 	};
 
@@ -132,16 +159,16 @@
 	  }
 	};
 
-	func3 = (lChars) => {
-	  return join(lChars);
+	func3 = (str) => {
+	  return str;
 	};
 
-	func4 = (lChars) => {
-	  return join(lChars);
+	func4 = (str) => {
+	  return str;
 	};
 
-	func5 = (lChars) => {
-	  return join(lChars);
+	func5 = (str) => {
+	  return str;
 	};
 
 function peg$subclass(child, parent) {
@@ -393,9 +420,9 @@ function peg$parse(input, options) {
   var peg$f0 = function() { return func0(); };
   var peg$f1 = function(lChars, value) { return func1(lChars,value); };
   var peg$f2 = function(val) { return func2(val); };
-  var peg$f3 = function(lChars) { return func3(lChars); };
-  var peg$f4 = function(lChars) { return func4(lChars); };
-  var peg$f5 = function(lChars) { return func5(lChars); };
+  var peg$f3 = function(str) { return func3(mkString2(str)); };
+  var peg$f4 = function(str) { return func4(mkString2(str)); };
+  var peg$f5 = function(str) { return func5(mkString2(str)); };
   var peg$currPos = options.peg$currPos | 0;
   var peg$savedPos = peg$currPos;
   var peg$posDetailsCache = [{ line: 1, column: 1 }];

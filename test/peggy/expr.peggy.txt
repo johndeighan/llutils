@@ -1,0 +1,83 @@
+{{
+	var mkString2;
+
+	mkString2 = (...lItems) => {
+	  var i, item, lStrings, len;
+	  lStrings = [];
+	  for (i = 0, len = lItems.length; i < len; i++) {
+	    item = lItems[i];
+	    if (isString(item)) {
+	      lStrings.push(item);
+	    } else if (isArray(item)) {
+	      lStrings.push(mkString(...item));
+	    }
+	  }
+	  return lStrings.join('');
+	};
+	var func0, func1, func2, func3, func4;
+
+	import {
+	  mkString
+	} from '@jdeighan/llutils';
+
+	func0 = (left, op, right) => {
+	  if (op === '+') {
+	    return left + right;
+	  } else {
+	    return left - right;
+	  }
+	};
+
+	func1 = (left, op, right) => {
+	  if (op === '*') {
+	    return left * right;
+	  } else {
+	    return left / right;
+	  }
+	};
+
+	func2 = (f) => {
+	  return f;
+	};
+
+	func3 = (digits) => {
+	  var str;
+	  str = mkString(digits);
+	  return parseInt(str);
+	};
+
+	func4 = (digits, decimal) => {
+	  var str;
+	  str = mkString(digits, '.', decimal);
+	  return parseFloat(str);
+	};
+}}
+expr
+	= left:term ws op:addOp ws right:expr
+		{ return func0(left,op,right); }
+	/ term
+term
+	= left:factor ws op:mulOp ws right:term
+		{ return func1(left,op,right); }
+	/ factor
+factor
+	= number
+	/ '(' ws f:expr ws ')'
+		{ return func2(f); }
+addOp
+	= '+'
+	/ '-'
+mulOp
+	= '*'
+	/ '/'
+ws
+	= ' '*
+integer
+	= digits:[0-9]+
+		{ return func3(digits); }
+float
+	= digits:[0-9]+ '.' decimal:[0-9]+
+		{ return func4(digits,decimal); }
+number
+	= float
+	/ integer
