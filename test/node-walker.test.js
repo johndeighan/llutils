@@ -25,6 +25,91 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
+symbol("matches(lStack, str)");
+
+(() => {
+  truthy(itemMatches({
+    key: 'program',
+    hNode: {
+      type: 'File'
+    }
+  }, ['program', 'File']));
+  truthy(itemMatches({
+    key: 'program',
+    hNode: {
+      type: 'File'
+    }
+  }, ['', 'File']));
+  truthy(itemMatches({
+    key: 'program',
+    hNode: {
+      type: 'File'
+    }
+  }, ['program', '']));
+  return truthy(itemMatches({
+    key: 'program',
+    hNode: {
+      type: 'File'
+    }
+  }, ['', '']));
+})();
+
+// ---------------------------------------------------------------------------
+symbol("stackMatches(lStack, str)");
+
+(() => {
+  var lStack;
+  lStack = [
+    {
+      key: 'program',
+      hNode: {
+        type: 'File'
+      }
+    },
+    {
+      key: 'body',
+      hNode: {
+        type: 'Program'
+      }
+    },
+    {
+      key: 'declaration',
+      hNode: {
+        type: 'ExportNamedDeclaration'
+      }
+    },
+    {
+      key: 'right',
+      hNode: {
+        type: 'AssignmentExpression'
+      }
+    }
+  ];
+  return truthy(stackMatches(lStack, 'right'));
+})();
+
+// ---------------------------------------------------------------------------
+symbol("parsePath(str)");
+
+equal(parsePath("left:Expression"), [['left', 'Expression']]);
+
+equal(parsePath("left: Expression"), [['left', 'Expression']]);
+
+equal(parsePath("  left: Expression  "), [['left', 'Expression']]);
+
+// --- parts can be separated by / or newline
+equal(parsePath("left: Expression / right: Literal"), [['left', 'Expression'], ['right', 'Literal']]);
+
+equal(parsePath(`left: Expression
+right: Literal`), [['left', 'Expression'], ['right', 'Literal']]);
+
+equal(parsePath("right:"), [['right', '']]);
+
+equal(parsePath("right"), [['right', '']]);
+
+// ---------------------------------------------------------------------------
+symbol("NodeWalker");
+
 // --- A counter walks an AST and
 //     counts the number of nodes of each type
 Counter = class Counter extends NodeWalker {

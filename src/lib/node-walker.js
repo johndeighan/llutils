@@ -11,9 +11,15 @@ import {
   assert,
   croak,
   dclone,
+  range,
+  rev_range,
+  centered,
+  leftAligned,
   isString,
   isArray,
   isHash,
+  isEmpty,
+  DUMP,
   hasKey,
   keys
 } from '@jdeighan/llutils';
@@ -22,6 +28,56 @@ import {
   indented,
   undented
 } from '@jdeighan/llutils/indent';
+
+// ---------------------------------------------------------------------------
+export var stackMatches = (lStack, str) => {
+  debugger;
+  var i, item, lPath, pos, ref;
+  lPath = parsePath(str);
+  if (lStack.length < lPath.length) {
+    return false;
+  }
+  pos = lStack.length;
+  ref = range(lPath.length);
+  for (i of ref) {
+    pos -= 1;
+    item = lStack[pos];
+    if (!itemMatches(item, lPath[i])) {
+      return false;
+    }
+  }
+  return true;
+};
+
+// ---------------------------------------------------------------------------
+export var parsePath = (str) => {
+  var re, splitter;
+  assert(isString(str), `Not a string: ${OL(str)}`);
+  splitter = (substr) => {
+    var key, type;
+    [key, type] = substr.split(':');
+    if (isEmpty(key)) {
+      key = '';
+    }
+    if (isEmpty(type)) {
+      type = '';
+    }
+    return [key.trim(), type.trim()];
+  };
+  re = /[\r\n\/]+/;
+  return str.split(re).map(splitter);
+};
+
+// ---------------------------------------------------------------------------
+export var itemMatches = function(hStackItem, [key, type]) {
+  if (key && (hStackItem.key !== key.trim())) {
+    return false;
+  }
+  if (type && (hStackItem.hNode.type !== type.trim())) {
+    return false;
+  }
+  return true;
+};
 
 // ---------------------------------------------------------------------------
 // --- anything named 'item'
@@ -38,6 +94,26 @@ export var NodeWalker = class NodeWalker {
   }
 
   // ..........................................................
+  dumpStack() {
+    var i, item, pos, ref;
+    console.log(centered('STACK', 40, 'char=-'));
+    pos = this.lStack.length;
+    ref = range(pos);
+    for (i of ref) {
+      pos -= 1;
+      item = this.lStack[pos];
+      // console.log "#{item.key}: #{item.hNode.type}"
+      console.log(`{key: ${leftAligned(item.key, 12)}, hNode: {type: ${item.hNode.type}}}`);
+    }
+    console.log('-'.repeat(40));
+  }
+
+  // ..........................................................
+  stackMatches(str) {
+    return stackMatches(this.lStack, str);
+  }
+
+  // ..........................................................
   level() {
     return this.lStack.length;
   }
@@ -49,12 +125,12 @@ export var NodeWalker = class NodeWalker {
 
   // ..........................................................
   isArrayOfNodes(item) {
-    var i, len, x;
+    var j, len, x;
     if (!isArray(item)) {
       return false;
     }
-    for (i = 0, len = item.length; i < len; i++) {
-      x = item[i];
+    for (j = 0, len = item.length; j < len; j++) {
+      x = item[j];
       if (!this.isNode(x)) {
         return false;
       }
@@ -82,7 +158,7 @@ export var NodeWalker = class NodeWalker {
   
     // ..........................................................
   visitChildren(hNode) {
-    var i, key, len, value;
+    var j, key, len, value;
     for (key in hNode) {
       if (!hasProp.call(hNode, key)) continue;
       value = hNode[key];
@@ -92,8 +168,8 @@ export var NodeWalker = class NodeWalker {
         this.visitChildren(value);
         this.end(value);
       } else if (this.isArrayOfNodes(value)) {
-        for (i = 0, len = value.length; i < len; i++) {
-          hNode = value[i];
+        for (j = 0, len = value.length; j < len; j++) {
+          hNode = value[j];
           this.visit(hNode.type, hNode);
           this.visitChildren(hNode);
           this.end(hNode);

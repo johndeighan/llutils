@@ -161,4 +161,25 @@ export var toASTFile = function(code, filePath, hOptions = {}) {
   barfAST(hAST, filePath);
 };
 
+// ---------------------------------------------------------------------------
+export var coffeeInfo = (codeOrAST, hOptions = {}) => {
+  var debug, hAST, walker;
+  ({debug} = getOptions(hOptions, {
+    debug: false
+  }));
+  if (isString(codeOrAST)) {
+    hAST = toAST(codeOrAST);
+  } else {
+    hAST = codeOrAST;
+  }
+  walker = new ASTWalker().walk(hAST);
+  return {
+    hAST,
+    hImports: walker.hImports,
+    lExports: walker.lExports,
+    lUsed: walker.lUsed,
+    lNeeded: walker.getNeeded()
+  };
+};
+
 //# sourceMappingURL=coffee.js.map

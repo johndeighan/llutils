@@ -39,6 +39,11 @@ symbol "range(n)"   # --- build iterable of ints
 equal Array.from(range(10)), [0,1,2,3,4,5,6,7,8,9]
 
 # ---------------------------------------------------------------------------
+symbol "rev_range(n)"   # --- build iterable of ints
+
+equal Array.from(rev_range(10)), [9,8,7,6,5,4,3,2,1,0]
+
+# ---------------------------------------------------------------------------
 symbol "add_s(n)"    # --- add an 's' for plural things
 
 equal add_s(0), 's'
@@ -603,5 +608,18 @@ equal toTAML([1,2]), """
 	---
 	- 1
 	- 2
+	"""
+
+equal toTAML({a:1, b:2}), """
+	---
+	a: 1
+	b: 2
+	"""
+
+equal toTAML([13, {key: 'fName', value: 'John'}]), """
+	---
+	- 13
+	- key: fName
+		value: John
 	"""
 

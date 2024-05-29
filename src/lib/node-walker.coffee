@@ -2,11 +2,50 @@
 
 import {
 	undef, defined, notdefined, OL, getOptions, LOG,
-	assert, croak, dclone,
-	isString, isArray, isHash,
+	assert, croak, dclone, range, rev_range, centered, leftAligned,
+	isString, isArray, isHash, isEmpty, DUMP,
 	hasKey, keys,
 	} from '@jdeighan/llutils'
 import {indented, undented} from '@jdeighan/llutils/indent'
+
+# ---------------------------------------------------------------------------
+
+export stackMatches = (lStack, str) =>
+
+	debugger
+	lPath = parsePath(str)
+	if (lStack.length < lPath.length)
+		return false
+	pos = lStack.length
+	for i from range(lPath.length)
+		pos -= 1
+		item = lStack[pos]
+		if !itemMatches(item, lPath[i])
+			return false
+	return true
+
+# ---------------------------------------------------------------------------
+
+export parsePath = (str) =>
+
+	assert isString(str), "Not a string: #{OL(str)}"
+	splitter = (substr) =>
+		[key, type] = substr.split(':')
+		if isEmpty(key) then key = ''
+		if isEmpty(type) then type = ''
+		return [key.trim(), type.trim()]
+	re = /[\r\n\/]+/
+	return str.split(re).map(splitter)
+
+# ---------------------------------------------------------------------------
+
+export itemMatches = (hStackItem, [key, type]) ->
+
+	if key && (hStackItem.key != key.trim())
+		return false
+	if type && (hStackItem.hNode.type != type.trim())
+		return false
+	return true
 
 # ---------------------------------------------------------------------------
 # --- anything named 'item'
@@ -22,6 +61,26 @@ export class NodeWalker
 
 		# --- Array of {key, hNode}
 		@lStack = []
+
+	# ..........................................................
+
+	dumpStack: () ->
+
+		console.log centered('STACK', 40, 'char=-')
+		pos = @lStack.length
+		for i from range(pos)
+			pos -= 1
+			item = @lStack[pos]
+			# console.log "#{item.key}: #{item.hNode.type}"
+			console.log "{key: #{leftAligned(item.key, 12)}, hNode: {type: #{item.hNode.type}}}"
+		console.log '-'.repeat(40)
+		return
+
+	# ..........................................................
+
+	stackMatches: (str) ->
+
+		return stackMatches @lStack, str
 
 	# ..........................................................
 

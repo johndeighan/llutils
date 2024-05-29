@@ -36,6 +36,16 @@ export range = (n) ->
 
 # ---------------------------------------------------------------------------
 
+export rev_range = (n) ->
+
+	i = n
+	while (i > 0)
+		i -= 1
+		yield i
+	return
+
+# ---------------------------------------------------------------------------
+
 export add_s = (n) =>
 
 	return if (n == 1) then '' else 's'
@@ -521,10 +531,12 @@ export toBlock = (strOrArray) =>
 
 # ---------------------------------------------------------------------------
 
-export listdiff = (lItems, lItemsToRemove) =>
+export listdiff = (lItems, lToRemove) =>
 
+	assert isArray(lItems), "lItems is #{OL(lItems)}"
+	assert isArray(lToRemove), "lToRemove is #{OL(lToRemove)}"
 	return lItems.filter((item) =>
-		return ! lItemsToRemove.includes(item))
+		return ! lToRemove.includes(item))
 
 # ---------------------------------------------------------------------------
 
@@ -626,6 +638,24 @@ export centered = (text, width, hOptions={}) =>
 
 # ---------------------------------------------------------------------------
 
+export leftAligned = (text, width, hOptions={}) =>
+
+	if (text.length >= width)
+		return text
+	numSpaces = width - text.length
+	return text + ' '.repeat(numSpaces)
+
+# ---------------------------------------------------------------------------
+
+export rightAligned = (text, width, hOptions={}) =>
+
+	if (text.length >= width)
+		return text
+	numSpaces = width - text.length
+	return ' '.repeat(numSpaces) + text
+
+# ---------------------------------------------------------------------------
+
 export countChars = (str, ch) =>
 
 	count = 0
@@ -648,29 +678,42 @@ export rtrim = (line) =>
 
 # ---------------------------------------------------------------------------
 
-export DUMP = (block, label='RESULT', hOptions={}) =>
+export DUMP = (item, label='RESULT', hOptions={}) =>
 
-	width = 64
-	{esc} = getOptions hOptions, {
+	width = 40
+	{esc, format} = getOptions hOptions, {
 		esc: false
+		format: undef    # --- can be 'JSON', 'TAML'
 		}
 
-	if isArray(block, 'allStrings')
-		block = arrayToBlock(block)
-
 	label = label.replace('_',' ')
-	if isString(block)
+	if defined(format)
+		console.log centered("#{label} (as #{format})", width, 'char=-')
+		switch format
+			when 'JSON'
+				console.log untabify(JSON.stringify(item, undef, 3))
+			when 'TAML'
+				console.log untabify(toTAML(item))
+			else
+				croak "Bad format: #{OL(format)}"
+		console.log '-'.repeat(width)
+		return
+
+	str = OL(item)
+	if (str.length <= width)
+		console.log "#{label} = #{str}"
+	else if isString(item)
 		header = centered(label, width, 'char=-')
 		console.log header
 		if esc
-			console.log escapeBlock(block)
+			console.log escapeBlock(item)
 		else
-			console.log untabify(block)
+			console.log untabify(item)
+		console.log '-'.repeat(width)
 	else
-		header = centered("#{label} as JSON", width, 'char=-')
-		console.log header
-		console.log untabify(toTAML(block))
-	console.log '-'.repeat(width)
+		console.log centered("#{label} (as TAML)", width, 'char=-')
+		console.log untabify(toTAML(item))
+		console.log '-'.repeat(width)
 	return
 
 # ---------------------------------------------------------------------------

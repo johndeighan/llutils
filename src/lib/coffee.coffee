@@ -131,3 +131,24 @@ export toASTFile = (code, filePath, hOptions={}) ->
 	hAST = toAST(code, hOptions)
 	barfAST hAST, filePath
 	return
+
+# ---------------------------------------------------------------------------
+
+export coffeeInfo = (codeOrAST, hOptions={}) =>
+
+	{debug} = getOptions hOptions, {
+		debug: false
+		}
+
+	if isString(codeOrAST)
+		hAST = toAST(codeOrAST)
+	else
+		hAST = codeOrAST
+	walker = new ASTWalker().walk(hAST)
+	return {
+		hAST
+		hImports: walker.hImports
+		lExports: walker.lExports
+		lUsed: walker.lUsed
+		lNeeded: walker.getNeeded()
+		}
