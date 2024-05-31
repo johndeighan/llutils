@@ -19,9 +19,7 @@ symbol "coffeeInfo(codeOrAST)"
 		export func1 = (arg) => return 13
 		export func2 = (arg) -> return 13
 		"""
-	equal coffeeInfo(code).lExports, [
-		'x', 'func1', 'func2'
-		]
+	equal coffeeInfo(code).setExports, new Set(['x','func1','func2'])
 	)()
 
 (() =>
@@ -31,7 +29,7 @@ symbol "coffeeInfo(codeOrAST)"
 			} from '@jdeighan/llutils'
 		"""
 	equal coffeeInfo(code).hImports, {
-		'@jdeighan/llutils': words('undef defined notdefined')
+		'@jdeighan/llutils': new Set(['undef','defined','notdefined'])
 		}
 	)()
 
@@ -45,8 +43,8 @@ symbol "coffeeInfo(codeOrAST)"
 		import {withExt} from '@jdeighan/llutils/fs'
 		"""
 	equal coffeeInfo(code).hImports, {
-		'@jdeighan/llutils': words('undef defined notdefined')
-		'@jdeighan/llutils/fs': ['withExt']
+		'@jdeighan/llutils': new Set(['undef','defined','notdefined'])
+		'@jdeighan/llutils/fs': new Set(['withExt'])
 		}
 	)()
 
@@ -56,7 +54,7 @@ symbol "coffeeInfo(codeOrAST)"
 	code = """
 		export x = 42
 		"""
-	equal coffeeInfo(code).lExports, ['x']
+	equal coffeeInfo(code).setExports, new Set(['x'])
 	)()
 
 # ---------------------------------------------------------------------------
@@ -73,6 +71,6 @@ fails () => coffeeInfo("""
 		export x = 42
 		export y = func(33)
 		"""
-	equal coffeeInfo(code).lExports, ['x','y']
+	equal coffeeInfo(code).setExports, new Set(['x','y'])
 	)()
 

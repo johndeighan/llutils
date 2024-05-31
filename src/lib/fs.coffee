@@ -8,7 +8,7 @@ import NReadLines from 'n-readlines'
 
 import {
 	undef, defined, notdefined, words, isString, OL,
-	assert, croak, arrayToBlock, getOptions,
+	assert, croak, arrayToBlock, getOptions, sliceBlock,
 	} from '@jdeighan/llutils'
 import {
 	isMetaDataStart, convertMetaData,
@@ -285,7 +285,12 @@ export subPath = (path, name="temp") =>
 # ---------------------------------------------------------------------------
 #   slurp - read a file into a string
 
-export slurp = (filePath, hOptions) =>
+export slurp = (filePath, hOptions={}) =>
+
+	{numLines, start} = getOptions hOptions, {
+		numLines: undef
+		start: 0
+		}
 
 	assert isString(filePath, 'nonEmpty'), "empty path"
 	filePath = mkpath(filePath)
@@ -293,8 +298,19 @@ export slurp = (filePath, hOptions) =>
 	block = fs.readFileSync(filePath, 'utf8') \
 			.toString() \
 			.replaceAll('\r', '')
-	return block
+	if defined(numLines)
+		return sliceBlock(block, numLines, 0)
+	else if (start > 0)
+		return sliceBlock(block, numLines, 0)
+	else
+		return block
 
+# ---------------------------------------------------------------------------
+#   sliceFile - read a section of a file
+
+export sliceFile = (filePath, numLines, start=0) =>
+
+	block = slurp(filePath)
 # ---------------------------------------------------------------------------
 #   barf - write a string to a file
 #          will ensure that all necessary directories exist

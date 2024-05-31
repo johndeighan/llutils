@@ -828,4 +828,23 @@ equal(toTAML([
 - key: fName
 	value: John`);
 
+// ---------------------------------------------------------------------------
+symbol("sliceBlock(block)");
+
+(() => {
+  var block;
+  block = `aaa
+bbb
+ccc
+ddd
+eee`;
+  equal(sliceBlock(block, 0, 3), `aaa
+bbb
+ccc`);
+  equal(sliceBlock(block, 1, 4), `bbb
+ccc
+ddd`);
+  return equal(sliceBlock(block, 3, 4), `ddd`);
+})();
+
 //# sourceMappingURL=llutils.test.js.map

@@ -9,7 +9,8 @@ import {
   hasKey,
   dclone,
   assert,
-  words
+  words,
+  fromTAML
 } from '@jdeighan/llutils';
 
 import {
@@ -109,6 +110,55 @@ equal(parsePath("right"), [['right', '']]);
 
 // ---------------------------------------------------------------------------
 symbol("NodeWalker");
+
+(() => {
+  var hNode, walker;
+  hNode = fromTAML(`---
+type: ExportNamedDeclaration
+declaration:
+	type: AssignmentExpression
+	right:
+		type: ArrowFunctionExpression
+		params:
+			- type: Identifier
+				name: x
+				declaration: false
+		body:
+			type: BlockStatement
+			body:
+				- type: ReturnStatement
+					argument:
+						type: BinaryExpression
+						left:
+							type: NumericLiteral
+							value: 42
+						right:
+							type: Identifier
+							name: x
+							declaration: false
+						operator: +
+		generator: false
+		async: false
+		id: null
+		hasIndentedBody: true
+	left:
+		type: Identifier
+		name: func
+		declaration: true
+	operator: =`);
+  walker = new NodeWalker();
+  walker.walk(hNode);
+  return equal(walker.getTrace(), `ExportNamedDeclaration
+	declaration: AssignmentExpression
+		right: ArrowFunctionExpression
+			params: Identifier
+			body: BlockStatement
+				body: ReturnStatement
+					argument: BinaryExpression
+						left: NumericLiteral
+						right: Identifier
+		left: Identifier`);
+})();
 
 // --- A counter walks an AST and
 //     counts the number of nodes of each type

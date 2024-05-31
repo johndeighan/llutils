@@ -21,7 +21,8 @@ import {
   assert,
   croak,
   arrayToBlock,
-  getOptions
+  getOptions,
+  sliceBlock
 } from '@jdeighan/llutils';
 
 import {
@@ -295,13 +296,30 @@ export var subPath = (path, name = "temp") => {
 
 // ---------------------------------------------------------------------------
 //   slurp - read a file into a string
-export var slurp = (filePath, hOptions) => {
-  var block;
+export var slurp = (filePath, hOptions = {}) => {
+  var block, numLines, start;
+  ({numLines, start} = getOptions(hOptions, {
+    numLines: undef,
+    start: 0
+  }));
   assert(isString(filePath, 'nonEmpty'), "empty path");
   filePath = mkpath(filePath);
   assert(isFile(filePath), `Not a file: ${OL(filePath)}`);
   block = fs.readFileSync(filePath, 'utf8').toString().replaceAll('\r', '');
-  return block;
+  if (defined(numLines)) {
+    return sliceBlock(block, numLines, 0);
+  } else if (start > 0) {
+    return sliceBlock(block, numLines, 0);
+  } else {
+    return block;
+  }
+};
+
+// ---------------------------------------------------------------------------
+//   sliceFile - read a section of a file
+export var sliceFile = (filePath, numLines, start = 0) => {
+  var block;
+  return block = slurp(filePath);
 };
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,4 @@
-// node-walker.coffee
-var hasProp = {}.hasOwnProperty;
-
+  // node-walker.coffee
 import {
   undef,
   defined,
@@ -158,9 +156,10 @@ export var NodeWalker = class NodeWalker {
   
     // ..........................................................
   visitChildren(hNode) {
-    var j, key, len, value;
-    for (key in hNode) {
-      if (!hasProp.call(hNode, key)) continue;
+    var h, j, k, key, lKeys, len, len1, value;
+    lKeys = keys(hNode);
+    for (j = 0, len = lKeys.length; j < len; j++) {
+      key = lKeys[j];
       value = hNode[key];
       this.lStack.push({key, hNode});
       if (this.isNode(value)) {
@@ -168,11 +167,11 @@ export var NodeWalker = class NodeWalker {
         this.visitChildren(value);
         this.end(value);
       } else if (this.isArrayOfNodes(value)) {
-        for (j = 0, len = value.length; j < len; j++) {
-          hNode = value[j];
-          this.visit(hNode.type, hNode);
-          this.visitChildren(hNode);
-          this.end(hNode);
+        for (k = 0, len1 = value.length; k < len1; k++) {
+          h = value[k];
+          this.visit(h.type, h);
+          this.visitChildren(h);
+          this.end(h);
         }
       }
       this.lStack.pop();

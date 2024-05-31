@@ -62,4 +62,45 @@ fails(() => {
   return toAST('let v = 5');
 });
 
+// ---------------------------------------------------------------------------
+symbol("coffeeInfo(hAST)");
+
+(() => {
+  var code;
+  code = `import {undef, defined} from '@jdeighan/llutils'`;
+  return like(coffeeInfo(code), {
+    hImports: {
+      '@jdeighan/llutils': new Set(['undef', 'defined'])
+    }
+  });
+})();
+
+(() => {
+  var code;
+  code = `import {undef} from '@jdeighan/llutils'
+import {LOG} from '@jdeighan/llutils/log'`;
+  return like(coffeeInfo(code), {
+    hImports: {
+      '@jdeighan/llutils': new Set(['undef']),
+      '@jdeighan/llutils/log': new Set(['LOG'])
+    }
+  });
+})();
+
+(() => {
+  var code;
+  code = `export meaning = 42`;
+  return like(coffeeInfo(code), {
+    setExports: new Set(['meaning'])
+  });
+})();
+
+(() => {
+  var code;
+  code = `x = a`;
+  return like(coffeeInfo(code), {
+    setUsed: new Set(['a'])
+  });
+})();
+
 //# sourceMappingURL=coffee.test.js.map

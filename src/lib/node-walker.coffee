@@ -128,17 +128,19 @@ export class NodeWalker
 
 	visitChildren: (hNode) ->
 
-		for own key,value of hNode
+		lKeys = keys(hNode)
+		for key in lKeys
+			value = hNode[key]
 			@lStack.push {key, hNode}
 			if @isNode(value)
 				@visit value.type, value
 				@visitChildren value
 				@end value
 			else if @isArrayOfNodes(value)
-				for hNode in value
-					@visit hNode.type, hNode
-					@visitChildren hNode
-					@end hNode
+				for h in value
+					@visit h.type, h
+					@visitChildren h
+					@end h
 			@lStack.pop()
 		return
 

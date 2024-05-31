@@ -76,8 +76,16 @@ export var croak = (msg) => {
 };
 
 // ---------------------------------------------------------------------------
-export var defined = (obj) => {
-  return (obj !== undef) && (obj !== null);
+// returns true if all args defined
+export var defined = (...lObjs) => {
+  var j, len1, obj;
+  for (j = 0, len1 = lObjs.length; j < len1; j++) {
+    obj = lObjs[j];
+    if ((obj === undef) || (obj === null)) {
+      return false;
+    }
+  }
+  return true;
 };
 
 // ---------------------------------------------------------------------------
@@ -328,15 +336,26 @@ export var escapeBlock = (block) => {
 };
 
 // ---------------------------------------------------------------------------
+// --- Can't use getOptions() !!!!!
 export var OL = (obj, hOptions = {}) => {
-  var finalResult, myReplacer, result;
+  var esc, finalResult, myReplacer, result, short;
   if (obj === undef) {
     return 'undef';
   }
   if (obj === null) {
     return 'null';
   }
-  if (hOptions.short) {
+  if (hOptions.hasOwnProperty('esc')) {
+    esc = hOptions.esc;
+  } else {
+    esc = true;
+  }
+  if (hOptions.hasOwnProperty('short')) {
+    short = hOptions.short;
+  } else {
+    short = false;
+  }
+  if (short) {
     if (isHash(obj)) {
       return 'HASH';
     }
@@ -370,7 +389,12 @@ export var OL = (obj, hOptions = {}) => {
         break;
       case 'string':
         // --- NOTE: JSON.stringify will add quote chars
-        return escapeStr(x);
+        if (esc) {
+          return escapeStr(x);
+        } else {
+          return x;
+        }
+        break;
       case 'object':
         if (x instanceof RegExp) {
           return `«RegExp ${x.toString()}»`;
@@ -757,9 +781,9 @@ export var rtrim = (line) => {
 // ---------------------------------------------------------------------------
 export var DUMP = (item, label = 'RESULT', hOptions = {}) => {
   var esc, format, header, str, width;
-  width = 40;
-  ({esc, format} = getOptions(hOptions, {
+  ({esc, width, format} = getOptions(hOptions, {
     esc: false,
+    width: 50,
     format: undef // --- can be 'JSON', 'TAML'
   }));
   label = label.replace('_', ' ');
@@ -923,5 +947,13 @@ export var toTAML = function(ds) {
 };
 
 // ---------------------------------------------------------------------------
+export var sliceBlock = function(block, start = 0, end = undef) {
+  var lLines;
+  lLines = toArray(block);
+  if (notdefined(end)) {
+    end = lLines.length;
+  }
+  return toBlock(lLines.slice(start, end));
+};
 
 //# sourceMappingURL=llutils.js.map

@@ -622,4 +622,31 @@ equal toTAML([13, {key: 'fName', value: 'John'}]), """
 	- key: fName
 		value: John
 	"""
+# ---------------------------------------------------------------------------
+symbol "sliceBlock(block)"
 
+(() =>
+	block = """
+		aaa
+		bbb
+		ccc
+		ddd
+		eee
+		"""
+
+	equal sliceBlock(block, 0, 3), """
+		aaa
+		bbb
+		ccc
+		"""
+
+	equal sliceBlock(block, 1, 4), """
+		bbb
+		ccc
+		ddd
+		"""
+
+	equal sliceBlock(block, 3, 4), """
+		ddd
+		"""
+)()

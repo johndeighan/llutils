@@ -29,7 +29,7 @@ symbol("coffeeInfo(codeOrAST)");
   code = `export x = y
 export func1 = (arg) => return 13
 export func2 = (arg) -> return 13`;
-  return equal(coffeeInfo(code).lExports, ['x', 'func1', 'func2']);
+  return equal(coffeeInfo(code).setExports, new Set(['x', 'func1', 'func2']));
 })();
 
 (() => {
@@ -38,7 +38,7 @@ export func2 = (arg) -> return 13`;
 	undef, defined, notdefined,
 	} from '@jdeighan/llutils'`;
   return equal(coffeeInfo(code).hImports, {
-    '@jdeighan/llutils': words('undef defined notdefined')
+    '@jdeighan/llutils': new Set(['undef', 'defined', 'notdefined'])
   });
 })();
 
@@ -50,8 +50,8 @@ export func2 = (arg) -> return 13`;
 	} from '@jdeighan/llutils'
 import {withExt} from '@jdeighan/llutils/fs'`;
   return equal(coffeeInfo(code).hImports, {
-    '@jdeighan/llutils': words('undef defined notdefined'),
-    '@jdeighan/llutils/fs': ['withExt']
+    '@jdeighan/llutils': new Set(['undef', 'defined', 'notdefined']),
+    '@jdeighan/llutils/fs': new Set(['withExt'])
   });
 })();
 
@@ -59,7 +59,7 @@ import {withExt} from '@jdeighan/llutils/fs'`;
 (() => {
   var code;
   code = `export x = 42`;
-  return equal(coffeeInfo(code).lExports, ['x']);
+  return equal(coffeeInfo(code).setExports, new Set(['x']));
 })();
 
 // ---------------------------------------------------------------------------
@@ -73,7 +73,7 @@ export x = 42`);
   var code;
   code = `export x = 42
 export y = func(33)`;
-  return equal(coffeeInfo(code).lExports, ['x', 'y']);
+  return equal(coffeeInfo(code).setExports, new Set(['x', 'y']));
 })();
 
 //# sourceMappingURL=ast-walker.test.js.map

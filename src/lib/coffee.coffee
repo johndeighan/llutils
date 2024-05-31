@@ -134,21 +134,20 @@ export toASTFile = (code, filePath, hOptions={}) ->
 
 # ---------------------------------------------------------------------------
 
-export coffeeInfo = (codeOrAST, hOptions={}) =>
+export coffeeInfo = (hAST, hOptions={}) =>
 
 	{debug} = getOptions hOptions, {
 		debug: false
 		}
 
-	if isString(codeOrAST)
-		hAST = toAST(codeOrAST)
-	else
-		hAST = codeOrAST
+	if isString(hAST)
+		hAST = toAST(hAST)
 	walker = new ASTWalker().walk(hAST)
 	return {
 		hAST
+		trace: walker.getTrace()
 		hImports: walker.hImports
-		lExports: walker.lExports
-		lUsed: walker.lUsed
-		lNeeded: walker.getNeeded()
+		setExports: walker.setExports
+		setUsed: walker.setUsed
+		setMissing: walker.getMissing()
 		}

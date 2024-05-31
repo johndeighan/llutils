@@ -67,10 +67,14 @@ export croak = (msg) =>
 	return true
 
 # ---------------------------------------------------------------------------
+# returns true if all args defined
 
-export defined = (obj) =>
+export defined = (...lObjs) =>
 
-	return (obj != undef) && (obj != null)
+	for obj in lObjs
+		if (obj == undef) || (obj == null)
+			return false
+	return true
 
 # ---------------------------------------------------------------------------
 
@@ -295,13 +299,24 @@ export escapeBlock = (block) =>
 	return escapeStr(block, 'escNoNL')
 
 # ---------------------------------------------------------------------------
+# --- Can't use getOptions() !!!!!
 
 export OL = (obj, hOptions={}) =>
 
 	if (obj == undef) then return 'undef'
 	if (obj == null) then return 'null'
 
-	if hOptions.short
+	if hOptions.hasOwnProperty('esc')
+		esc = hOptions.esc
+	else
+		esc = true
+
+	if hOptions.hasOwnProperty('short')
+		short = hOptions.short
+	else
+		short = false
+
+	if short
 		if isHash(obj) then return 'HASH'
 		if isArray(obj) then return 'ARRAY'
 		if isFunction(obj) then return 'FUNCTION'
@@ -323,7 +338,10 @@ export OL = (obj, hOptions={}) =>
 					return "«#{tag}»"
 			when 'string'
 				# --- NOTE: JSON.stringify will add quote chars
-				return escapeStr(x)
+				if esc
+					return escapeStr(x)
+				else
+					return x
 			when 'object'
 				if x instanceof RegExp
 					return "«RegExp #{x.toString()}»"
@@ -680,9 +698,9 @@ export rtrim = (line) =>
 
 export DUMP = (item, label='RESULT', hOptions={}) =>
 
-	width = 40
-	{esc, format} = getOptions hOptions, {
+	{esc, width, format} = getOptions hOptions, {
 		esc: false
+		width: 50
 		format: undef    # --- can be 'JSON', 'TAML'
 		}
 
@@ -842,3 +860,9 @@ export toTAML = (ds) ->
 
 # ---------------------------------------------------------------------------
 
+export sliceBlock = (block, start=0, end=undef) ->
+
+	lLines = toArray(block)
+	if notdefined(end)
+		end = lLines.length
+	return toBlock(lLines.slice(start, end))

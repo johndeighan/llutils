@@ -22,72 +22,165 @@ import {
 export var ASTWalker = class ASTWalker extends NodeWalker {
   init() {
     super.init();
-    this.hImports = {}; // --- {<src>: [<ident>,...], ...}
-    this.lExports = [];
-    return this.lUsed = [];
+    this.lEnvironments = []; // --- stack of Set objects
+    this.hImports = {}; // --- {<src>: <Set obj>, ...}
+    this.setExports = new Set();
+    return this.setUsed = new Set();
   }
 
   // ..........................................................
-  addImport(src, ident) {
-    if (hasKey(this.hImports, src)) {
-      assert(!this.hImports[src].includes(ident), `Import already declared: ${OL(ident)}`);
-      this.hImports[src].push(ident);
-    } else {
-      this.hImports[src] = [ident];
-    }
+  pushEnv(set) {
+    this.lEnvironments.push(set);
   }
 
   // ..........................................................
-  addExport(ident) {
-    assert(!this.lExports.includes(ident), `Export already declared: ${OL(ident)}`);
-    this.lExports.push(ident);
+  popEnv() {
+    return this.lEnvironments.pop();
   }
 
   // ..........................................................
-  addUsed(ident) {
-    assert(!this.lUsed.includes(ident), `Used symbol already declared: ${OL(ident)}`);
-    this.lUsed.push(ident);
-  }
-
-  // ..........................................................
-  getNeeded() {
-    var i, lNeeded, len, ref, src;
-    lNeeded = dclone(this.lUsed);
-    ref = keys(this.hImports);
+  inEnv(name) {
+    var i, len, ref, set;
+    ref = this.lEnvironments;
     for (i = 0, len = ref.length; i < len; i++) {
-      src = ref[i];
-      lNeeded = listdiff(lNeeded, this.hImports[src]);
+      set = ref[i];
+      if (set.has(name)) {
+        return true;
+      }
     }
-    return lNeeded;
+    return false;
+  }
+
+  // ..........................................................
+  addUsed(name) {
+    if (!this.inEnv(name)) {
+      this.setUsed.add(name);
+    }
+  }
+
+  // ..........................................................
+  addImport(src, name) {
+    if (hasKey(this.hImports, src)) {
+      this.hImports[src].add(name);
+    } else {
+      this.hImports[src] = new Set([name]);
+    }
+  }
+
+  // ..........................................................
+  addExport(name) {
+    assert(!this.setExports.has(name), `Export already declared: ${OL(name)}`);
+    this.setExports.add(name);
+  }
+
+  // ..........................................................
+  getMissing() {
+    var i, len, ref, ref1, ref2, setMissing, src, val;
+    setMissing = new Set();
+    ref = this.setUsed.values();
+    for (val of ref) {
+      setMissing.add(val);
+    }
+    ref1 = keys(this.hImports);
+    for (i = 0, len = ref1.length; i < len; i++) {
+      src = ref1[i];
+      ref2 = this.hImports[src].values();
+      for (val of ref2) {
+        setMissing.delete(val);
+      }
+    }
+    return setMissing;
+  }
+
+  // ..........................................................
+  analyzeExpr(type, hNode) {
+    var left, operator, right;
+    // --- Add all identifiers used in this expression
+    switch (type) {
+      case 'AssignmentExpression':
+        ({left, operator, right} = hNode);
+        if (right.type === 'Identifier') {
+          this.addUsed(right.name);
+        }
+    }
+  }
+
+  // ..........................................................
+  end(type, hNode) {
+    switch (type) {
+      case 'ArrowFunctionExpression':
+        this.popEnv();
+    }
   }
 
   // ..........................................................
   //    @level() gives you the level
   //    @lStack is stack of {key, hNode} to get parents
   visit(type, hNode) {
-    var name, src;
+    var declaration, exportKind, expression, i, importKind, imported, j, left, len, len1, operator, params, parm, results, right, set, source, spec, specifiers, src;
     super.visit(type, hNode);
     switch (type) {
-      case 'Identifier':
-        assert(hasKey(hNode, 'name'), `No name key: ${OL(hNode)}`);
-        ({name} = hNode);
-        if (this.debug) {
-          console.log(`Identifier: ${OL(name)}`);
-          this.dumpStack();
+      case 'ImportDeclaration':
+        ({importKind, specifiers, source} = hNode);
+        if (importKind !== 'value') {
+          return;
         }
-        if (this.stackMatches(`imported: ImportSpecifier
-specifiers: ImportDeclaration`)) {
-          src = this.lStack.at(-2).hNode.source.value;
-          this.addImport(src, name);
+        if (source.type !== 'StringLiteral') {
+          return;
         }
-        if (this.stackMatches(`right: AssignmentExpression
-declaration: ExportNamedDeclaration`)) {
-          this.addUsed(name);
+        src = source.value;
+        results = [];
+        for (i = 0, len = specifiers.length; i < len; i++) {
+          spec = specifiers[i];
+          ({type, imported} = spec);
+          if (type !== 'ImportSpecifier') {
+            continue;
+          }
+          if ((imported != null ? imported.type : void 0) === 'Identifier') {
+            results.push(this.addImport(src, imported.name));
+          } else {
+            results.push(void 0);
+          }
         }
-        if (this.stackMatches(`left: AssignmentExpression
-declaration: ExportNamedDeclaration`)) {
-          return this.addExport(name);
+        return results;
+        break;
+      case 'ExportNamedDeclaration':
+        ({exportKind, declaration} = hNode);
+        if (exportKind !== 'value') {
+          return;
         }
+        if (notdefined(declaration)) {
+          return;
+        }
+        ({type, left, right} = declaration);
+        if (left.type === 'Identifier') {
+          return this.addExport(left.name);
+        }
+        break;
+      case 'ExpressionStatement':
+        ({expression} = hNode);
+        return this.analyzeExpr(expression.type, expression);
+      case 'BinaryExpression':
+        ({left, operator, right} = hNode);
+        if (left.type === 'Identifier') {
+          this.addUsed(left.name);
+        }
+        if (right.type === 'Identifier') {
+          return this.addUsed(right.name);
+        }
+        break;
+      case 'ArrowFunctionExpression':
+        ({params} = hNode);
+        set = new Set();
+        if (defined(params)) {
+          for (j = 0, len1 = params.length; j < len1; j++) {
+            parm = params[j];
+            if (parm.type === 'Identifier') {
+              set.add(parm.name);
+            }
+          }
+        }
+        return this.pushEnv(set);
     }
   }
 

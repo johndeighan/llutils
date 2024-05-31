@@ -162,23 +162,22 @@ export var toASTFile = function(code, filePath, hOptions = {}) {
 };
 
 // ---------------------------------------------------------------------------
-export var coffeeInfo = (codeOrAST, hOptions = {}) => {
-  var debug, hAST, walker;
+export var coffeeInfo = (hAST, hOptions = {}) => {
+  var debug, walker;
   ({debug} = getOptions(hOptions, {
     debug: false
   }));
-  if (isString(codeOrAST)) {
-    hAST = toAST(codeOrAST);
-  } else {
-    hAST = codeOrAST;
+  if (isString(hAST)) {
+    hAST = toAST(hAST);
   }
   walker = new ASTWalker().walk(hAST);
   return {
     hAST,
+    trace: walker.getTrace(),
     hImports: walker.hImports,
-    lExports: walker.lExports,
-    lUsed: walker.lUsed,
-    lNeeded: walker.getNeeded()
+    setExports: walker.setExports,
+    setUsed: walker.setUsed,
+    setMissing: walker.getMissing()
   };
 };
 
