@@ -17,10 +17,13 @@ import {
   isArray,
   isHash,
   isEmpty,
-  DUMP,
   hasKey,
   keys
 } from '@jdeighan/llutils';
+
+import {
+  DUMP
+} from '@jdeighan/llutils/dump';
 
 import {
   indented,

@@ -2,8 +2,9 @@
 
 import {
 	undef, defined, notdefined, listdiff, hasKey,
-	assert, croak, DUMP, dclone, keys, OL,
+	assert, croak, dclone, keys, OL,
 	} from '@jdeighan/llutils'
+import {DUMP} from '@jdeighan/llutils/dump'
 import {
 	NodeWalker, stackMatches,
 	} from '@jdeighan/llutils/node-walker'

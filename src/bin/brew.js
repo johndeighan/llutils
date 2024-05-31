@@ -5,9 +5,12 @@ var main;
 
 import {
   defined,
-  assert,
-  DUMP
+  assert
 } from '@jdeighan/llutils';
+
+import {
+  DUMP
+} from '@jdeighan/llutils/dump';
 
 import {
   slurp

@@ -14,7 +14,6 @@ import {
   words,
   assert,
   croak,
-  DUMP,
   OL,
   dclone,
   getOptions,
@@ -25,6 +24,10 @@ import {
   isFunction,
   removeKeys
 } from '@jdeighan/llutils';
+
+import {
+  DUMP
+} from '@jdeighan/llutils/dump';
 
 import {
   indented,

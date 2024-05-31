@@ -30,7 +30,6 @@
 	  hasKey,
 	  keys,
 	  OL,
-	  DUMP,
 	  words,
 	  add_s,
 	  assert,
@@ -42,6 +41,10 @@
 	  isBoolean,
 	  isArray
 	} from '@jdeighan/llutils';
+
+	import {
+	  DUMP
+	} from '@jdeighan/llutils/dump';
 
 	import {
 	  getTracer

@@ -1,10 +1,11 @@
 # fetcher.coffee
 
 import {
-	undef, defined, notdefined, OL, escapeStr, DUMP,
+	undef, defined, notdefined, OL, escapeStr,
 	blockToArray, arrayToBlock, getOptions,
 	assert, croak, isEmpty, nonEmpty,
 	} from '@jdeighan/llutils'
+import {DUMP} from '@jdeighan/llutils/dump'
 import {
 	indentLevel, indented, undented, splitLine,
 	} from '@jdeighan/llutils/indent'

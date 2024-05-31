@@ -5,9 +5,10 @@ import {compile} from 'coffeescript'
 
 import {
 	pass, undef, defined, notdefined, gen2block, words,
-	assert, croak, DUMP, OL, dclone, getOptions, listdiff,
+	assert, croak, OL, dclone, getOptions, listdiff,
 	isString, isArray, isHash, isFunction, removeKeys,
 	} from '@jdeighan/llutils'
+import {DUMP} from '@jdeighan/llutils/dump'
 import {indented, splitLine} from '@jdeighan/llutils/indent'
 import {
 	readTextFile, barf, withExt, isFile,

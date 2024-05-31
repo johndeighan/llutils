@@ -29,13 +29,16 @@ import {
   assert,
   croak,
   OL,
-  DUMP,
   js2uri,
   ML,
   keys,
   pass,
   eq
 } from '@jdeighan/llutils';
+
+import {
+  DUMP
+} from '@jdeighan/llutils/dump';
 
 import {
   indentLevel,

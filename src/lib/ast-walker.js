@@ -7,11 +7,14 @@ import {
   hasKey,
   assert,
   croak,
-  DUMP,
   dclone,
   keys,
   OL
 } from '@jdeighan/llutils';
+
+import {
+  DUMP
+} from '@jdeighan/llutils/dump';
 
 import {
   NodeWalker,

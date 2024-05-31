@@ -5,7 +5,6 @@ import {
   notdefined,
   OL,
   escapeStr,
-  DUMP,
   blockToArray,
   arrayToBlock,
   getOptions,
@@ -14,6 +13,10 @@ import {
   isEmpty,
   nonEmpty
 } from '@jdeighan/llutils';
+
+import {
+  DUMP
+} from '@jdeighan/llutils/dump';
 
 import {
   indentLevel,

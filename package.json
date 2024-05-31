@@ -19,6 +19,8 @@
 		"./peggy": "./src/lib/peggy.js",
 		"./cmd-args": "./src/lib/cmd-args.js",
 		"./heredoc": "./src/lib/heredoc.js",
+		"./to-nice": "./src/lib/to-nice.js",
+		"./dump": "./src/lib/dump.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {

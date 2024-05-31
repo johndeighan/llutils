@@ -2,7 +2,8 @@
 #
 # --- designed to be a TextPad tool
 
-import {defined, assert, DUMP} from '@jdeighan/llutils'
+import {defined, assert} from '@jdeighan/llutils'
+import {DUMP} from '@jdeighan/llutils/dump'
 import {slurp} from '@jdeighan/llutils/fs'
 import {brew} from '@jdeighan/llutils/coffee'
 

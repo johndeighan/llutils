@@ -3,9 +3,10 @@
 import {
 	undef, defined, notdefined, OL, getOptions, LOG,
 	assert, croak, dclone, range, rev_range, centered, leftAligned,
-	isString, isArray, isHash, isEmpty, DUMP,
+	isString, isArray, isHash, isEmpty,
 	hasKey, keys,
 	} from '@jdeighan/llutils'
+import {DUMP} from '@jdeighan/llutils/dump'
 import {indented, undented} from '@jdeighan/llutils/indent'
 
 # ---------------------------------------------------------------------------

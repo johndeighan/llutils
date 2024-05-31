@@ -89,6 +89,19 @@ export var defined = (...lObjs) => {
 };
 
 // ---------------------------------------------------------------------------
+// returns true if any args defined
+export var anyDefined = (...lObjs) => {
+  var j, len1, obj;
+  for (j = 0, len1 = lObjs.length; j < len1; j++) {
+    obj = lObjs[j];
+    if ((obj !== undef) && (obj !== null)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// ---------------------------------------------------------------------------
 export var notdefined = (obj) => {
   return (obj === undef) || (obj === null);
 };
@@ -241,6 +254,26 @@ export var isClass = (x) => {
 };
 
 // ---------------------------------------------------------------------------
+export var className = (x) => {
+  var lMatches, text;
+  // --- item can be a class or an object
+  if (isClass(x)) {
+    text = x.toString();
+    if (lMatches = text.match(/class\s+(\w+)/)) {
+      return lMatches[1];
+    } else if (lMatches = text.match(/class/)) {
+      return undef;
+    } else {
+      throw new Error("className(): Bad input class");
+    }
+  } else if (isClassInstance(x)) {
+    return x.constructor.name;
+  } else {
+    return undef;
+  }
+};
+
+// ---------------------------------------------------------------------------
 export var isPromise = (x) => {
   if (typeof x !== 'object') {
     return false;
@@ -382,9 +415,9 @@ export var OL = (obj, hOptions = {}) => {
           tag = 'Function';
         }
         if (defined(x.name)) {
-          return `«${tag} ${x.name}»`;
+          return `.${tag} ${x.name}.`;
         } else {
-          return `«${tag}»`;
+          return `.${tag}.`;
         }
         break;
       case 'string':
@@ -397,10 +430,10 @@ export var OL = (obj, hOptions = {}) => {
         break;
       case 'object':
         if (x instanceof RegExp) {
-          return `«RegExp ${x.toString()}»`;
+          return `.RegExp ${x.toString()}.`;
         }
         if (defined(x) && (typeof x.then === 'function')) {
-          return "«Promise»";
+          return ".Promise.";
         } else {
           return x;
         }
@@ -411,8 +444,8 @@ export var OL = (obj, hOptions = {}) => {
   };
   result = JSON.stringify(obj, myReplacer);
   // --- Because JSON.stringify adds quote marks,
-  //     we remove them when using « and »
-  finalResult = result.replaceAll('"«', '«').replaceAll('»"', '»');
+  //     we remove them when using .
+  finalResult = result.replaceAll('".', '.').replaceAll('."', '.');
   return finalResult;
 };
 
@@ -779,45 +812,17 @@ export var rtrim = (line) => {
 };
 
 // ---------------------------------------------------------------------------
-export var DUMP = (item, label = 'RESULT', hOptions = {}) => {
-  var esc, format, header, str, width;
-  ({esc, width, format} = getOptions(hOptions, {
-    esc: false,
-    width: 50,
-    format: undef // --- can be 'JSON', 'TAML'
-  }));
-  label = label.replace('_', ' ');
-  if (defined(format)) {
-    console.log(centered(`${label} (as ${format})`, width, 'char=-'));
-    switch (format) {
-      case 'JSON':
-        console.log(untabify(JSON.stringify(item, undef, 3)));
-        break;
-      case 'TAML':
-        console.log(untabify(toTAML(item)));
-        break;
-      default:
-        croak(`Bad format: ${OL(format)}`);
-    }
-    console.log('-'.repeat(width));
-    return;
-  }
-  str = OL(item);
-  if (str.length <= width) {
-    console.log(`${label} = ${str}`);
-  } else if (isString(item)) {
-    header = centered(label, width, 'char=-');
-    console.log(header);
-    if (esc) {
-      console.log(escapeBlock(item));
+// --- Always logs using console.log, therefore
+//     strings are untabified
+export var log = (...lItems) => {
+  var j, len1, x;
+  for (j = 0, len1 = lItems.length; j < len1; j++) {
+    x = lItems[j];
+    if (isString(x)) {
+      console.log(untabify(x));
     } else {
-      console.log(untabify(item));
+      console.log(x);
     }
-    console.log('-'.repeat(width));
-  } else {
-    console.log(centered(`${label} (as TAML)`, width, 'char=-'));
-    console.log(untabify(toTAML(item)));
-    console.log('-'.repeat(width));
   }
 };
 
@@ -943,7 +948,12 @@ export var fromTAML = function(block) {
 
 // ---------------------------------------------------------------------------
 export var toTAML = function(ds) {
-  return chomp("---\n" + tabify(YAML.stringify(ds)));
+  var str;
+  str = YAML.stringify(ds, {
+    keepUndef: true,
+    simpleKeys: true
+  });
+  return chomp("---\n" + tabify(str));
 };
 
 // ---------------------------------------------------------------------------

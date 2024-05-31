@@ -7,10 +7,11 @@ GLOBAL
 
 	import {
 		undef, defined, notdefined, pass, isEmpty,
-		hasKey, keys, OL, DUMP, words, add_s,
+		hasKey, keys, OL, words, add_s,
 		assert, croak, getOptions, mkString,
 		isString, isFunction, isBoolean, isArray,
 		} from '@jdeighan/llutils'
+	import {DUMP} from '@jdeighan/llutils/dump'
 	import {getTracer} from '@jdeighan/llutils/peggy'
 
 	hOptions = {}
