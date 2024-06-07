@@ -78,16 +78,15 @@ desc
 	= result: expr
 
 		& {
-			// --- name is always defined
-			//     obj might not be defined
-			//     store indicates whether we should store it
-			// NOTE: If store is true, obj is defined
+			// --- if name is undef, we're not storing it
+			//     if obj is undef, it wasn't found but was optional
+			// NOTE: name is defined => obj is defined
 
-			let obj = result[1];
+			let [name, obj] = result;
+			lStack.push(obj)
 
 			// --- NOTE: obj may be undef
 			//           in that case, there should be no 'more'
-			lStack.push(obj)
 			return true;
 			}
 
@@ -95,9 +94,10 @@ desc
 
 		{
 			lStack.pop();
-			let [name, obj, store] = result;
-			let hResult = store ? {[name]: obj} : {};
+			let [name, obj] = result;
+			let hResult = defined(name) ? {[name]: obj} : {};
 			if (defined(hMore)) {
+				assert(defined(obj), "obj undef, but more found");
 				mergeKeys(hResult, hMore);
 				}
 			return hResult;
@@ -165,7 +165,11 @@ expr
 				}
 			store = false;
 			}
-		return [name, obj, store];
+
+		if (store)
+			return [name, obj]
+		else
+			return [undef, obj]
 		}
 
 
