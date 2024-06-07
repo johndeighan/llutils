@@ -1,5 +1,5 @@
 // peggy.coffee
-var MyTracer, Tracer, hCodeConverters;
+var hCodeConverters;
 
 import pathLib from 'node:path';
 
@@ -70,6 +70,12 @@ import {
   SectionMap
 } from '@jdeighan/llutils/section-map';
 
+import {
+  getTracer
+} from '@jdeighan/llutils/tracer';
+
+assert(isFunction(brew), `brew is not a function: ${OL(brew)}`);
+
 // --- code converter is applied to each code block in a peggy file
 //     using type: 'javascript' allows you to use indentation syntax
 //        for everything but the code blocks
@@ -107,7 +113,7 @@ export var getParser = async(filePath, hOptions = {}) => {
     var hParseOptions, start, tracer;
     // --- Valid options:
     //        start - what is the start rule (usually first rule)
-    //        tracer - 'none','peggy','default'
+    //        tracer - 'none','peggy','default' or function
     ({start, tracer} = getOptions(hOptions, {
       start: undef, //     name of start rule
       tracer: 'none' // --- can be none/peggy/default/a function
@@ -118,13 +124,9 @@ export var getParser = async(filePath, hOptions = {}) => {
     }
     switch (tracer) {
       case 'none':
-        hParseOptions.tracer = new Tracer();
-        break;
       case 'peggy':
-        pass();
-        break;
       case 'default':
-        hParseOptions.tracer = new MyTracer();
+        hParseOptions.tracer = getTracer(tracer);
         break;
       default:
         assert(isFunction(tracer), "tracer not a function");
@@ -140,7 +142,7 @@ export var getParser = async(filePath, hOptions = {}) => {
 //       - 'type' (usually 'coffee')
 //       - 'trace' (default: true)
 export var peggify = (code, hMetaData = {}, filePath = undef) => {
-  var debug, js, peggyCode, trace, type;
+  var debug, grammarSource, js, map, peggyCode, sourceMap, sourceNode, trace, type;
   assert(isString(code), `code not a string: ${typeof code}`);
   // --- type determines which preprocessor to use, if any
   ({type, debug, trace} = getOptions(hMetaData, {
@@ -152,39 +154,60 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
     console.log(`peggify() ${OL(filePath)}`);
   }
   // --- preprocess code if required
+  if (defined(filePath)) {
+    grammarSource = withExt(filePath, '.pegjs');
+  } else {
+    grammarSource = undef;
+  }
   if (defined(type)) {
     if (debug) {
       console.log(`TYPE: ${OL(type)}`);
     }
     assert(isFunction(hCodeConverters[type]), `Bad type ${type}`);
     peggyCode = PreProcessPeggy(code, hMetaData);
-    if (defined(filePath) && debug) {
-      filePath = "./test/temp.txt";
-      barf(peggyCode, filePath);
-      console.log(`Preprocessed code saved to ${OL(filePath)}`);
+    if (defined(grammarSource)) {
+      barf(peggyCode, grammarSource);
     }
   } else {
     peggyCode = code;
   }
-  js = peggy.generate(peggyCode, {
-    allowedStartRules: ['*'],
-    format: 'es',
-    output: 'source', // --- return a string of JS
-    trace
-  });
-  return {
-    js,
-    sourceMap: undef,
-    peggyCode
-  };
+  // --- Different depending on whether filePath is defined
+  if (defined(filePath)) {
+    sourceNode = peggy.generate(peggyCode, {
+      allowedStartRules: ['*'],
+      format: 'es',
+      output: 'source-and-map',
+      grammarSource,
+      trace
+    });
+    ({code, map} = sourceNode.toStringWithSourceMap());
+    assert(isString(code), `code = ${OL(code)}`);
+    sourceMap = map.toString();
+    assert(isString(sourceMap), `sourceMap = ${OL(sourceMap)}`);
+    return {
+      js: code,
+      sourceMap: map.toString(),
+      peggyCode
+    };
+  } else {
+    js = peggy.generate(peggyCode, {
+      allowedStartRules: ['*'],
+      format: 'es',
+      output: 'source',
+      trace
+    });
+    return {js, peggyCode};
+  }
 };
 
 // ---------------------------------------------------------------------------
 export var peggifyFile = (filePath) => {
+  debugger;
   var code, hMetaData, js, jsFilePath, reader, sourceMap, sourceMapFilePath;
   ({hMetaData, reader} = readTextFile(filePath));
   code = gen2block(reader);
   ({js, sourceMap} = peggify(code, hMetaData, filePath));
+  assert(isString(js), `js is ${OL(js)}`);
   jsFilePath = withExt(filePath, '.js');
   barf(js, jsFilePath);
   if (defined(sourceMap)) {
@@ -225,17 +248,13 @@ export var PreProcessPeggy = (code, hMetaData) => {
       }
       return [
         '{{',
-        // --- If we add an import for mkString(), users will get
-        //     and error if they also import it. So, instead,
-        //     we define our own version, though it's identical
-        // indented("import {mkString} from '@jdeighan/llutils';")
-        indented(brew(`mkString2 = (lItems...) =>
+        indented(brew(`mkString = (lItems...) =>
 
 	lStrings = []
 	for item in lItems
-		if isString(item)
+		if (typeof item == 'string') || (item instanceof String)
 			lStrings.push item
-		else if isArray(item)
+		else if Array.isArray(item)
 			lStrings.push mkString(item...)
 	return lStrings.join('')`).js),
         indented(js),
@@ -292,6 +311,7 @@ ${block}
       // --- Get match expression
       [level, matchExpr] = src.fetch();
       assert(level === 1, "BAD - level not 1");
+      matchExpr = matchExpr.replaceAll('{', '|').replaceAll('}', '|');
       // --- Extract names of new variables
       lVars = [];
       hJoin = {};
@@ -311,7 +331,7 @@ ${block}
         for (i = 0, len = lVars.length; i < len; i++) {
           v = lVars[i];
           if (hJoin[v]) {
-            results.push(`mkString2(${v})`);
+            results.push(`mkString(${v})`);
           } else {
             results.push(v);
           }
@@ -347,63 +367,6 @@ ${block}
     DUMP(peggyCode, 'PEGGY CODE');
   }
   return peggyCode;
-};
-
-// ---------------------------------------------------------------------------
-
-  // --- Tracer object does not log
-Tracer = class Tracer {
-  trace({type, rule, location}) {
-    return pass();
-  }
-
-};
-
-MyTracer = class MyTracer extends Tracer {
-  constructor() {
-    super();
-    this.level = 0;
-  }
-
-  prefix() {
-    return "|  ".repeat(this.level);
-  }
-
-  trace({type, rule, location, match}) {
-    switch (type) {
-      case 'rule.enter':
-        console.log(`${this.prefix()}? ${rule}`);
-        this.level += 1;
-        break;
-      case 'rule.fail':
-        this.level -= 1;
-        console.log(`${this.prefix()}NO`);
-        break;
-      case 'rule.match':
-        this.level -= 1;
-        if (defined(match)) {
-          console.log(`${this.prefix()}YES - ${OL(match)}`);
-        } else {
-          console.log(`${this.prefix()}YES`);
-        }
-        break;
-      default:
-        console.log(`UNKNOWN type: ${type}`);
-    }
-  }
-
-};
-
-// ---------------------------------------------------------------------------
-export var getTracer = (type) => {
-  switch (type) {
-    case 'default':
-      return new MyTracer();
-    case 'peggy':
-      return undef;
-    default:
-      return new Tracer();
-  }
 };
 
 // ---------------------------------------------------------------------------

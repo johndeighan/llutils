@@ -135,7 +135,8 @@ export var LineFetcher = class LineFetcher {
 // --- Returns pairs, e.g. [3, 'abc']
 export var PLLFetcher = class PLLFetcher extends LineFetcher {
   transform(line) {
-    return splitLine(line);
+    // --- super removes \r
+    return splitLine(super.transform(line));
   }
 
   // ..........................................................
@@ -151,6 +152,20 @@ export var PLLFetcher = class PLLFetcher extends LineFetcher {
       return -1;
     }
     return result[0];
+  }
+
+  // ..........................................................
+  fetch() {
+    var item, level, nextLevel, nextStr, str;
+    if (notdefined(item = super.fetch())) {
+      return undef;
+    }
+    [level, str] = item;
+    while (this.peekLevel() >= level + 2) {
+      [nextLevel, nextStr] = super.fetch();
+      str += ` ${nextStr}`;
+    }
+    return [level, str];
   }
 
   // ..........................................................

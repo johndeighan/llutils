@@ -21,10 +21,14 @@ import {
 import {brew} from '@jdeighan/llutils/coffee'
 import {PLLFetcher} from '@jdeighan/llutils/fetcher'
 import {SectionMap} from '@jdeighan/llutils/section-map'
+import {getTracer} from '@jdeighan/llutils/tracer'
+
+assert isFunction(brew), "brew is not a function: #{OL(brew)}"
 
 # --- code converter is applied to each code block in a peggy file
 #     using type: 'javascript' allows you to use indentation syntax
 #        for everything but the code blocks
+
 hCodeConverters = {
 	coffee: brew
 	javascript: (js) => return {js, sourceMap: undef}
@@ -56,7 +60,7 @@ export getParser = (filePath, hOptions={}) =>
 	return (str, hOptions={}) =>
 		# --- Valid options:
 		#        start - what is the start rule (usually first rule)
-		#        tracer - 'none','peggy','default'
+		#        tracer - 'none','peggy','default' or function
 
 		{start, tracer} = getOptions hOptions, {
 			start: undef     #     name of start rule
@@ -67,12 +71,8 @@ export getParser = (filePath, hOptions={}) =>
 		if defined(start)
 			hParseOptions.startRule = start
 		switch tracer
-			when 'none'
-				hParseOptions.tracer = new Tracer()
-			when 'peggy'
-				pass()
-			when 'default'
-				hParseOptions.tracer = new MyTracer()
+			when 'none','peggy','default'
+				hParseOptions.tracer = getTracer(tracer)
 			else
 				assert isFunction(tracer), "tracer not a function"
 				hParseOptions.tracer = tracer
@@ -100,37 +100,60 @@ export peggify = (code, hMetaData={}, filePath=undef) =>
 		console.log "peggify() #{OL(filePath)}"
 
 	# --- preprocess code if required
+	if defined(filePath)
+		grammarSource = withExt(filePath, '.pegjs')
+	else
+		grammarSource = undef
+
 	if defined(type)
 		if debug
 			console.log "TYPE: #{OL(type)}"
 		assert isFunction(hCodeConverters[type]), "Bad type #{type}"
 		peggyCode = PreProcessPeggy(code, hMetaData)
-		if defined(filePath) && debug
-			filePath = "./test/temp.txt"
-			barf peggyCode, filePath
-			console.log "Preprocessed code saved to #{OL(filePath)}"
+		if defined(grammarSource)
+			barf peggyCode, grammarSource
 	else
 		peggyCode = code
 
-	js = peggy.generate(peggyCode, {
-		allowedStartRules: ['*']
-		format: 'es'
-		output: 'source'  # --- return a string of JS
-		trace
-		})
-	return {
-		js
-		sourceMap: undef
-		peggyCode
-		}
+	# --- Different depending on whether filePath is defined
+	if defined(filePath)
+		sourceNode = peggy.generate(peggyCode, {
+			allowedStartRules: ['*']
+			format: 'es'
+			output: 'source-and-map'
+			grammarSource
+			trace
+			})
+		{code, map} = sourceNode.toStringWithSourceMap()
+		assert isString(code), "code = #{OL(code)}"
+		sourceMap = map.toString()
+		assert isString(sourceMap), "sourceMap = #{OL(sourceMap)}"
+		return {
+			js: code
+			sourceMap: map.toString()
+			peggyCode
+			}
+	else
+		js = peggy.generate(peggyCode, {
+			allowedStartRules: ['*']
+			format: 'es'
+			output: 'source'
+			trace
+			})
+		return {
+			js
+			peggyCode
+			}
 
 # ---------------------------------------------------------------------------
 
 export peggifyFile = (filePath) =>
 
+	debugger
 	{hMetaData, reader} = readTextFile(filePath)
 	code = gen2block(reader)
 	{js, sourceMap} = peggify code, hMetaData, filePath
+	assert isString(js), "js is #{OL(js)}"
 	jsFilePath = withExt(filePath, '.js')
 	barf js, jsFilePath
 	if defined(sourceMap)
@@ -175,19 +198,14 @@ export PreProcessPeggy = (code, hMetaData) =>
 			return [
 				'{{'
 
-				# --- If we add an import for mkString(), users will get
-				#     and error if they also import it. So, instead,
-				#     we define our own version, though it's identical
-				# indented("import {mkString} from '@jdeighan/llutils';")
-
 				indented(brew("""
-					mkString2 = (lItems...) =>
+					mkString = (lItems...) =>
 
 						lStrings = []
 						for item in lItems
-							if isString(item)
+							if (typeof item == 'string') || (item instanceof String)
 								lStrings.push item
-							else if isArray(item)
+							else if Array.isArray(item)
 								lStrings.push mkString(item...)
 						return lStrings.join('')
 					""").js)
@@ -248,6 +266,9 @@ export PreProcessPeggy = (code, hMetaData) =>
 			# --- Get match expression
 			[level, matchExpr] = src.fetch()
 			assert (level == 1), "BAD - level not 1"
+			matchExpr = matchExpr \
+				.replaceAll('{','|') \
+				.replaceAll('}','|')
 
 			# --- Extract names of new variables
 			lVars = []
@@ -263,7 +284,7 @@ export PreProcessPeggy = (code, hMetaData) =>
 			strArgs = (
 				for v in lVars
 					if hJoin[v]
-						"mkString2(#{v})"
+						"mkString(#{v})"
 					else
 						v
 				).join(',')
@@ -297,54 +318,6 @@ export PreProcessPeggy = (code, hMetaData) =>
 	if debug
 		DUMP peggyCode, 'PEGGY CODE'
 	return peggyCode
-
-# ---------------------------------------------------------------------------
-
-# --- Tracer object does not log
-
-class Tracer
-
-	trace: ({type, rule, location}) ->
-		pass()
-
-class MyTracer extends Tracer
-
-	constructor: () ->
-		super()
-		@level = 0
-
-	prefix: () ->
-		return "|  ".repeat(@level)
-
-	trace: ({type, rule, location, match}) ->
-		switch type
-			when 'rule.enter'
-				console.log "#{@prefix()}? #{rule}"
-				@level += 1
-			when 'rule.fail'
-				@level -= 1;
-				console.log "#{@prefix()}NO"
-			when 'rule.match'
-				@level -= 1
-				if defined(match)
-					console.log "#{@prefix()}YES - #{OL(match)}"
-				else
-					console.log "#{@prefix()}YES"
-			else
-				console.log "UNKNOWN type: #{type}"
-		return
-
-# ---------------------------------------------------------------------------
-
-export getTracer = (type) =>
-
-	switch type
-		when 'default'
-			return new MyTracer()
-		when 'peggy'
-			return undef
-		else
-			return new Tracer()
 
 # ---------------------------------------------------------------------------
 # --- a converter should return {js: jsCode, sourceMap: srcMap}

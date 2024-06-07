@@ -4,16 +4,16 @@
 
 
 
-	var mkString2;
+	var mkString;
 
-	mkString2 = (...lItems) => {
+	mkString = (...lItems) => {
 	  var i, item, lStrings, len;
 	  lStrings = [];
 	  for (i = 0, len = lItems.length; i < len; i++) {
 	    item = lItems[i];
-	    if (isString(item)) {
+	    if ((typeof item === 'string') || (item instanceof String)) {
 	      lStrings.push(item);
-	    } else if (isArray(item)) {
+	    } else if (Array.isArray(item)) {
 	      lStrings.push(mkString(...item));
 	    }
 	  }
@@ -35,7 +35,6 @@
 	  assert,
 	  croak,
 	  getOptions,
-	  mkString,
 	  isString,
 	  isFunction,
 	  isBoolean,
@@ -48,7 +47,7 @@
 
 	import {
 	  getTracer
-	} from '@jdeighan/llutils/peggy';
+	} from '@jdeighan/llutils/tracer';
 
 	hOptions = {};
 
@@ -62,19 +61,14 @@
 
 	// --- If hDesc is undef, no checking is done
 	export var getArgs = (argStr = undef, hDesc = undef, tracer = 'none') => {
-	  var hParseOptions, hResult;
+	  var hResult;
 	  if (notdefined(argStr)) {
 	    argStr = process.argv.slice(2).join(' ');
 	  }
 	  assert(isString(argStr), `Not a string: ${OL(argStr)}`);
-	  if (isFunction(tracer)) {
-	    hParseOptions = {tracer};
-	  } else {
-	    hParseOptions = {
-	      tracer: getTracer(tracer)
-	    };
-	  }
-	  hResult = peg$parse(argStr, hParseOptions);
+	  hResult = peg$parse(argStr, {
+	    tracer: getTracer(tracer, argStr)
+	  });
 	  if (defined(hDesc)) {
 	    check(hResult, hDesc);
 	  }
@@ -150,7 +144,7 @@
 	    }
 	    return results;
 	  } else {
-	    return hOptions[mkString(lChars)] = value[1];
+	    return hOptions[lChars.join('')] = value[1];
 	  }
 	};
 
@@ -400,9 +394,13 @@ function peg$parse(input, options) {
   var peg$startRuleFunction = peg$parsecmdArgs;
 
   var peg$c0 = "-";
-  var peg$c1 = "=";
-  var peg$c2 = "\"";
-  var peg$c3 = "'";
+  var peg$c1 = "lChars";
+  var peg$c2 = "=";
+  var peg$c3 = "value";
+  var peg$c4 = "val";
+  var peg$c5 = "\"";
+  var peg$c6 = "str";
+  var peg$c7 = "'";
 
   var peg$r0 = /^[A-Za-z]/;
   var peg$r1 = /^[^"]/;
@@ -423,9 +421,9 @@ function peg$parse(input, options) {
   var peg$f0 = function() { return func0(); };
   var peg$f1 = function(lChars, value) { return func1(lChars,value); };
   var peg$f2 = function(val) { return func2(val); };
-  var peg$f3 = function(str) { return func3(mkString2(str)); };
-  var peg$f4 = function(str) { return func4(mkString2(str)); };
-  var peg$f5 = function(str) { return func5(mkString2(str)); };
+  var peg$f3 = function(str) { return func3(mkString(str)); };
+  var peg$f4 = function(str) { return func4(mkString(str)); };
+  var peg$f5 = function(str) { return func5(mkString(str)); };
   var peg$currPos = options.peg$currPos | 0;
   var peg$savedPos = peg$currPos;
   var peg$posDetailsCache = [{ line: 1, column: 1 }];
@@ -706,7 +704,7 @@ function peg$parse(input, options) {
       if (s2 !== peg$FAILED) {
         s3 = peg$currPos;
         if (input.charCodeAt(peg$currPos) === 61) {
-          s4 = peg$c1;
+          s4 = peg$c2;
           peg$currPos++;
         } else {
           s4 = peg$FAILED;
@@ -777,7 +775,7 @@ function peg$parse(input, options) {
 
     s0 = peg$currPos;
     if (input.charCodeAt(peg$currPos) === 34) {
-      s1 = peg$c2;
+      s1 = peg$c5;
       peg$currPos++;
     } else {
       s1 = peg$FAILED;
@@ -803,7 +801,7 @@ function peg$parse(input, options) {
         }
       }
       if (input.charCodeAt(peg$currPos) === 34) {
-        s3 = peg$c2;
+        s3 = peg$c5;
         peg$currPos++;
       } else {
         s3 = peg$FAILED;
@@ -823,7 +821,7 @@ function peg$parse(input, options) {
     if (s0 === peg$FAILED) {
       s0 = peg$currPos;
       if (input.charCodeAt(peg$currPos) === 39) {
-        s1 = peg$c3;
+        s1 = peg$c7;
         peg$currPos++;
       } else {
         s1 = peg$FAILED;
@@ -849,7 +847,7 @@ function peg$parse(input, options) {
           }
         }
         if (input.charCodeAt(peg$currPos) === 39) {
-          s3 = peg$c3;
+          s3 = peg$c7;
           peg$currPos++;
         } else {
           s3 = peg$FAILED;

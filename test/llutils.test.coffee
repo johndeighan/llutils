@@ -550,16 +550,6 @@ symbol "timeit(func, numReps=100)"
 succeeds () => timeit(() -> return 42)
 
 # ---------------------------------------------------------------------------
-symbol "mkString(item...)"
-
-equal mkString('abc'), 'abc'
-equal mkString(['abc']), 'abc'
-equal mkString(['a','b','c']), 'abc'
-equal mkString(['a','b'],'c'), 'abc'
-equal mkString(['a','b'],['c']), 'abc'
-equal mkString([['a','b'],['c']]), 'abc'
-
-# ---------------------------------------------------------------------------
 symbol "behead(block)"    # --- separate out first line
 
 equal behead("""

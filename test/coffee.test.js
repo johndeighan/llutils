@@ -63,14 +63,14 @@ fails(() => {
 });
 
 // ---------------------------------------------------------------------------
-symbol("coffeeInfo(hAST)");
+symbol("coffeeInfo(astOrCode)");
 
 (() => {
   var code;
   code = `import {undef, defined} from '@jdeighan/llutils'`;
   return like(coffeeInfo(code), {
     hImports: {
-      '@jdeighan/llutils': new Set(['undef', 'defined'])
+      '@jdeighan/llutils': ['undef', 'defined']
     }
   });
 })();
@@ -81,8 +81,8 @@ symbol("coffeeInfo(hAST)");
 import {LOG} from '@jdeighan/llutils/log'`;
   return like(coffeeInfo(code), {
     hImports: {
-      '@jdeighan/llutils': new Set(['undef']),
-      '@jdeighan/llutils/log': new Set(['LOG'])
+      '@jdeighan/llutils': ['undef'],
+      '@jdeighan/llutils/log': ['LOG']
     }
   });
 })();
@@ -91,7 +91,7 @@ import {LOG} from '@jdeighan/llutils/log'`;
   var code;
   code = `export meaning = 42`;
   return like(coffeeInfo(code), {
-    setExports: new Set(['meaning'])
+    lExports: ['meaning']
   });
 })();
 
@@ -99,7 +99,7 @@ import {LOG} from '@jdeighan/llutils/log'`;
   var code;
   code = `x = a`;
   return like(coffeeInfo(code), {
-    setUsed: new Set(['a'])
+    lUsed: ['a']
   });
 })();
 

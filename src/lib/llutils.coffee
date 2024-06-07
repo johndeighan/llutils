@@ -88,9 +88,12 @@ export anyDefined = (...lObjs) =>
 
 # ---------------------------------------------------------------------------
 
-export notdefined = (obj) =>
+export notdefined = (...lObjs) =>
 
-	return (obj == undef) || (obj == null)
+	for obj in lObjs
+		if (obj != undef) && (obj != null)
+			return false
+	return true
 
 # ---------------------------------------------------------------------------
 
@@ -243,7 +246,7 @@ export className = (x) =>
 
 export isPromise = (x) =>
 
-	if (typeof x != 'object')
+	if (typeof x != 'object') || (x == null)
 		return false
 	return (typeof x.then == 'function')
 
@@ -278,6 +281,7 @@ export isClassInstance = (x, lReqKeys=undef) =>
 
 # ---------------------------------------------------------------------------
 #   escapeStr - escape newlines, carriage return, TAB chars, etc.
+# --- NOTE: We can't use OL() inside here since it uses escapeStr()
 
 export hEsc = {
 	"\r": '◄'
@@ -291,7 +295,7 @@ export hEscNoNL = {
 	" ": '˳'
 	}
 
-export escapeStr = (str, hReplace=hEsc) =>
+export escapeStr = (str, hReplace=hEsc, hOptions={}) =>
 	# --- hReplace can also be a string:
 	#        'esc'     - escape space, newline, tab
 	#        'escNoNL' - escape space, tab
@@ -304,18 +308,30 @@ export escapeStr = (str, hReplace=hEsc) =>
 			when 'escNoNL'
 				hReplace = hEscNoNL
 			else
-				return str
+				hReplace = {}
 	assert isHash(hReplace), "not a hash"
-	if isEmpty(hReplace)
-		return str
 
-	result = ''
+	{offset} = getOptions hOptions, {
+		offset: undef
+		}
+
+	lParts = []
+	i = 0
 	for ch from str
-		if defined(hReplace[ch])
-			result += hReplace[ch]
+		if defined(offset)
+			if (i == offset)
+				lParts.push ':'
+			else
+				lParts.push ' '
+		result = hReplace[ch]
+		if defined(result)
+			lParts.push result
 		else
-			result += ch
-	return result
+			lParts.push ch
+		i += 1
+	if (offset == str.length)
+		lParts.push ':'
+	return lParts.join('')
 
 # ---------------------------------------------------------------------------
 #   escapeBlock
@@ -592,9 +608,12 @@ export untabify = (str, numSpaces=3) =>
 
 # ---------------------------------------------------------------------------
 
-export LOG = (str) =>
+export LOG = (item) =>
 
-	console.log untabify(str)
+	if isString(item)
+		console.log untabify(item)
+	else
+		console.log item
 
 # ---------------------------------------------------------------------------
 
@@ -746,7 +765,7 @@ export getOptions = (options=undef, hDefault={}) =>
 	else if isString(options)
 		hOptions = hashFromString(options)
 	else
-		croak "Bad options"
+		croak "Bad options: #{OL(options)}"
 
 	# --- Fill in defaults for missing values
 	for own key,value of hDefault
@@ -811,18 +830,6 @@ export timeit = (func, nReps=100) =>
 		func()
 	diff = now() - t0
 	return diff / nReps
-
-# ---------------------------------------------------------------------------
-
-export mkString = (lItems...) =>
-
-	lStrings = []
-	for item in lItems
-		if isString(item)
-			lStrings.push item
-		else if isArray(item)
-			lStrings.push mkString(item...)
-	return lStrings.join('')
 
 # ---------------------------------------------------------------------------
 

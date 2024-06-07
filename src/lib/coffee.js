@@ -22,6 +22,7 @@ import {
   isArray,
   isHash,
   isFunction,
+  keys,
   removeKeys
 } from '@jdeighan/llutils';
 
@@ -46,7 +47,8 @@ import {
 } from '@jdeighan/llutils/fetcher';
 
 import {
-  ASTWalker
+  ASTWalker,
+  removeExtraASTKeys
 } from '@jdeighan/llutils/ast-walker';
 
 import {
@@ -146,14 +148,8 @@ export var toAST = (coffeeCode, hOptions = {}) => {
     ast: true
   });
   if (minimal) {
-    removeKeys(hAST, words('loc range extra start end', 'directives comments tokens'));
+    removeExtraASTKeys(hAST);
   }
-  return hAST;
-};
-
-// ---------------------------------------------------------------------------
-export var removeExtraASTKeys = (hAST) => {
-  removeKeys(hAST, words('loc range extra start end', 'directives comments tokens'));
   return hAST;
 };
 
@@ -165,22 +161,29 @@ export var toASTFile = function(code, filePath, hOptions = {}) {
 };
 
 // ---------------------------------------------------------------------------
+// --- Valid options:
+//        debug - extensive debugging
+//        hDumpNode - { <nodeType>: true, ... }
 export var coffeeInfo = (hAST, hOptions = {}) => {
-  var debug, walker;
-  ({debug} = getOptions(hOptions, {
-    debug: false
-  }));
+  var hImports, i, len, ref, src, walker;
   if (isString(hAST)) {
     hAST = toAST(hAST);
   }
-  walker = new ASTWalker().walk(hAST);
+  walker = new ASTWalker(hOptions).walk(hAST);
+  // --- Convert sets to arrays
+  hImports = {};
+  ref = keys(walker.hImports);
+  for (i = 0, len = ref.length; i < len; i++) {
+    src = ref[i];
+    hImports[src] = Array.from(walker.hImports[src].values());
+  }
   return {
     hAST,
     trace: walker.getTrace(),
-    hImports: walker.hImports,
-    setExports: walker.setExports,
-    setUsed: walker.setUsed,
-    setMissing: walker.getMissing()
+    hImports,
+    lExports: Array.from(walker.setExports.values()),
+    lUsed: Array.from(walker.setUsed.values()),
+    lMissing: Array.from(walker.getMissing().values())
   };
 };
 

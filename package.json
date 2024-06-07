@@ -21,6 +21,10 @@
 		"./heredoc": "./src/lib/heredoc.js",
 		"./to-nice": "./src/lib/to-nice.js",
 		"./dump": "./src/lib/dump.js",
+		"./data-extractor": "./src/lib/data-extractor.js",
+		"./source-map": "./src/lib/source-map.js",
+		"./tracer": "./src/lib/tracer.js",
+		"./lang": "./src/lib/lang.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {
@@ -28,7 +32,10 @@
 		"llb": "src/bin/low-level-build.js"
 	},
 	"scripts": {
-		"build": "coffee -cmb --no-header . && node src/bin/low-level-build.js",
+		"build:extractor": "echo data-extractor.pegjs && peggy -m --format es --trace ./src/lib/data-extractor.pegjs ./src/lib/PLL.pegjs",
+		"build:lang": "echo lang.pegjs && peggy -m --format es --trace ./src/lib/lang.pegjs ./src/lib/PLL.pegjs",
+		"build:coffee": "coffee -cmb --no-header .",
+		"build": "npm run build:extractor && npm run build:lang && npm run build:coffee && node src/bin/low-level-build.js",
 		"test": "npm run build && npx ava --timeout=1m ./test/*.test.js && git status"
 	},
 	"keywords": [

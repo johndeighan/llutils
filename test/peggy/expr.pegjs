@@ -1,24 +1,20 @@
 {{
-	var mkString2;
+	var mkString;
 
-	mkString2 = (...lItems) => {
+	mkString = (...lItems) => {
 	  var i, item, lStrings, len;
 	  lStrings = [];
 	  for (i = 0, len = lItems.length; i < len; i++) {
 	    item = lItems[i];
-	    if (isString(item)) {
+	    if ((typeof item === 'string') || (item instanceof String)) {
 	      lStrings.push(item);
-	    } else if (isArray(item)) {
+	    } else if (Array.isArray(item)) {
 	      lStrings.push(mkString(...item));
 	    }
 	  }
 	  return lStrings.join('');
 	};
 	var func0, func1, func2, func3, func4;
-
-	import {
-	  mkString
-	} from '@jdeighan/llutils';
 
 	func0 = (left, op, right) => {
 	  if (op === '+') {
@@ -40,16 +36,12 @@
 	  return f;
 	};
 
-	func3 = (digits) => {
-	  var str;
-	  str = mkString(digits);
+	func3 = (str) => {
 	  return parseInt(str);
 	};
 
 	func4 = (digits, decimal) => {
-	  var str;
-	  str = mkString(digits, '.', decimal);
-	  return parseFloat(str);
+	  return parseFloat(digits + '.' + decimal);
 	};
 }}
 expr
@@ -73,11 +65,11 @@ mulOp
 ws
 	= ' '*
 integer
-	= digits:[0-9]+
-		{ return func3(digits); }
+	= str:[0-9]+
+		{ return func3(mkString(str)); }
 float
 	= digits:[0-9]+ '.' decimal:[0-9]+
-		{ return func4(digits,decimal); }
+		{ return func4(mkString(digits),mkString(decimal)); }
 number
 	= float
 	/ integer

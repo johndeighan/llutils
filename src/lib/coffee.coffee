@@ -6,7 +6,7 @@ import {compile} from 'coffeescript'
 import {
 	pass, undef, defined, notdefined, gen2block, words,
 	assert, croak, OL, dclone, getOptions, listdiff,
-	isString, isArray, isHash, isFunction, removeKeys,
+	isString, isArray, isHash, isFunction, keys, removeKeys,
 	} from '@jdeighan/llutils'
 import {DUMP} from '@jdeighan/llutils/dump'
 import {indented, splitLine} from '@jdeighan/llutils/indent'
@@ -14,7 +14,9 @@ import {
 	readTextFile, barf, withExt, isFile,
 	} from '@jdeighan/llutils/fs'
 import {LineFetcher} from '@jdeighan/llutils/fetcher'
-import {ASTWalker} from '@jdeighan/llutils/ast-walker'
+import {
+	ASTWalker, removeExtraASTKeys,
+	} from '@jdeighan/llutils/ast-walker'
 import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
 
 # ---------------------------------------------------------------------------
@@ -109,20 +111,7 @@ export toAST = (coffeeCode, hOptions={}) =>
 
 	hAST = compile(coffeeCode, {ast: true})
 	if minimal
-		removeKeys hAST, words(
-			'loc range extra start end',
-			'directives comments tokens',
-			)
-	return hAST
-
-# ---------------------------------------------------------------------------
-
-export removeExtraASTKeys = (hAST) =>
-
-	removeKeys hAST, words(
-		'loc range extra start end',
-		'directives comments tokens',
-		)
+		removeExtraASTKeys hAST
 	return hAST
 
 # ---------------------------------------------------------------------------
@@ -134,21 +123,26 @@ export toASTFile = (code, filePath, hOptions={}) ->
 	return
 
 # ---------------------------------------------------------------------------
+# --- Valid options:
+#        debug - extensive debugging
+#        hDumpNode - { <nodeType>: true, ... }
 
 export coffeeInfo = (hAST, hOptions={}) =>
 
-	{debug} = getOptions hOptions, {
-		debug: false
-		}
-
 	if isString(hAST)
 		hAST = toAST(hAST)
-	walker = new ASTWalker().walk(hAST)
+	walker = new ASTWalker(hOptions).walk(hAST)
+
+	# --- Convert sets to arrays
+	hImports = {}
+	for src in keys(walker.hImports)
+		hImports[src] = Array.from(walker.hImports[src].values())
+
 	return {
 		hAST
 		trace: walker.getTrace()
-		hImports: walker.hImports
-		setExports: walker.setExports
-		setUsed: walker.setUsed
-		setMissing: walker.getMissing()
+		hImports
+		lExports: Array.from(walker.setExports.values())
+		lUsed: Array.from(walker.setUsed.values())
+		lMissing: Array.from(walker.getMissing().values())
 		}

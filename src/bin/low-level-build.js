@@ -1,7 +1,7 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var doLog, echo, fileFilter, hBin, hFilesProcessed, hJson, hMetaData, jsPath, key, nCoffee, nPeggy, ref, ref1, ref2, relPath, short_name, stub, tla, value, x, y, z;
+var doLog, echo, fileFilter, hBin, hFilesProcessed, hJson, hMetaData, jsPath, key, nCoffee, nPeggy, oneFilePath, ref, ref1, ref2, relPath, short_name, stub, tla, value, x, y, z;
 
 import {
   globSync
@@ -49,6 +49,21 @@ doLog("-- low-level-build --");
 // ---------------------------------------------------------------------------
 // 1. Make sure we're in a project root directory
 assert(isProjRoot('.', 'strict'), "Not in package root dir");
+
+debugger;
+
+if (oneFilePath = process.argv[2]) {
+  if (fileExt(oneFilePath) === '.coffee') {
+    doLog(oneFilePath);
+    brewFile(oneFilePath);
+    hFilesProcessed.coffee += 1;
+  } else if (fileExt(oneFilePath) === '.peggy') {
+    doLog(oneFilePath);
+    peggifyFile(oneFilePath);
+    hFilesProcessed.peggy += 1;
+  }
+  process.exit();
+}
 
 // ---------------------------------------------------------------------------
 // --- A file (either *.coffee or *.peggy) is out of date unless both:

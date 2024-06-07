@@ -19,17 +19,17 @@ symbol "coffeeInfo(codeOrAST)"
 		export func1 = (arg) => return 13
 		export func2 = (arg) -> return 13
 		"""
-	equal coffeeInfo(code).setExports, new Set(['x','func1','func2'])
+	equal coffeeInfo(code).lExports, ['x','func1','func2']
 	)()
 
 (() =>
 	code = """
 		import {
-			undef, defined, notdefined,
+			undef, defined,
 			} from '@jdeighan/llutils'
 		"""
 	equal coffeeInfo(code).hImports, {
-		'@jdeighan/llutils': new Set(['undef','defined','notdefined'])
+		'@jdeighan/llutils': ['undef','defined']
 		}
 	)()
 
@@ -38,13 +38,13 @@ symbol "coffeeInfo(codeOrAST)"
 (() =>
 	code = """
 		import {
-			undef, defined, notdefined,
+			undef, defined,
 			} from '@jdeighan/llutils'
 		import {withExt} from '@jdeighan/llutils/fs'
 		"""
 	equal coffeeInfo(code).hImports, {
-		'@jdeighan/llutils': new Set(['undef','defined','notdefined'])
-		'@jdeighan/llutils/fs': new Set(['withExt'])
+		'@jdeighan/llutils': ['undef','defined']
+		'@jdeighan/llutils/fs': ['withExt']
 		}
 	)()
 
@@ -54,7 +54,7 @@ symbol "coffeeInfo(codeOrAST)"
 	code = """
 		export x = 42
 		"""
-	equal coffeeInfo(code).setExports, new Set(['x'])
+	equal coffeeInfo(code).lExports, ['x']
 	)()
 
 # ---------------------------------------------------------------------------
@@ -71,6 +71,5 @@ fails () => coffeeInfo("""
 		export x = 42
 		export y = func(33)
 		"""
-	equal coffeeInfo(code).setExports, new Set(['x','y'])
+	equal coffeeInfo(code).lExports, ['x','y']
 	)()
-

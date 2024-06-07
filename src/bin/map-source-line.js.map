@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "map-source-line.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\bin\\map-source-line.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAwB;AAAA,IAAA,QAAA,EAAA,KAAA,EAAA;;AAExB,OAAA;EAAQ,KAAR;EAAe,EAAf;CAAA,MAAA;;AACA,OAAA;EAAQ,UAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,OAAR;CAAA,MAAA;;AAEA,KAAA,GAAQ,OAAA,CAAQ,KAAR,EAAe;EACtB,CAAA,EAAG,CAAC,CAAD,EAAG,CAAH;AADmB,CAAf;;AAGR,CAAC,QAAD,EAAW,OAAX,CAAA,GAAsB,KAAK,CAAC;;AAC5B,OAAO,CAAC,GAAR,CAAY,CAAA,WAAA,CAAA,CAAc,EAAA,CAAG,QAAH,CAAd,CAAA,CAAZ;;AACA,OAAO,CAAC,GAAR,CAAY,CAAA,UAAA,CAAA,CAAa,EAAA,CAAG,OAAH,CAAb,CAAA,CAAZ",
+  "sourcesContent": [
+    "# map-source-line.coffee\r\n\r\nimport {undef, OL} from '@jdeighan/llutils'\r\nimport {mapLineNum} from '@jdeighan/llutils/source-map'\r\nimport {getArgs} from '@jdeighan/llutils/cmd-args'\r\n\r\nhArgs = getArgs(undef, {\r\n\t_: [2,2]\r\n\t})\r\n[filePath, lineNum] = hArgs._\r\nconsole.log \"filePath = #{OL(filePath)}\"\r\nconsole.log \"lineNum = #{OL(lineNum)}\"\r\n"
+  ]
+}

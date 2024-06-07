@@ -56,9 +56,12 @@ export class NodeWalker
 
 	constructor: (hOptions={}) ->
 
-		{debug: @debug} = getOptions hOptions, {
+		{debug, hDumpNode} = getOptions hOptions, {
 			debug: false
+			hDumpNode: {}
 			}
+		@debug = debug
+		@hDumpNode = hDumpNode
 
 		# --- Array of {key, hNode}
 		@lStack = []
@@ -119,10 +122,11 @@ export class NodeWalker
 	walk: (hAST) ->
 
 		assert @isNode(hAST), "Not a node: #{OL(hAST)}"
+		@hAST = hAST
 		@init()
-		@visit hAST.type, hAST
-		@visitChildren hAST
-		@end hAST
+		@visit @hAST.type, @hAST
+		@visitChildren @hAST
+		@end @hAST
 		return this    # allow chaining
 
 	# ..........................................................
@@ -149,6 +153,7 @@ export class NodeWalker
 	# --- Override these
 
 	init: () ->
+		# --- ADVICE: if you modify @hAST, clone it first
 
 		@lLines = []
 		return
@@ -158,6 +163,8 @@ export class NodeWalker
 	visit: (type, hNode) ->
 
 		@dbg indented("VISIT #{type}")
+		if @hDumpNode[type]
+			DUMP hNode, type
 		str = @stringifyNode(hNode)
 		@lLines.push indented(str, @level())
 		return

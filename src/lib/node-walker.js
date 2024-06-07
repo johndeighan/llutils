@@ -85,11 +85,13 @@ export var itemMatches = function(hStackItem, [key, type]) {
 //     can always be a node or array of nodes
 export var NodeWalker = class NodeWalker {
   constructor(hOptions = {}) {
-    ({
-      debug: this.debug
-    } = getOptions(hOptions, {
-      debug: false
+    var debug, hDumpNode;
+    ({debug, hDumpNode} = getOptions(hOptions, {
+      debug: false,
+      hDumpNode: {}
     }));
+    this.debug = debug;
+    this.hDumpNode = hDumpNode;
     // --- Array of {key, hNode}
     this.lStack = [];
   }
@@ -149,10 +151,11 @@ export var NodeWalker = class NodeWalker {
   // ..........................................................
   walk(hAST) {
     assert(this.isNode(hAST), `Not a node: ${OL(hAST)}`);
+    this.hAST = hAST;
     this.init();
-    this.visit(hAST.type, hAST);
-    this.visitChildren(hAST);
-    this.end(hAST);
+    this.visit(this.hAST.type, this.hAST);
+    this.visitChildren(this.hAST);
+    this.end(this.hAST);
     return this; // allow chaining
   }
 
@@ -184,6 +187,7 @@ export var NodeWalker = class NodeWalker {
   // ..........................................................
   // --- Override these
   init() {
+    // --- ADVICE: if you modify @hAST, clone it first
     this.lLines = [];
   }
 
@@ -191,6 +195,9 @@ export var NodeWalker = class NodeWalker {
   visit(type, hNode) {
     var str;
     this.dbg(indented(`VISIT ${type}`));
+    if (this.hDumpNode[type]) {
+      DUMP(hNode, type);
+    }
     str = this.stringifyNode(hNode);
     this.lLines.push(indented(str, this.level()));
   }

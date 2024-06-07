@@ -1,14 +1,14 @@
 {{
-	var mkString2;
+	var mkString;
 
-	mkString2 = (...lItems) => {
+	mkString = (...lItems) => {
 	  var i, item, lStrings, len;
 	  lStrings = [];
 	  for (i = 0, len = lItems.length; i < len; i++) {
 	    item = lItems[i];
-	    if (isString(item)) {
+	    if ((typeof item === 'string') || (item instanceof String)) {
 	      lStrings.push(item);
-	    } else if (isArray(item)) {
+	    } else if (Array.isArray(item)) {
 	      lStrings.push(mkString(...item));
 	    }
 	  }
@@ -25,13 +25,11 @@
 	  hasKey,
 	  keys,
 	  OL,
-	  DUMP,
 	  words,
 	  add_s,
 	  assert,
 	  croak,
 	  getOptions,
-	  mkString,
 	  isString,
 	  isFunction,
 	  isBoolean,
@@ -39,8 +37,12 @@
 	} from '@jdeighan/llutils';
 
 	import {
+	  DUMP
+	} from '@jdeighan/llutils/dump';
+
+	import {
 	  getTracer
-	} from '@jdeighan/llutils/peggy';
+	} from '@jdeighan/llutils/tracer';
 
 	hOptions = {};
 
@@ -54,19 +56,14 @@
 
 	// --- If hDesc is undef, no checking is done
 	export var getArgs = (argStr = undef, hDesc = undef, tracer = 'none') => {
-	  var hParseOptions, hResult;
+	  var hResult;
 	  if (notdefined(argStr)) {
 	    argStr = process.argv.slice(2).join(' ');
 	  }
 	  assert(isString(argStr), `Not a string: ${OL(argStr)}`);
-	  if (isFunction(tracer)) {
-	    hParseOptions = {tracer};
-	  } else {
-	    hParseOptions = {
-	      tracer: getTracer(tracer)
-	    };
-	  }
-	  hResult = peg$parse(argStr, hParseOptions);
+	  hResult = peg$parse(argStr, {
+	    tracer: getTracer(tracer, argStr)
+	  });
 	  if (defined(hDesc)) {
 	    check(hResult, hDesc);
 	  }
@@ -142,7 +139,7 @@
 	    }
 	    return results;
 	  } else {
-	    return hOptions[mkString(lChars)] = value[1];
+	    return hOptions[lChars.join('')] = value[1];
 	  }
 	};
 
@@ -179,10 +176,10 @@ arg
 		{ return func2(val); }
 stringVal
 	= '"'  str:[^"]*  '"'
-		{ return func3(mkString2(str)); }
+		{ return func3(mkString(str)); }
 	/ "'"  str:[^']*  "'"
-		{ return func4(mkString2(str)); }
+		{ return func4(mkString(str)); }
 	/ !'-' str:[^ \t]+
-		{ return func5(mkString2(str)); }
+		{ return func5(mkString(str)); }
 ws
 	= [ \t]+

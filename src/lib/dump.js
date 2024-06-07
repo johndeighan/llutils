@@ -20,7 +20,7 @@ import {
 } from '@jdeighan/llutils/to-nice';
 
 // ---------------------------------------------------------------------------
-export var DUMP = (item, label = 'RESULT', hOptions = undef) => {
+export var DUMP = (item, label = 'RESULT', hOptions = {}) => {
   var echo, esc, format, lLines, oneLine, output, sortKeys, str, width;
   ({esc, width, oneLine, format, sortKeys, echo} = getOptions(hOptions, {
     esc: false,
@@ -60,7 +60,7 @@ export var DUMP = (item, label = 'RESULT', hOptions = undef) => {
         output(toTAML(item));
         break;
       case 'NICE':
-        output(toNICE(item, sortKeys));
+        output(toNICE(item, {sortKeys}));
         break;
       default:
         croak(`Bad format: ${OL(format)}`);

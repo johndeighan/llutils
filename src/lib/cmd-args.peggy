@@ -8,11 +8,11 @@ GLOBAL
 	import {
 		undef, defined, notdefined, pass, isEmpty,
 		hasKey, keys, OL, words, add_s,
-		assert, croak, getOptions, mkString,
+		assert, croak, getOptions,
 		isString, isFunction, isBoolean, isArray,
 		} from '@jdeighan/llutils'
 	import {DUMP} from '@jdeighan/llutils/dump'
-	import {getTracer} from '@jdeighan/llutils/peggy'
+	import {getTracer} from '@jdeighan/llutils/tracer'
 
 	hOptions = {}
 
@@ -31,12 +31,8 @@ GLOBAL
 		if notdefined(argStr)
 			argStr = process.argv.slice(2).join(' ')
 		assert isString(argStr), "Not a string: #{OL(argStr)}"
-		if isFunction(tracer)
-			hParseOptions = {tracer}
-		else
-			hParseOptions = {tracer: getTracer(tracer)}
 
-		hResult = peg$parse argStr, hParseOptions
+		hResult = peg$parse argStr, {tracer: getTracer(tracer, argStr)}
 		if defined(hDesc)
 			check hResult, hDesc
 		return hResult
@@ -101,7 +97,7 @@ arg
 			for ch in lChars
 				hOptions[ch] = true
 		else
-			hOptions[mkString(lChars)] = value[1]
+			hOptions[lChars.join('')] = value[1]
 
 	val:stringVal
 

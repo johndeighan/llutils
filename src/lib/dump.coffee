@@ -9,7 +9,7 @@ import {toNICE} from '@jdeighan/llutils/to-nice'
 
 # ---------------------------------------------------------------------------
 
-export DUMP = (item, label='RESULT', hOptions=undef) =>
+export DUMP = (item, label='RESULT', hOptions={}) =>
 
 	{esc, width, oneLine, format, sortKeys, echo
 		} = getOptions hOptions, {
@@ -47,7 +47,7 @@ export DUMP = (item, label='RESULT', hOptions=undef) =>
 			when 'TAML'
 				output toTAML(item)
 			when 'NICE'
-				output toNICE(item, sortKeys)
+				output toNICE(item, {sortKeys})
 			else
 				croak "Bad format: #{OL(format)}"
 	else if isString(item)

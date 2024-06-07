@@ -4,26 +4,22 @@
 
 
 
-	var mkString2;
+	var mkString;
 
-	mkString2 = (...lItems) => {
+	mkString = (...lItems) => {
 	  var i, item, lStrings, len;
 	  lStrings = [];
 	  for (i = 0, len = lItems.length; i < len; i++) {
 	    item = lItems[i];
-	    if (isString(item)) {
+	    if ((typeof item === 'string') || (item instanceof String)) {
 	      lStrings.push(item);
-	    } else if (isArray(item)) {
+	    } else if (Array.isArray(item)) {
 	      lStrings.push(mkString(...item));
 	    }
 	  }
 	  return lStrings.join('');
 	};
 	var func0, func1, func2, func3, func4;
-
-	import {
-	  mkString
-	} from '@jdeighan/llutils';
 
 	func0 = (left, op, right) => {
 	  if (op === '+') {
@@ -45,16 +41,12 @@
 	  return f;
 	};
 
-	func3 = (digits) => {
-	  var str;
-	  str = mkString(digits);
+	func3 = (str) => {
 	  return parseInt(str);
 	};
 
 	func4 = (digits, decimal) => {
-	  var str;
-	  str = mkString(digits, '.', decimal);
-	  return parseFloat(str);
+	  return parseFloat(digits + '.' + decimal);
 	};
 
 function peg$subclass(child, parent) {
@@ -282,10 +274,17 @@ function peg$parse(input, options) {
   var peg$startRuleFunctions = { expr: peg$parseexpr, term: peg$parseterm, factor: peg$parsefactor, addOp: peg$parseaddOp, mulOp: peg$parsemulOp, ws: peg$parsews, integer: peg$parseinteger, float: peg$parsefloat, number: peg$parsenumber };
   var peg$startRuleFunction = peg$parseexpr;
 
-  var peg$c0 = "(";
-  var peg$c1 = ")";
-  var peg$c2 = " ";
-  var peg$c3 = ".";
+  var peg$c0 = "left";
+  var peg$c1 = "op";
+  var peg$c2 = "right";
+  var peg$c3 = "(";
+  var peg$c4 = "f";
+  var peg$c5 = ")";
+  var peg$c6 = " ";
+  var peg$c7 = "str";
+  var peg$c8 = "digits";
+  var peg$c9 = ".";
+  var peg$c10 = "decimal";
 
   var peg$r0 = /^[+\-]/;
   var peg$r1 = /^[*\/]/;
@@ -302,8 +301,8 @@ function peg$parse(input, options) {
   var peg$f0 = function(left, op, right) { return func0(left,op,right); };
   var peg$f1 = function(left, op, right) { return func1(left,op,right); };
   var peg$f2 = function(f) { return func2(f); };
-  var peg$f3 = function(digits) { return func3(digits); };
-  var peg$f4 = function(digits, decimal) { return func4(digits,decimal); };
+  var peg$f3 = function(str) { return func3(mkString(str)); };
+  var peg$f4 = function(digits, decimal) { return func4(mkString(digits),mkString(decimal)); };
   var peg$currPos = options.peg$currPos | 0;
   var peg$savedPos = peg$currPos;
   var peg$posDetailsCache = [{ line: 1, column: 1 }];
@@ -592,7 +591,7 @@ function peg$parse(input, options) {
     if (s0 === peg$FAILED) {
       s0 = peg$currPos;
       if (input.charCodeAt(peg$currPos) === 40) {
-        s1 = peg$c0;
+        s1 = peg$c3;
         peg$currPos++;
       } else {
         s1 = peg$FAILED;
@@ -604,7 +603,7 @@ function peg$parse(input, options) {
         if (s3 !== peg$FAILED) {
           s4 = peg$parsews();
           if (input.charCodeAt(peg$currPos) === 41) {
-            s5 = peg$c1;
+            s5 = peg$c5;
             peg$currPos++;
           } else {
             s5 = peg$FAILED;
@@ -729,7 +728,7 @@ function peg$parse(input, options) {
 
     s0 = [];
     if (input.charCodeAt(peg$currPos) === 32) {
-      s1 = peg$c2;
+      s1 = peg$c6;
       peg$currPos++;
     } else {
       s1 = peg$FAILED;
@@ -738,7 +737,7 @@ function peg$parse(input, options) {
     while (s1 !== peg$FAILED) {
       s0.push(s1);
       if (input.charCodeAt(peg$currPos) === 32) {
-        s1 = peg$c2;
+        s1 = peg$c6;
         peg$currPos++;
       } else {
         s1 = peg$FAILED;
@@ -856,7 +855,7 @@ function peg$parse(input, options) {
     }
     if (s1 !== peg$FAILED) {
       if (input.charCodeAt(peg$currPos) === 46) {
-        s2 = peg$c3;
+        s2 = peg$c9;
         peg$currPos++;
       } else {
         s2 = peg$FAILED;

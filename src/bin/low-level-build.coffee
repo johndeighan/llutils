@@ -32,6 +32,18 @@ doLog "-- low-level-build --"
 
 assert isProjRoot('.', 'strict'), "Not in package root dir"
 
+debugger
+if oneFilePath = process.argv[2]
+	if (fileExt(oneFilePath) == '.coffee')
+		doLog oneFilePath
+		brewFile oneFilePath
+		hFilesProcessed.coffee += 1
+	else if (fileExt(oneFilePath) == '.peggy')
+		doLog oneFilePath
+		peggifyFile oneFilePath
+		hFilesProcessed.peggy += 1
+	process.exit()
+
 # ---------------------------------------------------------------------------
 # --- A file (either *.coffee or *.peggy) is out of date unless both:
 #        - a *.js file exists that's newer than the original file

@@ -50,14 +50,14 @@ succeeds () => toAST('v = 5')
 fails () => toAST('let v = 5')
 
 # ---------------------------------------------------------------------------
-symbol "coffeeInfo(hAST)"
+symbol "coffeeInfo(astOrCode)"
 
 (() =>
 	code = """
 		import {undef, defined} from '@jdeighan/llutils'
 		"""
 	like coffeeInfo(code), {
-		hImports: {'@jdeighan/llutils': new Set(['undef','defined'])}
+		hImports: {'@jdeighan/llutils': ['undef','defined']}
 		}
 	)()
 
@@ -68,8 +68,8 @@ symbol "coffeeInfo(hAST)"
 		"""
 	like coffeeInfo(code), {
 		hImports: {
-			'@jdeighan/llutils': new Set(['undef'])
-			'@jdeighan/llutils/log': new Set(['LOG'])
+			'@jdeighan/llutils': ['undef']
+			'@jdeighan/llutils/log': ['LOG']
 			}
 		}
 	)()
@@ -79,7 +79,7 @@ symbol "coffeeInfo(hAST)"
 		export meaning = 42
 		"""
 	like coffeeInfo(code), {
-		setExports: new Set(['meaning'])
+		lExports: ['meaning']
 		}
 	)()
 
@@ -88,6 +88,6 @@ symbol "coffeeInfo(hAST)"
 		x = a
 		"""
 	like coffeeInfo(code), {
-		setUsed: new Set(['a'])
+		lUsed: ['a']
 		}
 	)()

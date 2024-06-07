@@ -123,7 +123,8 @@ export class PLLFetcher extends LineFetcher
 
 	transform: (line) ->
 
-		return splitLine(line)
+		# --- super removes \r
+		return splitLine(super(line))
 
 	# ..........................................................
 
@@ -139,6 +140,18 @@ export class PLLFetcher extends LineFetcher
 		if notdefined(result)
 			return -1
 		return result[0]
+
+	# ..........................................................
+
+	fetch: () ->
+
+		if notdefined(item = super())
+			return undef
+		[level, str] = item
+		while (@peekLevel() >= level+2)
+			[nextLevel, nextStr] = super()
+			str += " #{nextStr}"
+		return [level, str]
 
 	# ..........................................................
 

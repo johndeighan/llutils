@@ -5,11 +5,15 @@ import {
   notdefined,
   listdiff,
   hasKey,
+  words,
   assert,
   croak,
   dclone,
   keys,
-  OL
+  OL,
+  removeKeys,
+  isString,
+  nonEmpty
 } from '@jdeighan/llutils';
 
 import {
@@ -17,14 +21,29 @@ import {
 } from '@jdeighan/llutils/dump';
 
 import {
+  extract
+} from '@jdeighan/llutils/data-extractor';
+
+import {
   NodeWalker,
   stackMatches
 } from '@jdeighan/llutils/node-walker';
 
 // ---------------------------------------------------------------------------
+export var removeExtraASTKeys = (hAST) => {
+  removeKeys(hAST, words('loc range extra start end', 'directives comments tokens'));
+  return hAST;
+};
+
+// ---------------------------------------------------------------------------
 export var ASTWalker = class ASTWalker extends NodeWalker {
   init() {
+    var hAST;
     super.init();
+    // --- clone AST, remove extra keys
+    hAST = dclone(this.hAST);
+    removeExtraASTKeys(hAST);
+    this.hAST = hAST;
     this.lEnvironments = []; // --- stack of Set objects
     this.hImports = {}; // --- {<src>: <Set obj>, ...}
     this.setExports = new Set();
@@ -63,6 +82,8 @@ export var ASTWalker = class ASTWalker extends NodeWalker {
 
   // ..........................................................
   addImport(src, name) {
+    assert(isString(name), `Not a string: ${OL(name)}`);
+    assert(nonEmpty(name), `Not empty: ${OL(name)}`);
     if (hasKey(this.hImports, src)) {
       this.hImports[src].add(name);
     } else {
@@ -120,46 +141,31 @@ export var ASTWalker = class ASTWalker extends NodeWalker {
   //    @level() gives you the level
   //    @lStack is stack of {key, hNode} to get parents
   visit(type, hNode) {
-    var declaration, exportKind, expression, i, importKind, imported, j, left, len, len1, operator, params, parm, results, right, set, source, spec, specifiers, src;
+    var expression, h, i, j, left, len, len1, name, operator, params, parm, results, right, set, specifiers, src;
     super.visit(type, hNode);
     switch (type) {
       case 'ImportDeclaration':
-        ({importKind, specifiers, source} = hNode);
-        if (importKind !== 'value') {
-          return;
-        }
-        if (source.type !== 'StringLiteral') {
-          return;
-        }
-        src = source.value;
+        ({src, specifiers} = extract(hNode, `importKind="value"
+(source)
+	type="StringLiteral"
+	value as src
+specifiers`));
         results = [];
         for (i = 0, len = specifiers.length; i < len; i++) {
-          spec = specifiers[i];
-          ({type, imported} = spec);
-          if (type !== 'ImportSpecifier') {
-            continue;
-          }
-          if ((imported != null ? imported.type : void 0) === 'Identifier') {
-            results.push(this.addImport(src, imported.name));
-          } else {
-            results.push(void 0);
-          }
+          h = specifiers[i];
+          assert(h.type === 'ImportSpecifier', "Bad");
+          name = h.imported.name;
+          results.push(this.addImport(src, name));
         }
         return results;
         break;
       case 'ExportNamedDeclaration':
-        ({exportKind, declaration} = hNode);
-        if (exportKind !== 'value') {
-          return;
-        }
-        if (notdefined(declaration)) {
-          return;
-        }
-        ({type, left, right} = declaration);
-        if (left.type === 'Identifier') {
-          return this.addExport(left.name);
-        }
-        break;
+        ({name} = extract(hNode, `exportKind="value"
+declaration
+	type="AssignmentExpression"
+	left.type="Identifier"
+	left.name`));
+        return this.addExport(name);
       case 'ExpressionStatement':
         ({expression} = hNode);
         return this.analyzeExpr(expression.type, expression);

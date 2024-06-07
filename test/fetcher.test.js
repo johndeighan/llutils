@@ -222,4 +222,27 @@ meaning = 42`);
   return falsy(src.moreLines());
 })();
 
+// ---------------------------------------------------------------------------
+(() => {
+  var src;
+  src = new PLLFetcher(`GLOBAL
+	import undef
+	meaning = 42
+cmdArgs
+	arg
+			(ws arg)*
+		return hOptions
+extra`);
+  equal(src.fetch(), [0, 'GLOBAL']);
+  equal(src.getBlock(1), `import undef
+meaning = 42`);
+  equal(src.fetch(), [0, 'cmdArgs']);
+  equal(src.fetch(), [1, 'arg (ws arg)*']);
+  equal(src.getBlock(2), `return hOptions`);
+  equal(src.fetch(), [0, 'extra']);
+  equal(src.fetch(), undef);
+  equal(src.fetch(), undef);
+  return falsy(src.moreLines());
+})();
+
 //# sourceMappingURL=fetcher.test.js.map

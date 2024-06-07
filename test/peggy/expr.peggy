@@ -1,6 +1,3 @@
-GLOBAL
-	import {mkString} from '@jdeighan/llutils'
-
 expr
 	left:term ws op:addOp ws right:expr
 		if (op == '+')
@@ -34,14 +31,12 @@ ws
 	' '*
 
 integer
-	digits:[0-9]+
-		str = mkString(digits)
+	str::[0-9]+
 		return parseInt(str)
 
 float
-	digits:[0-9]+ '.' decimal:[0-9]+
-		str = mkString(digits, '.', decimal)
-		return parseFloat(str)
+	digits::[0-9]+ '.' decimal::[0-9]+
+		return parseFloat(digits + '.' + decimal)
 
 number
 	float

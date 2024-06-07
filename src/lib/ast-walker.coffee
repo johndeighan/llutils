@@ -1,13 +1,25 @@
 # ast-walker.coffee
 
 import {
-	undef, defined, notdefined, listdiff, hasKey,
-	assert, croak, dclone, keys, OL,
+	undef, defined, notdefined, listdiff, hasKey, words,
+	assert, croak, dclone, keys, OL, removeKeys,
+	isString, nonEmpty,
 	} from '@jdeighan/llutils'
 import {DUMP} from '@jdeighan/llutils/dump'
+import {extract} from '@jdeighan/llutils/data-extractor'
 import {
 	NodeWalker, stackMatches,
 	} from '@jdeighan/llutils/node-walker'
+
+# ---------------------------------------------------------------------------
+
+export removeExtraASTKeys = (hAST) =>
+
+	removeKeys hAST, words(
+		'loc range extra start end',
+		'directives comments tokens',
+		)
+	return hAST
 
 # ---------------------------------------------------------------------------
 
@@ -16,6 +28,12 @@ export class ASTWalker extends NodeWalker
 	init: () ->
 
 		super()
+
+		# --- clone AST, remove extra keys
+		hAST = dclone(@hAST)
+		removeExtraASTKeys hAST
+		@hAST = hAST
+
 		@lEnvironments = [] # --- stack of Set objects
 
 		@hImports = {}      # --- {<src>: <Set obj>, ...}
@@ -56,11 +74,12 @@ export class ASTWalker extends NodeWalker
 
 	addImport: (src, name) ->
 
+		assert isString(name), "Not a string: #{OL(name)}"
+		assert nonEmpty(name), "Not empty: #{OL(name)}"
 		if hasKey(@hImports, src)
 			@hImports[src].add name
 		else
 			@hImports[src] = new Set([name])
-
 		return
 
 	# ..........................................................
@@ -115,28 +134,29 @@ export class ASTWalker extends NodeWalker
 		switch type
 
 			when 'ImportDeclaration'
-				{importKind, specifiers, source} = hNode
-				if (importKind != 'value')
-					return
-				if (source.type != 'StringLiteral')
-					return
-				src = source.value
-				for spec in specifiers
-					{type, imported} = spec
-					if (type != 'ImportSpecifier')
-						continue
-					if (imported?.type == 'Identifier')
-						@addImport src, imported.name
+				{src, specifiers} = extract(hNode, """
+					importKind="value"
+					(source)
+						type="StringLiteral"
+						value as src
+					specifiers
+					""")
+
+				for h in specifiers
+					assert (h.type == 'ImportSpecifier'), "Bad"
+					name = h.imported.name
+					@addImport src, name
 
 			when 'ExportNamedDeclaration'
-				{exportKind, declaration} = hNode
-				if (exportKind != 'value')
-					return
-				if notdefined(declaration)
-					return
-				{type, left, right} = declaration
-				if (left.type == 'Identifier')
-					@addExport left.name
+				{name} = extract(hNode, """
+					exportKind="value"
+					declaration
+						type="AssignmentExpression"
+						left.type="Identifier"
+						left.name
+					""")
+
+				@addExport name
 
 			when 'ExpressionStatement'
 				{expression} = hNode

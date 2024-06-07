@@ -102,8 +102,15 @@ export var anyDefined = (...lObjs) => {
 };
 
 // ---------------------------------------------------------------------------
-export var notdefined = (obj) => {
-  return (obj === undef) || (obj === null);
+export var notdefined = (...lObjs) => {
+  var j, len1, obj;
+  for (j = 0, len1 = lObjs.length; j < len1; j++) {
+    obj = lObjs[j];
+    if ((obj !== undef) && (obj !== null)) {
+      return false;
+    }
+  }
+  return true;
 };
 
 // ---------------------------------------------------------------------------
@@ -275,7 +282,7 @@ export var className = (x) => {
 
 // ---------------------------------------------------------------------------
 export var isPromise = (x) => {
-  if (typeof x !== 'object') {
+  if ((typeof x !== 'object') || (x === null)) {
     return false;
   }
   return typeof x.then === 'function';
@@ -314,6 +321,7 @@ export var isClassInstance = (x, lReqKeys = undef) => {
 
 // ---------------------------------------------------------------------------
 //   escapeStr - escape newlines, carriage return, TAB chars, etc.
+// --- NOTE: We can't use OL() inside here since it uses escapeStr()
 export var hEsc = {
   "\r": '◄',
   "\n": '▼',
@@ -327,8 +335,8 @@ export var hEscNoNL = {
   " ": '˳'
 };
 
-export var escapeStr = (str, hReplace = hEsc) => {
-  var ch, result;
+export var escapeStr = (str, hReplace = hEsc, hOptions = {}) => {
+  var ch, i, lParts, offset, result;
   // --- hReplace can also be a string:
   //        'esc'     - escape space, newline, tab
   //        'escNoNL' - escape space, tab
@@ -342,22 +350,35 @@ export var escapeStr = (str, hReplace = hEsc) => {
         hReplace = hEscNoNL;
         break;
       default:
-        return str;
+        hReplace = {};
     }
   }
   assert(isHash(hReplace), "not a hash");
-  if (isEmpty(hReplace)) {
-    return str;
-  }
-  result = '';
+  ({offset} = getOptions(hOptions, {
+    offset: undef
+  }));
+  lParts = [];
+  i = 0;
   for (ch of str) {
-    if (defined(hReplace[ch])) {
-      result += hReplace[ch];
-    } else {
-      result += ch;
+    if (defined(offset)) {
+      if (i === offset) {
+        lParts.push(':');
+      } else {
+        lParts.push(' ');
+      }
     }
+    result = hReplace[ch];
+    if (defined(result)) {
+      lParts.push(result);
+    } else {
+      lParts.push(ch);
+    }
+    i += 1;
   }
-  return result;
+  if (offset === str.length) {
+    lParts.push(':');
+  }
+  return lParts.join('');
 };
 
 // ---------------------------------------------------------------------------
@@ -672,8 +693,12 @@ export var untabify = (str, numSpaces = 3) => {
 };
 
 // ---------------------------------------------------------------------------
-export var LOG = (str) => {
-  return console.log(untabify(str));
+export var LOG = (item) => {
+  if (isString(item)) {
+    return console.log(untabify(item));
+  } else {
+    return console.log(item);
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -836,7 +861,7 @@ export var getOptions = (options = undef, hDefault = {}) => {
   } else if (isString(options)) {
     hOptions = hashFromString(options);
   } else {
-    croak("Bad options");
+    croak(`Bad options: ${OL(options)}`);
   }
   for (key in hDefault) {
     if (!hasProp.call(hDefault, key)) continue;
@@ -902,21 +927,6 @@ export var timeit = (func, nReps = 100) => {
   }
   diff = now() - t0;
   return diff / nReps;
-};
-
-// ---------------------------------------------------------------------------
-export var mkString = (...lItems) => {
-  var item, j, lStrings, len1;
-  lStrings = [];
-  for (j = 0, len1 = lItems.length; j < len1; j++) {
-    item = lItems[j];
-    if (isString(item)) {
-      lStrings.push(item);
-    } else if (isArray(item)) {
-      lStrings.push(mkString(...item));
-    }
-  }
-  return lStrings.join('');
 };
 
 // ---------------------------------------------------------------------------
