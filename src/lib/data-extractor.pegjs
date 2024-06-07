@@ -123,8 +123,6 @@ expr
 		let obj = lStack.at(-1); // --- Top of Stack
 		assert(isHash(obj), `obj = ${OL(obj)}`);
 
-//		DUMP(lStack, 'lStack');
-
 		// --- Don't store if expression inside '(' and ')'
 		//     or expected is defined
 		//     or it's optional and missing
