@@ -103,6 +103,22 @@ desc
 			return hResult;
 			}
 
+	/ '[' _ result: expr _ ']'
+
+		& {
+			let [name, obj] = result;
+			lStack.push(obj)
+			return true;
+			}
+
+		INDENT h: program UNDENT
+
+		{
+			lStack.pop();
+			let [name, obj] = result;
+			return 'OK'
+			}
+
 more
 	= INDENT h: program UNDENT
 		{

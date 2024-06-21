@@ -2,13 +2,14 @@
 
 import pathLib from 'node:path'
 import urlLib from 'url'
-import fs from 'fs'
+import fs from 'node:fs'
 import {globSync as glob} from 'glob'
 import NReadLines from 'n-readlines'
 
 import {
-	undef, defined, notdefined, words, isString, OL,
+	undef, defined, notdefined, words, OL, keys,
 	assert, croak, arrayToBlock, getOptions, sliceBlock,
+	isString, isHash,
 	} from '@jdeighan/llutils'
 import {
 	isMetaDataStart, convertMetaData,
@@ -152,8 +153,11 @@ export clearDir = (dirPath) =>
 	try
 		hOptions = {withFileTypes: true, recursive: true}
 		for ent in fs.readdirSync(dirPath, hOptions)
+			subEnt = mkpath(ent.path, ent.name)
 			if ent.isFile()
-				fs.rmSync mkpath(ent.path, ent.name)
+				fs.rmSync subEnt
+			else if ent.isDirectory()
+				clearDir subEnt
 	catch err
 	return
 
@@ -178,6 +182,13 @@ export touch = (filePath) =>
 
 	fd = fs.openSync(filePath, 'a')
 	fs.closeSync(fd)
+	return
+
+# ---------------------------------------------------------------------------
+
+export createFile = (filePath, contents) =>
+
+	fs.writeFileSync(filePath, contents)
 	return
 
 # ---------------------------------------------------------------------------
@@ -305,12 +316,6 @@ export slurp = (filePath, hOptions={}) =>
 	else
 		return block
 
-# ---------------------------------------------------------------------------
-#   sliceFile - read a section of a file
-
-export sliceFile = (filePath, numLines, start=0) =>
-
-	block = slurp(filePath)
 # ---------------------------------------------------------------------------
 #   barf - write a string to a file
 #          will ensure that all necessary directories exist
@@ -621,3 +626,24 @@ export allPathsTo = (fileName, hOptions={}) ->
 		if isFile(filePath)
 			yield filePath
 	return
+
+# ---------------------------------------------------------------------------
+#   slurpJSON - read a file into a hash
+
+export slurpJSON = (filePath) =>
+
+	return JSON.parse(slurp(filePath))
+
+# ---------------------------------------------------------------------------
+#   barfJSON - write a string to a file
+
+export barfJSON = (hJson, filePath) =>
+
+	assert isHash(hJson), "Not a hash: #{OL(hJson)}"
+	for key in keys(hJson)
+		if notdefined(hJson[key])
+			delete hJson[key]
+	str = JSON.stringify(hJson, null, "\t")
+	barf(str, filePath)
+	return
+

@@ -56,14 +56,20 @@
 
 	// --- If hDesc is undef, no checking is done
 	export var getArgs = (argStr = undef, hDesc = undef, tracer = 'none') => {
-	  var hResult;
+	  var err, hResult;
 	  if (notdefined(argStr)) {
 	    argStr = process.argv.slice(2).join(' ');
 	  }
 	  assert(isString(argStr), `Not a string: ${OL(argStr)}`);
-	  hResult = peg$parse(argStr, {
-	    tracer: getTracer(tracer, argStr)
-	  });
+	  try {
+	    hResult = peg$parse(argStr, {
+	      tracer: getTracer(tracer, argStr)
+	    });
+	  } catch (error) {
+	    err = error;
+	    console.log(`ERROR parsing command args: ${OL(argStr)}`);
+	    process.exit();
+	  }
 	  if (defined(hDesc)) {
 	    check(hResult, hDesc);
 	  }
@@ -96,6 +102,7 @@
 	    assert(n <= max, `There can be at most ${max} non-option${add_s(max)}`);
 	  }
 	  ref = keys(hResult);
+	  // --- Check types of all options
 	  for (i = 0, len = ref.length; i < len; i++) {
 	    key = ref[i];
 	    if (key !== '_') {

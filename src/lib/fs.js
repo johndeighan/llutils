@@ -3,7 +3,7 @@ import pathLib from 'node:path';
 
 import urlLib from 'url';
 
-import fs from 'fs';
+import fs from 'node:fs';
 
 import {
   globSync as glob
@@ -16,13 +16,15 @@ import {
   defined,
   notdefined,
   words,
-  isString,
   OL,
+  keys,
   assert,
   croak,
   arrayToBlock,
   getOptions,
-  sliceBlock
+  sliceBlock,
+  isString,
+  isHash
 } from '@jdeighan/llutils';
 
 import {
@@ -150,7 +152,7 @@ export var isDir = (dirPath) => {
 
 // ---------------------------------------------------------------------------
 export var clearDir = (dirPath) => {
-  var ent, err, hOptions, i, len, ref;
+  var ent, err, hOptions, i, len, ref, subEnt;
   try {
     hOptions = {
       withFileTypes: true,
@@ -159,8 +161,11 @@ export var clearDir = (dirPath) => {
     ref = fs.readdirSync(dirPath, hOptions);
     for (i = 0, len = ref.length; i < len; i++) {
       ent = ref[i];
+      subEnt = mkpath(ent.path, ent.name);
       if (ent.isFile()) {
-        fs.rmSync(mkpath(ent.path, ent.name));
+        fs.rmSync(subEnt);
+      } else if (ent.isDirectory()) {
+        clearDir(subEnt);
       }
     }
   } catch (error) {
@@ -192,6 +197,11 @@ export var touch = (filePath) => {
   var fd;
   fd = fs.openSync(filePath, 'a');
   fs.closeSync(fd);
+};
+
+// ---------------------------------------------------------------------------
+export var createFile = (filePath, contents) => {
+  fs.writeFileSync(filePath, contents);
 };
 
 // ---------------------------------------------------------------------------
@@ -313,13 +323,6 @@ export var slurp = (filePath, hOptions = {}) => {
   } else {
     return block;
   }
-};
-
-// ---------------------------------------------------------------------------
-//   sliceFile - read a section of a file
-export var sliceFile = (filePath, numLines, start = 0) => {
-  var block;
-  return block = slurp(filePath);
 };
 
 // ---------------------------------------------------------------------------
@@ -654,6 +657,28 @@ export var allPathsTo = function*(fileName, hOptions = {}) {
       yield filePath;
     }
   }
+};
+
+// ---------------------------------------------------------------------------
+//   slurpJSON - read a file into a hash
+export var slurpJSON = (filePath) => {
+  return JSON.parse(slurp(filePath));
+};
+
+// ---------------------------------------------------------------------------
+//   barfJSON - write a string to a file
+export var barfJSON = (hJson, filePath) => {
+  var i, key, len, ref, str;
+  assert(isHash(hJson), `Not a hash: ${OL(hJson)}`);
+  ref = keys(hJson);
+  for (i = 0, len = ref.length; i < len; i++) {
+    key = ref[i];
+    if (notdefined(hJson[key])) {
+      delete hJson[key];
+    }
+  }
+  str = JSON.stringify(hJson, null, "\t");
+  barf(str, filePath);
 };
 
 //# sourceMappingURL=fs.js.map

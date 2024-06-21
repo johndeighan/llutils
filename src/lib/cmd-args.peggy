@@ -32,7 +32,11 @@ GLOBAL
 			argStr = process.argv.slice(2).join(' ')
 		assert isString(argStr), "Not a string: #{OL(argStr)}"
 
-		hResult = peg$parse argStr, {tracer: getTracer(tracer, argStr)}
+		try
+			hResult = peg$parse argStr, {tracer: getTracer(tracer, argStr)}
+		catch err
+			console.log "ERROR parsing command args: #{OL(argStr)}"
+			process.exit()
 		if defined(hDesc)
 			check hResult, hDesc
 		return hResult
@@ -64,7 +68,7 @@ GLOBAL
 			assert (n <= max),
 					"There can be at most #{max} non-option#{add_s(max)}"
 
-
+		# --- Check types of all options
 		for key in keys(hResult)
 			if (key != '_')
 				type = hDesc[key]
