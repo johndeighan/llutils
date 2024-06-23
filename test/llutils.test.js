@@ -333,9 +333,9 @@ symbol("escapeStr(str)");
 
 equal(escapeStr("\t\tabc def"), "→→abc˳def");
 
-equal(escapeStr("\t\tabc def\r\n"), "→→abc˳def◄▼");
+equal(escapeStr("\t\tabc def\r\n"), "→→abc˳def←↓");
 
-equal(escapeStr("\t\tabc def\r\nghi", 'escNoNL'), `→→abc˳def◄
+equal(escapeStr("\t\tabc def\r\nghi", 'escNoNL'), `→→abc˳def←
 ghi`);
 
 // ---------------------------------------------------------------------------

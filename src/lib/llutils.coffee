@@ -284,13 +284,13 @@ export isClassInstance = (x, lReqKeys=undef) =>
 # --- NOTE: We can't use OL() inside here since it uses escapeStr()
 
 export hEsc = {
-	"\r": '◄'
-	"\n": '▼'
+	"\r": '←'
+	"\n": '↓'
 	"\t": '→'
 	" ": '˳'
 	}
 export hEscNoNL = {
-	"\r": '◄'
+	"\r": '←'
 	"\t": '→'
 	" ": '˳'
 	}

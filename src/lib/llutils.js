@@ -323,14 +323,14 @@ export var isClassInstance = (x, lReqKeys = undef) => {
 //   escapeStr - escape newlines, carriage return, TAB chars, etc.
 // --- NOTE: We can't use OL() inside here since it uses escapeStr()
 export var hEsc = {
-  "\r": '◄',
-  "\n": '▼',
+  "\r": '←',
+  "\n": '↓',
   "\t": '→',
   " ": '˳'
 };
 
 export var hEscNoNL = {
-  "\r": '◄',
+  "\r": '←',
   "\t": '→',
   " ": '˳'
 };
