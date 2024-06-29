@@ -12,7 +12,8 @@ import {
   escapeBlock,
   toBlock,
   assert,
-  croak
+  croak,
+  stripCR
 } from '@jdeighan/llutils';
 
 import {
@@ -21,14 +22,15 @@ import {
 
 // ---------------------------------------------------------------------------
 export var DUMP = (item, label = 'RESULT', hOptions = {}) => {
-  var echo, esc, format, lLines, oneLine, output, sortKeys, str, width;
-  ({esc, width, oneLine, format, sortKeys, echo} = getOptions(hOptions, {
+  var echo, esc, format, lLines, longStr, nocr, oneLine, output, sortKeys, str, width;
+  ({esc, width, oneLine, format, sortKeys, echo, nocr} = getOptions(hOptions, {
     esc: false,
     width: 50,
     oneLine: true,
     format: undef, // --- can be 'JSON', 'TAML', 'NICE'
     sortKeys: undef,
-    echo: true
+    echo: true,
+    nocr: true
   }));
   label = label.replace('_', ' ');
   // --- define an output() function
@@ -40,9 +42,13 @@ export var DUMP = (item, label = 'RESULT', hOptions = {}) => {
     }
   };
   if (oneLine) {
+    if (nocr && isString(item)) {
+      item = stripCR(item);
+    }
     str = OL(item, {esc});
-    if (str.length <= width) {
-      output(`${label} = ${str}`);
+    longStr = `${label} = ${str}`;
+    if (longStr.length <= width) {
+      output(longStr);
       return toBlock(lLines);
     }
   }

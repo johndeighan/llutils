@@ -48,7 +48,7 @@ right`), {
     type: 'Assignment',
     right: 'Value'
   });
-  // --- Can't extract same symbol twice
+  // --- Can't extract same #symbol twice
   fails(() => {
     return extract(h, `type
 left
@@ -104,7 +104,8 @@ position.start as StartingPos`), {
     RightSide: 'Value',
     StartingPos: 1
   });
-  symbol("nested");
+  //symbol "nested"
+
   // --- Extract sub-keys
   return equal(extract(h, `type="Assignment"
 (position)
@@ -118,8 +119,7 @@ position.start as StartingPos`), {
   });
 })();
 
-symbol("from original test");
-
+//symbol "from original test"
 (() => {
   var h;
   h = fromTAML(`---

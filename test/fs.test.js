@@ -16,27 +16,23 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-symbol("normalize(path)");
-
+//symbol "normalize(path)"
 equal(normalize("C:\\temp"), "c:/temp");
 
 equal(normalize("c:\\temp/to/file.txt"), "c:/temp/to/file.txt");
 
 // ---------------------------------------------------------------------------
-symbol("mkpath(...lParts)");
-
+//symbol "mkpath(...lParts)"
 equal(mkpath('.', 'test'), "c:/Users/johnd/llutils/test");
 
 equal(mkpath('C:\\temp', 'work'), "c:/temp/work");
 
 // ---------------------------------------------------------------------------
-symbol("relpath(...lParts)");
-
+//symbol "relpath(...lParts)"
 equal(relpath(".", "temp"), "temp");
 
 // ---------------------------------------------------------------------------
-symbol("isDir(dirPath)");
-
+//symbol "isDir(dirPath)"
 (() => {
   var dir;
   dir = "c:/Users/johnd/llutils/test/fs";
@@ -45,8 +41,7 @@ symbol("isDir(dirPath)");
 })();
 
 // ---------------------------------------------------------------------------
-symbol("isFile(filePath)");
-
+//symbol "isFile(filePath)"
 (() => {
   var dir;
   dir = "c:/Users/johnd/llutils/test/fs";
@@ -54,8 +49,7 @@ symbol("isFile(filePath)");
 })();
 
 // ---------------------------------------------------------------------------
-symbol("getFileStats(filePath)");
-
+//symbol "getFileStats(filePath)"
 (() => {
   var dir;
   dir = "c:/Users/johnd/llutils/test/fs";
@@ -65,8 +59,7 @@ symbol("getFileStats(filePath)");
 })();
 
 // ---------------------------------------------------------------------------
-symbol("pathType(path)");
-
+//symbol "pathType(path)"
 (() => {
   var dir;
   dir = "c:/Users/johnd/llutils/test/fs";
@@ -76,8 +69,7 @@ symbol("pathType(path)");
 })();
 
 // ---------------------------------------------------------------------------
-symbol("parsePath(filePath)");
-
+//symbol "parsePath(filePath)"
 like(parsePath("./test/fs/test.txt"), {
   filePath: "c:/Users/johnd/llutils/test/fs/test.txt",
   size: 35
@@ -96,8 +88,7 @@ like(parsePath('./test/fs/file.test.txt'), {
 });
 
 // ---------------------------------------------------------------------------
-symbol("readTextFile(filePath)");
-
+//symbol "readTextFile(filePath)"
 (() => {
   var filePath, hMetaData, iter, nLines, reader;
   filePath = './test/fs/meta.txt';
@@ -144,13 +135,11 @@ def`);
 })();
 
 // ---------------------------------------------------------------------------
-symbol("pathTo(fileName)");
-
+//symbol "pathTo(fileName)"
 equal(mkpath(pathTo('cielo.coffee')), mkpath("src/lib/cielo.coffee"));
 
 // ---------------------------------------------------------------------------
-symbol("allPathsTo(fileName)");
-
+//symbol "allPathsTo(fileName)"
 lPaths = Array.from(allPathsTo('.symbols'), (x) => {
   return relpath(x);
 });

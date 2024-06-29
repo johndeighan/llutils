@@ -12,8 +12,7 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-symbol("DUMP(item, label, hOptions)");
-
+//symbol "DUMP(item, label, hOptions)"
 (() => {
   var str;
   str = DUMP({

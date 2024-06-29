@@ -1,7 +1,9 @@
 # llutils.coffee
 
 import assertLib from 'node:assert'
-import {execSync} from 'node:child_process'
+import {exec, execSync} from 'node:child_process'
+import {promisify} from 'node:util'
+execAsync = promisify(exec)
 import YAML from 'yaml'
 module = await import('deep-equal')
 deepEqual = module.default
@@ -19,6 +21,15 @@ export eq = (x, y) =>
 export dclone = (x) =>
 
 	return structuredClone(x)
+
+# ---------------------------------------------------------------------------
+
+export stripCR = (str) =>
+
+	if notdefined(str)
+		return undef
+	assert isString(str), "Not a string: #{OL(str)}"
+	return str.replaceAll('\r', '')
 
 # ---------------------------------------------------------------------------
 
@@ -113,7 +124,7 @@ export isString = (x, hOptions={}) =>
 
 	if (typeof x != 'string') && !(x instanceof String)
 		return false
-	if hOptions.nonempty
+	if (hOptions == 'nonempty') || hOptions.nonempty
 		return nonEmpty(x)
 	return true
 
@@ -501,8 +512,31 @@ export execCmd = (cmdLine, hOptions={}) =>
 		encoding: 'utf8'
 		windowsHide: true
 		}
-	result = execSync cmdLine, hOptions
-	return result.replace("\r", "")
+	return execSync(cmdLine, hOptions).toString()
+
+# ---------------------------------------------------------------------------
+
+export execAndLogCmd = (cmdLine, hOptions={}) =>
+	# --- may throw an exception
+
+	hOptions = getOptions hOptions, {
+		encoding: 'utf8'
+		windowsHide: true
+		}
+	result = execSync(cmdLine, hOptions).toString()
+	console.log result
+	return result
+
+# ---------------------------------------------------------------------------
+
+export execCmdAsync = (cmdLine, hOptions={}) =>
+	# --- may throw an exception
+
+	hOptions = getOptions hOptions, {
+		encoding: 'utf8'
+		windowsHide: true
+		}
+	return execAsync(cmdLine, hOptions)
 
 # ---------------------------------------------------------------------------
 
@@ -855,6 +889,7 @@ export isTAML = (block) ->
 export fromTAML = (block) ->
 
 	[head, rest] = behead(block)
+	assert head.startsWith('---'), "Missing '---'"
 	hOptions = {
 		skipInvalid: true
 		}
@@ -878,3 +913,63 @@ export sliceBlock = (block, start=0, end=undef) ->
 	if notdefined(end)
 		end = lLines.length
 	return toBlock(lLines.slice(start, end))
+
+# ---------------------------------------------------------------------------
+
+export sortArrayOfHashes = (lHashes, key) =>
+
+	# --- NOTE: works whether values are strings or numbers
+	compareFunc = (a, b) =>
+		if a[key] < b[key]
+			return -1
+		else if a[key] > b[key]
+			return 1
+		else
+			return 0
+	lHashes.sort(compareFunc)
+
+	# --- NOTE: array is sorted in place, but sometimes
+	#           it's useful if we return a ref to it anyway
+	return lHashes
+
+# ---------------------------------------------------------------------------
+
+export sortedArrayOfHashes = (lHashes, key) =>
+
+	# --- NOTE: works whether values are strings or numbers
+	compareFunc = (a, b) =>
+		if a[key] < b[key]
+			return -1
+		else if a[key] > b[key]
+			return 1
+		else
+			return 0
+	return lHashes.toSorted(compareFunc)
+
+# ---------------------------------------------------------------------------
+
+export cmdArgStr = (lArgs=undef) =>
+
+	if isString(lArgs)
+		return lArgs
+	if defined(lArgs)
+		assert isArray(lArgs), "Not an array: #{OL(lArgs)}"
+	else
+		lArgs = process.argv.slice(2) || []
+	return lArgs.map((str) =>
+		if lMatches = str.match(///^
+				-          # a dash
+				([^=\s]+)  # option name
+				=          # equal sign
+				(.*)
+				$///)
+			[_, name, value] = lMatches
+			if value.includes(' ')
+				return "-#{name}=\"#{value}\""
+			else
+				return "-#{name}=#{value}"
+		else if str.includes(' ')
+			return "\"#{str}\""
+		else
+			return str
+		).join(' ')

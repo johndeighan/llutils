@@ -7,7 +7,7 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
-symbol "LineFetcher"
+#symbol "LineFetcher"
 
 (() =>
 	src = new LineFetcher("""
@@ -28,7 +28,7 @@ symbol "LineFetcher"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "LineFetcher - filter"
+#symbol "LineFetcher - filter"
 
 (() =>
 	src = new LineFetcher("""
@@ -71,7 +71,7 @@ symbol "LineFetcher - filter"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "LineFetcher - filter & transform"
+#symbol "LineFetcher - filter & transform"
 
 (() =>
 	src = new LineFetcher("""
@@ -94,7 +94,7 @@ symbol "LineFetcher - filter & transform"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "LineFetcher - internal empty line"
+#symbol "LineFetcher - internal empty line"
 
 (() =>
 	src = new LineFetcher("""
@@ -115,7 +115,7 @@ symbol "LineFetcher - internal empty line"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "LineFetcher - trailing empty line"
+#symbol "LineFetcher - trailing empty line"
 
 (() =>
 	src = new LineFetcher("""
@@ -138,7 +138,7 @@ symbol "LineFetcher - trailing empty line"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "PLLFetcher"
+#symbol "PLLFetcher"
 
 (() =>
 	src = new PLLFetcher("""
@@ -168,7 +168,7 @@ symbol "PLLFetcher"
 
 
 # ---------------------------------------------------------------------------
-symbol "PLLFetcher- test getBlock()"
+#symbol "PLLFetcher- test getBlock()"
 
 (() =>
 	src = new PLLFetcher("""
@@ -198,7 +198,7 @@ symbol "PLLFetcher- test getBlock()"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "PLLFetcher - getBlock(), src has blank lines"
+#symbol "PLLFetcher - getBlock(), src has blank lines"
 
 (() =>
 	src = new PLLFetcher("""

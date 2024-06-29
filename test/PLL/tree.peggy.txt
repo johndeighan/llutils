@@ -1,0 +1,58 @@
+{{
+	// --------------------------------------------------------------
+	var parse__identifier__1, parse__one_ident__1, parse__stmt__1, parse__tree__1;
+
+	parse__tree__1 = (lStmts) => {
+	  return {
+	    type: 'tree',
+	    body: lStmts
+	  };
+	};
+
+	// --------------------------------------------------------------
+	parse__stmt__1 = (ident, children) => {
+	  var hResult;
+	  hResult = {
+	    type: 'stmt',
+	    ident
+	  };
+	  if (children) {
+	    hResult.children = children.body;
+	  }
+	  return hResult;
+	};
+
+	// --------------------------------------------------------------
+	parse__identifier__1 = (first, lMore) => {
+	  return [first, ...lMore].join(' ');
+	};
+
+	// --------------------------------------------------------------
+	parse__one_ident__1 = (str) => {
+	  return str;
+	};
+}}
+
+tree
+
+	= NL* lStmts: stmt |1.., SEP| NL*
+		{ return parse__tree__1(lStmts); }
+
+stmt
+
+	= ident:identifier children:(INDENT @tree UNDENT)?
+		{ return parse__stmt__1(ident, children); }
+
+identifier
+
+	= first: one_ident lMore: ( EXTEND @one_ident)*
+		{ return parse__identifier__1(first, lMore); }
+
+one_ident
+
+	= str: $ ([a-z]+) & {return (str != 'if');}
+		{ return parse__one_ident__1(str); }
+
+NL
+
+	= "\r" ? "\n"

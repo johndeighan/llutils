@@ -1,4 +1,4 @@
-# SectionMap.coffee
+# section-map.coffee
 
 import {
 	undef, defined, notdefined, OL, isEmpty, nonEmpty,
@@ -111,8 +111,8 @@ export class SectionMap
 				else
 					croak "Item in set #{desc} is not a string or array"
 
-					# --- Remove undef blocks
-#			lBlocks = lBlocks.filter((block) => defined(block))
+			# --- Remove undef blocks
+			lBlocks = lBlocks.filter((block) => defined(block))
 
 			block = toBlock(lBlocks)
 			replacer = @hReplacers[desc]

@@ -1,0 +1,218 @@
+{{
+	var check, hOptions, parse__arg__1, parse__arg__2, parse__cmdArgs__1, parse__stringVal__1, parse__stringVal__2, parse__stringVal__3;
+
+	import {
+	  undef,
+	  defined,
+	  notdefined,
+	  pass,
+	  isEmpty,
+	  hasKey,
+	  keys,
+	  OL,
+	  words,
+	  add_s,
+	  assert,
+	  croak,
+	  getOptions,
+	  cmdArgStr,
+	  isString,
+	  isFunction,
+	  isBoolean,
+	  isArray,
+	  isHash
+	} from '@jdeighan/llutils';
+
+	import {
+	  DUMP
+	} from '@jdeighan/llutils/dump';
+
+	import {
+	  getTracer
+	} from '@jdeighan/llutils/tracer';
+
+	hOptions = {};
+
+	export var getArgs = (argStr = undef, hDesc = undef, tracerStr = 'none') => {
+	  debugger;
+	  var err, hResult, tracer;
+	  argStr = cmdArgStr(argStr);
+	  try {
+	    tracer = getTracer(tracerStr, argStr);
+	  } catch (error) {
+	    err = error;
+	    console.log(`ERROR: getTracer() failed: ${err.message}`);
+	    process.exit();
+	  }
+	  try {
+	    hResult = peg$parse(argStr, {tracer});
+	  } catch (error) {
+	    err = error;
+	    console.log(`ERROR parsing ${OL(argStr)}: ${err.message}`);
+	    process.exit();
+	  }
+	  if (defined(hDesc)) {
+	    check(hResult, hDesc);
+	  }
+	  return hResult;
+	};
+
+	check = (hResult, hDesc) => {
+	  var err, i, key, lLimits, lNonOptions, len, max, min, n, ref, type, value;
+	  lLimits = hDesc._;
+	  if (defined(lLimits)) {
+	    assert(isArray(lLimits), `Not an array: ${OL(lLimits)}`);
+	    [min, max] = lLimits;
+	    if (notdefined(min)) {
+	      min = 0;
+	    }
+	    if (notdefined(max)) {
+	      max = 2e308;
+	    }
+	    lNonOptions = hResult._;
+	    if (defined(lNonOptions)) {
+	      assert(isArray(lNonOptions), `Not an array: ${OL(lNonOptions)}`);
+	      n = lNonOptions.length;
+	    } else {
+	      n = 0;
+	    }
+	    assert(n >= min, `There must be at least ${min} non-option${add_s(min)}`);
+	    assert(n <= max, `There can be at most ${max} non-option${add_s(max)}`);
+	  }
+	  ref = keys(hResult);
+	  for (i = 0, len = ref.length; i < len; i++) {
+	    key = ref[i];
+	    if (key !== '_') {
+	      type = hDesc[key];
+	      value = hResult[key];
+	      switch (typeof type) {
+	        case 'string':
+	          switch (type) {
+	            case 'string':
+	              pass();
+	              break;
+	            case 'boolean':
+	              assert(isBoolean(value), `Bad boolean: ${OL(value)}, key = ${OL(key)}`);
+	              break;
+	            case 'number':
+	              try {
+	                hResult[key] = parseFloat(value);
+	              } catch (error) {
+	                err = error;
+	                croak(`Bad number: ${OL(value)}, key = ${OL(key)}`);
+	              }
+	              break;
+	            case 'integer':
+	              try {
+	                hResult[key] = parseInt(value, 10);
+	              } catch (error) {
+	                err = error;
+	                croak(`Bad integer: ${OL(value)}, key = ${OL(key)}`);
+	              }
+	              break;
+	            default:
+	              croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);
+	          }
+	          break;
+	        case 'object':
+	          if (type instanceof RegExp) {
+	            assert(isString(value), `value not a string: ${OL(value)}`);
+	            assert(value.match(type), `value ${OL(value)} does not match regexp`);
+	          } else {
+	            croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);
+	          }
+	          break;
+	        default:
+	          croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);
+	      }
+	    }
+	  }
+	};
+
+	// --------------------------------------------------------------
+	parse__cmdArgs__1 = (lArgs) => {
+	  var arg, i, lNonOptions, len;
+	  hOptions = {};
+	  lNonOptions = [];
+	  for (i = 0, len = lArgs.length; i < len; i++) {
+	    arg = lArgs[i];
+	    if (isHash(arg)) {
+	      Object.assign(hOptions, arg);
+	    } else if (isArray(arg)) {
+	      lNonOptions.push(...arg);
+	    } else {
+	      croak(`Bad return from arg: ${OL(arg)}`);
+	    }
+	  }
+	  if (lNonOptions.length > 0) {
+	    hOptions._ = lNonOptions;
+	  }
+	  return hOptions;
+	};
+
+	// --------------------------------------------------------------
+	parse__arg__1 = (lChars, value) => {
+	  var ch, i, key, len;
+	  if (isEmpty(value)) {
+	    hOptions = {};
+	    for (i = 0, len = lChars.length; i < len; i++) {
+	      ch = lChars[i];
+	      hOptions[ch] = true;
+	    }
+	    return hOptions;
+	  } else {
+	    key = lChars.join('');
+	    return {
+	      [key]: value
+	    };
+	  }
+	};
+
+	// --------------------------------------------------------------
+	parse__arg__2 = (val) => {
+	  return [val];
+	};
+
+	// --------------------------------------------------------------
+	parse__stringVal__1 = (str) => {
+	  return str;
+	};
+
+	// --------------------------------------------------------------
+	parse__stringVal__2 = (str) => {
+	  return str;
+	};
+
+	// --------------------------------------------------------------
+	parse__stringVal__3 = (str) => {
+	  return str;
+	};
+}}
+
+cmdArgs
+
+	= lArgs: arg |.., ws|
+		{ return parse__cmdArgs__1(lArgs); }
+
+arg
+
+	= '-' lChars:[A-Za-z]+ value:('=' @stringVal)?
+		{ return parse__arg__1(lChars, value); }
+
+	/ val:stringVal
+		{ return parse__arg__2(val); }
+
+stringVal
+
+	= '"'  str: $ [^"]*  '"'
+		{ return parse__stringVal__1(str); }
+
+	/ "'"  str: $ [^']*  "'"
+		{ return parse__stringVal__2(str); }
+
+	/ !'-' str: $ [^ \t]+
+		{ return parse__stringVal__3(str); }
+
+ws
+
+	= [ \t]+

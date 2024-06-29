@@ -14,8 +14,7 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-symbol("toNICE(obj)");
-
+//symbol "toNICE(obj)"
 func1 = function(x) {
   return 42;
 };

@@ -7,7 +7,7 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
-symbol "brew(code)"
+#symbol "brew(code)"
 
 succeeds () => brew('v = 5')
 fails () => brew('let v = 5')
@@ -32,7 +32,7 @@ equal brew('v = 5', {shebang: 'abc'}).js, """
 	"""
 
 # ---------------------------------------------------------------------------
-symbol "brewFile(filePath)"
+#symbol "brewFile(filePath)"
 
 (() =>
 	filePath = './test/coffee/test1.coffee'
@@ -44,13 +44,13 @@ symbol "brewFile(filePath)"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "toAST(code)"
+#symbol "toAST(code)"
 
 succeeds () => toAST('v = 5')
 fails () => toAST('let v = 5')
 
 # ---------------------------------------------------------------------------
-symbol "coffeeInfo(astOrCode)"
+#symbol "coffeeInfo(astOrCode)"
 
 (() =>
 	code = """

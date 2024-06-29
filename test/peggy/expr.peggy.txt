@@ -1,0 +1,89 @@
+{{
+	// --------------------------------------------------------------
+	var parse__expr__1, parse__factor__2, parse__float__1, parse__integer__1, parse__term__1;
+
+	parse__expr__1 = (left, op, right) => {
+	  if (op === '+') {
+	    return left + right;
+	  } else {
+	    return left - right;
+	  }
+	};
+
+	// --------------------------------------------------------------
+	parse__term__1 = (left, op, right) => {
+	  if (op === '*') {
+	    return left * right;
+	  } else {
+	    return left / right;
+	  }
+	};
+
+	// --------------------------------------------------------------
+	parse__factor__2 = (f) => {
+	  return f;
+	};
+
+	// --------------------------------------------------------------
+	parse__integer__1 = (str) => {
+	  return parseInt(str);
+	};
+
+	// --------------------------------------------------------------
+	parse__float__1 = (digits, decimal) => {
+	  return parseFloat(digits + '.' + decimal);
+	};
+}}
+
+expr
+
+	= left:term ws op:addOp ws right:expr
+		{ return parse__expr__1(left, op, right); }
+
+	/ term
+
+term
+
+	= left:factor ws op:mulOp ws right:term
+		{ return parse__term__1(left, op, right); }
+
+	/ factor
+
+factor
+
+	= number
+
+	/ '(' ws f:expr ws ')'
+		{ return parse__factor__2(f); }
+
+addOp
+
+	= '+'
+
+	/ '-'
+
+mulOp
+
+	= '*'
+
+	/ '/'
+
+ws
+
+	= ' '*
+
+integer
+
+	= str: $ [0-9]+
+		{ return parse__integer__1(str); }
+
+float
+
+	= digits: $ [0-9]+ '.' decimal: $ [0-9]+
+		{ return parse__float__1(digits, decimal); }
+
+number
+
+	= float
+
+	/ integer

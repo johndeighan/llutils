@@ -13,8 +13,7 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-symbol("LineFetcher");
-
+//symbol "LineFetcher"
 (() => {
   var src;
   src = new LineFetcher(`abc
@@ -33,8 +32,7 @@ ghi`);
 })();
 
 // ---------------------------------------------------------------------------
-symbol("LineFetcher - filter");
-
+//symbol "LineFetcher - filter"
 (() => {
   var src;
   src = new LineFetcher(`abc
@@ -75,8 +73,7 @@ ghi`);
 })();
 
 // ---------------------------------------------------------------------------
-symbol("LineFetcher - filter & transform");
-
+//symbol "LineFetcher - filter & transform"
 (() => {
   var src;
   src = new LineFetcher(`abc
@@ -100,8 +97,7 @@ ghi`);
 })();
 
 // ---------------------------------------------------------------------------
-symbol("LineFetcher - internal empty line");
-
+//symbol "LineFetcher - internal empty line"
 (() => {
   var src;
   src = new LineFetcher(`abc
@@ -120,8 +116,7 @@ def`);
 })();
 
 // ---------------------------------------------------------------------------
-symbol("LineFetcher - trailing empty line");
-
+//symbol "LineFetcher - trailing empty line"
 (() => {
   var src;
   src = new LineFetcher(`abc
@@ -142,8 +137,7 @@ def
 })();
 
 // ---------------------------------------------------------------------------
-symbol("PLLFetcher");
-
+//symbol "PLLFetcher"
 (() => {
   var src;
   src = new PLLFetcher(`GLOBAL
@@ -169,8 +163,7 @@ cmdArgs
 })();
 
 // ---------------------------------------------------------------------------
-symbol("PLLFetcher- test getBlock()");
-
+//symbol "PLLFetcher- test getBlock()"
 (() => {
   var src;
   src = new PLLFetcher(`GLOBAL
@@ -193,8 +186,7 @@ meaning = 42`);
 })();
 
 // ---------------------------------------------------------------------------
-symbol("PLLFetcher - getBlock(), src has blank lines");
-
+//symbol "PLLFetcher - getBlock(), src has blank lines"
 (() => {
   var src;
   src = new PLLFetcher(`

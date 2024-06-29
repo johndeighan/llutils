@@ -1,4 +1,6 @@
 // fs.coffee
+var lDirs;
+
 import pathLib from 'node:path';
 
 import urlLib from 'url';
@@ -33,6 +35,22 @@ import {
 } from '@jdeighan/llutils/metadata';
 
 export var lStatFields = words('dev ino mode nlink uid gid rdev size blksize blocks', 'atimeMs mtimeMs ctimeMs birthtimeMs', 'atime mtime ctime birthtime');
+
+lDirs = [];
+
+// ---------------------------------------------------------------------------
+export var pushCWD = (dir) => {
+  lDirs.push(process.cwd());
+  process.chdir(dir);
+};
+
+// ---------------------------------------------------------------------------
+export var popCWD = () => {
+  var dir;
+  assert(lDirs.length > 0, "directory stack is empty");
+  dir = lDirs.pop();
+  process.chdir(dir);
+};
 
 // ---------------------------------------------------------------------------
 export var isProjRoot = (dir = '.', hOptions = {}) => {
@@ -314,7 +332,7 @@ export var slurp = (filePath, hOptions = {}) => {
   }));
   assert(isString(filePath, 'nonEmpty'), "empty path");
   filePath = mkpath(filePath);
-  assert(isFile(filePath), `Not a file: ${OL(filePath)}`);
+  assert(isFile(filePath), `No such file: ${OL(filePath)}`);
   block = fs.readFileSync(filePath, 'utf8').toString().replaceAll('\r', '');
   if (defined(numLines)) {
     return sliceBlock(block, numLines, 0);
@@ -431,7 +449,7 @@ export var allFilesMatching = function*(pattern = '*', hOptions = {}) {
   //        cwd - change working directory
   ({hGlobOptions, fileFilter} = getOptions(hOptions, {
     hGlobOptions: {
-      ignore: "node_modules"
+      ignore: "node_modules/**"
     },
     fileFilter: (h) => {
       var path;

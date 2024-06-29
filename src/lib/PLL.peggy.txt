@@ -1,0 +1,103 @@
+{{
+	var init, isExtend, isIndent, isSep, isUndent, level, log, parse__EXTEND__1, parse__INDENTATION__1, parse__INDENT__1, parse__SEP__1, parse__UNDENT__1, sep;
+
+	level = 0;
+
+	sep = false;
+
+	log = (...lObj) => {
+	  var i, len, obj;
+	  for (i = 0, len = lObj.length; i < len; i++) {
+	    obj = lObj[i];
+	    console.log(obj);
+	  }
+	  return true;
+	};
+
+	isSep = ({match, nTabs}) => {
+	  return sep || (match && (nTabs === level));
+	};
+
+	isIndent = ({match, nTabs}) => {
+	  return match && (nTabs === level + 1);
+	};
+
+	isExtend = ({match, nTabs}) => {
+	  return match && (nTabs > level + 1);
+	};
+
+	isUndent = ({match, nTabs}) => {
+	  if (match && (nTabs < level)) {
+	    return true;
+	  }
+	  if ((nTabs === 0) && (level > 0)) {
+	    return true;
+	  }
+	  return false;
+	};
+
+	init = () => {
+	  level = 0;
+	  return sep = false;
+	};
+
+	// --------------------------------------------------------------
+	parse__SEP__1 = (hInfo) => {
+	  sep = false;
+	  return 'SEP';
+	};
+
+	// --------------------------------------------------------------
+	parse__INDENT__1 = (hInfo) => {
+	  level += 1;
+	  return `INDENT ${level - 1} -> ${level}`;
+	};
+
+	// --------------------------------------------------------------
+	parse__EXTEND__1 = (hInfo) => {
+	  return 'EXTEND';
+	};
+
+	// --------------------------------------------------------------
+	parse__UNDENT__1 = (hInfo) => {
+	  level -= 1;
+	  sep = true; // cause SEP after last UNDENT
+	  return `UNDENT ${level + 1} -> ${level}`;
+	};
+
+	// --------------------------------------------------------------
+	parse__INDENTATION__1 = (lTabs) => {
+	  return {
+	    match: lTabs !== null,
+	    nTabs: lTabs === null ? 0 : lTabs.length
+	  };
+	};
+}}
+{
+init();
+}
+
+SEP
+
+	= hInfo: INDENTATION & {return isSep(hInfo)}
+		{ return parse__SEP__1(hInfo); }
+
+INDENT
+
+	= hInfo: INDENTATION & {return isIndent(hInfo)}
+		{ return parse__INDENT__1(hInfo); }
+
+EXTEND
+
+	= hInfo: INDENTATION & {return isExtend(hInfo)}
+		{ return parse__EXTEND__1(hInfo); }
+
+UNDENT
+
+	= hInfo: INDENTATION & {return isUndent(hInfo)}
+		{ return parse__UNDENT__1(hInfo); }
+
+INDENTATION
+
+	= lTabs: ("\r"? "\n" ([ \t]* "\n")* @"\t"*)?
+		{ return parse__INDENTATION__1(lTabs); }

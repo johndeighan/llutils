@@ -1,4 +1,4 @@
-// SectionMap.coffee
+// section-map.coffee
 var isSectionName, isSetName;
 
 import {
@@ -118,7 +118,9 @@ export var SectionMap = class SectionMap {
         return results;
       }).call(this);
       // --- Remove undef blocks
-      //			lBlocks = lBlocks.filter((block) => defined(block))
+      lBlocks = lBlocks.filter((block) => {
+        return defined(block);
+      });
       block = toBlock(lBlocks);
       replacer = this.hReplacers[desc];
       if (defined(replacer)) {

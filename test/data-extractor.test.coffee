@@ -58,7 +58,7 @@ Object.assign(global, lib2)
 		right: 'Value'
 		}
 
-	# --- Can't extract same symbol twice
+	# --- Can't extract same #symbol twice
 	fails () => extract(h, """
 		type
 		left
@@ -131,7 +131,7 @@ Object.assign(global, lib2)
 		StartingPos: 1
 		}
 
-	symbol "nested"
+	#symbol "nested"
 
 	# --- Extract sub-keys
 	equal extract(h, """
@@ -150,7 +150,7 @@ Object.assign(global, lib2)
 
 	)()
 
-symbol "from original test"
+#symbol "from original test"
 
 (() =>
 	h = fromTAML("""

@@ -7,7 +7,7 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
-symbol "getTracer(type, inputStr, hVars={})"
+#symbol "getTracer(type, inputStr, hVars={})"
 
 (() =>
 	tracer = getTracer('default')

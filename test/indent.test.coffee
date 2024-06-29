@@ -7,7 +7,7 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
-symbol "indentLevel(str)"
+#symbol "indentLevel(str)"
 
 (() =>
 	equal indentLevel('abc'), 0
@@ -33,7 +33,7 @@ symbol "indentLevel(str)"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "splitLine(line, oneIndent)"
+#symbol "splitLine(line, oneIndent)"
 
 (() =>
 	equal splitLine('abc'), [0, 'abc']
@@ -48,7 +48,7 @@ symbol "splitLine(line, oneIndent)"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "indented(input, level, oneIndent)"
+#symbol "indented(input, level, oneIndent)"
 
 (() =>
 	equal indented('abc'), '\tabc'
@@ -112,7 +112,7 @@ equal indented([
 	]
 
 # ---------------------------------------------------------------------------
-symbol "undented(input)"
+#symbol "undented(input)"
 
 equal undented("""
 	\t\tabc

@@ -22,8 +22,7 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-symbol("coffeeInfo(codeOrAST)");
-
+//symbol "coffeeInfo(codeOrAST)"
 (() => {
   var code;
   code = `export x = y

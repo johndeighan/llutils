@@ -1,0 +1,97 @@
+{{
+	var init, parse__identifier__1, parse__program__1, parse__stmt__1, parse__stmt__2;
+
+	import {
+	  undef,
+	  defined,
+	  OL,
+	  assert,
+	  nonEmpty
+	} from '@jdeighan/llutils';
+
+	import {
+	  getTracer
+	} from '@jdeighan/llutils/tracer';
+
+	export var evaluate = (input, tracerType = 'none') => {
+	  var tracer;
+	  tracer = getTracer(tracerType, input, {
+	    level: () => {
+	      return level;
+	    },
+	    sep: () => {
+	      return sep;
+	    }
+	  });
+	  if (defined(tracer)) {
+	    return peg$parse(input, {tracer});
+	  } else {
+	    return peg$parse(input);
+	  }
+	};
+
+	init = () => {
+	  var level, sep;
+	  level = 0;
+	  return sep = false;
+	};
+
+	// --------------------------------------------------------------
+	parse__program__1 = (lStmts) => {
+	  return {
+	    type: 'program',
+	    body: lStmts
+	  };
+	};
+
+	// --------------------------------------------------------------
+	parse__stmt__1 = (varname, val) => {
+	  return {
+	    type: 'assign',
+	    varname,
+	    val
+	  };
+	};
+
+	// --------------------------------------------------------------
+	parse__stmt__2 = (body) => {
+	  return {
+	    type: 'if',
+	    body
+	  };
+	};
+
+	// --------------------------------------------------------------
+	parse__identifier__1 = (str) => {
+	  return str;
+	};
+}}
+{
+init();
+}
+
+program
+
+	= lStmts: stmt |1.., SEP| NL*
+		{ return parse__program__1(lStmts); }
+
+stmt
+
+	= varname:identifier '=' val:int
+		{ return parse__stmt__1(varname, val); }
+
+	/ 'if' INDENT body: stmt|1..,SEP| UNDENT
+		{ return parse__stmt__2(body); }
+
+identifier
+
+	= str: $ ([a-z]+) & {return (str != 'if');}
+		{ return parse__identifier__1(str); }
+
+int
+
+	= $ [0-9]+
+
+NL
+
+	= "\r" ? "\n"

@@ -3,7 +3,7 @@
 import {
 	undef, defined, notdefined, getOptions, OL, log,
 	centered, toTAML, isString, escapeBlock, toBlock,
-	assert, croak,
+	assert, croak, stripCR,
 	} from '@jdeighan/llutils'
 import {toNICE} from '@jdeighan/llutils/to-nice'
 
@@ -11,7 +11,7 @@ import {toNICE} from '@jdeighan/llutils/to-nice'
 
 export DUMP = (item, label='RESULT', hOptions={}) =>
 
-	{esc, width, oneLine, format, sortKeys, echo
+	{esc, width, oneLine, format, sortKeys, echo, nocr,
 		} = getOptions hOptions, {
 		esc: false
 		width: 50
@@ -19,6 +19,7 @@ export DUMP = (item, label='RESULT', hOptions={}) =>
 		format: undef    # --- can be 'JSON', 'TAML', 'NICE'
 		sortKeys: undef
 		echo: true
+		nocr: true
 		}
 	label = label.replace('_',' ')
 
@@ -30,9 +31,12 @@ export DUMP = (item, label='RESULT', hOptions={}) =>
 			log str
 
 	if oneLine
+		if nocr && isString(item)
+			item = stripCR(item)
 		str = OL(item, {esc})
-		if (str.length <= width)
-			output "#{label} = #{str}"
+		longStr = "#{label} = #{str}"
+		if (longStr.length <= width)
+			output longStr
 			return toBlock(lLines)
 
 	if defined(format)

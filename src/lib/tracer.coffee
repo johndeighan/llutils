@@ -2,59 +2,96 @@
 
 import {
 	undef, defined, pass, OL, escapeStr, keys,
-	assert, isString, isArray, isEmpty,
+	assert, isString, isArray, isEmpty, getOptions,
 	} from '@jdeighan/llutils'
 
 # ---------------------------------------------------------------------------
 
-class NullTracer
+export class NullTracer
 
 	trace: () ->
 		return
 
-class DefaultTracer extends NullTracer
+# ---------------------------------------------------------------------------
 
-	constructor: () ->
+export class DefaultTracer extends NullTracer
+
+	constructor: (hOptions={}) ->
 
 		super()
+		hOptions = getOptions hOptions, {
+			ignore: ['_']
+			}
+		@lIgnore = hOptions.ignore
 		@level = 0
 
-	prefix: () ->
-		return "│  ".repeat(@level)
+	# ..........................................................
 
-	result: () ->
-		count = if (@level==0) then 0 else @level-1
-		return "│  ".repeat(count) + "└─>"
+	prefix: (type) ->
+		if (type == 'rule.enter') || (type == 'match.string')
+			return "│  ".repeat(@level)
+		else if (type == 'fail.string')
+			return "│  ".repeat(@level-1) + "x  "
+		else
+			count = if (@level==0) then 0 else @level-1
+			return "│  ".repeat(count) + "└─>"
 
-	# --- This allows unit testing
+	# ..........................................................
+
 	traceStr: (hInfo) ->
 
 		{type, rule, location, result} = hInfo
 		if defined(location)
-			{line, column, offset} = location.start
+			{line: s_line, column: s_col, offset: s_offset} = location.start
+			{line: e_line, column: e_col, offset: e_offset} = location.end
+			locStr = "#{s_line}:#{s_col}:#{s_offset}"
+			endPos = e_offset
+		else
+			locStr = '?'
+			endPos = undef
+		pre = @prefix(type)
+
 		switch type
 
 			when 'rule.enter'
-				return "#{@prefix()}? #{rule}"
+				return "#{pre}? #{rule}"
 
 			when 'rule.fail'
 				if defined(location)
-					return "#{@result()} NO (at #{line}:#{column}:#{offset})"
+					return "#{pre} NO (at #{locStr})"
 				else
-					return "#{@result()} NO"
+					return "#{pre} NO"
 
-			when 'rule.match'
-				if defined(result)
-					return "#{@result()} #{OL(result)}"
+			when 'fail.string'
+				if defined(location)
+					return "#{pre} NO #{rule} (at #{locStr})"
 				else
-					return "#{@result()} YES"
+					return "#{pre} NO #{rule}"
+
+			when 'rule.match', 'match.string'
+				if defined(result)
+					if defined(endPos)
+						return "#{pre} #{OL(result)} (pos -> #{endPos})"
+					else
+						return "#{pre} #{OL(result)}"
+				else
+					if defined(endPos)
+						return "#{pre} YES (pos=#{endPos})"
+					else
+						return "#{pre} YES"
+
 			else
 				return "UNKNOWN type: #{type}"
 		return
 
+	# ..........................................................
+
 	trace: (hInfo) ->
+
+		# --- DEBUG console.dir hInfo
+
 		# --- ignore whitespace rule
-		if (hInfo.rule == '_')
+		if @lIgnore.includes(hInfo.rule)
 			return
 
 		result = @traceStr(hInfo)
@@ -71,7 +108,9 @@ class DefaultTracer extends NullTracer
 				@level -= 1;
 		return
 
-class DetailedTracer extends DefaultTracer
+# ---------------------------------------------------------------------------
+
+export class DetailedTracer extends DefaultTracer
 
 	constructor: (@input, @hVars={}) ->
 
@@ -80,6 +119,7 @@ class DetailedTracer extends DefaultTracer
 	# ..........................................................
 
 	varStr: () ->
+
 		if isEmpty(@hVars)
 			return ''
 
@@ -120,10 +160,10 @@ class DetailedTracer extends DefaultTracer
 #        - an object with a function property named 'trace'
 #        - a function
 
-export getTracer = (tracer, input, hVars={}) =>
+export getTracer = (tracer='default', input, hVars={}) =>
 
-	if (tracer == null)
-		tracer = undef
+	if isEmpty(tracer) || (tracer == 'none') || (tracer == 'null')
+		return new NullTracer()
 	switch (typeof tracer)
 		when 'undefined'
 			return new NullTracer()
@@ -131,14 +171,14 @@ export getTracer = (tracer, input, hVars={}) =>
 			if hasKey(tracer, trace)
 				return tracer
 			else
-				return new NullTracer()
+				croak "Invalid tracer object, no 'trace' method"
 		when 'function'
 			return {trace: tracer}
 		when 'string'
 			switch tracer
 				when 'default'
 					return new DefaultTracer()
-				when 'detailed'
+				when 'detailed','advanced'
 					return new DetailedTracer(input, hVars)
 				when 'peggy'
 					return undef

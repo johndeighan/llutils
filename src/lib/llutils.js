@@ -1,12 +1,19 @@
   // llutils.coffee
-var deepEqual, module,
+var deepEqual, execAsync, module,
   hasProp = {}.hasOwnProperty;
 
 import assertLib from 'node:assert';
 
 import {
+  exec,
   execSync
 } from 'node:child_process';
+
+import {
+  promisify
+} from 'node:util';
+
+execAsync = promisify(exec);
 
 import YAML from 'yaml';
 
@@ -26,6 +33,15 @@ export var eq = (x, y) => {
 // ---------------------------------------------------------------------------
 export var dclone = (x) => {
   return structuredClone(x);
+};
+
+// ---------------------------------------------------------------------------
+export var stripCR = (str) => {
+  if (notdefined(str)) {
+    return undef;
+  }
+  assert(isString(str), `Not a string: ${OL(str)}`);
+  return str.replaceAll('\r', '');
 };
 
 // ---------------------------------------------------------------------------
@@ -136,7 +152,7 @@ export var isString = (x, hOptions = {}) => {
   if ((typeof x !== 'string') && !(x instanceof String)) {
     return false;
   }
-  if (hOptions.nonempty) {
+  if ((hOptions === 'nonempty') || hOptions.nonempty) {
     return nonEmpty(x);
   }
   return true;
@@ -572,14 +588,35 @@ export var nonEmpty = (x) => {
 
 // ---------------------------------------------------------------------------
 export var execCmd = (cmdLine, hOptions = {}) => {
+  // --- may throw an exception
+  hOptions = getOptions(hOptions, {
+    encoding: 'utf8',
+    windowsHide: true
+  });
+  return execSync(cmdLine, hOptions).toString();
+};
+
+// ---------------------------------------------------------------------------
+export var execAndLogCmd = (cmdLine, hOptions = {}) => {
   var result;
   // --- may throw an exception
   hOptions = getOptions(hOptions, {
     encoding: 'utf8',
     windowsHide: true
   });
-  result = execSync(cmdLine, hOptions);
-  return result.replace("\r", "");
+  result = execSync(cmdLine, hOptions).toString();
+  console.log(result);
+  return result;
+};
+
+// ---------------------------------------------------------------------------
+export var execCmdAsync = (cmdLine, hOptions = {}) => {
+  // --- may throw an exception
+  hOptions = getOptions(hOptions, {
+    encoding: 'utf8',
+    windowsHide: true
+  });
+  return execAsync(cmdLine, hOptions);
 };
 
 // ---------------------------------------------------------------------------
@@ -950,6 +987,7 @@ export var isTAML = function(block) {
 export var fromTAML = function(block) {
   var hOptions, head, rest;
   [head, rest] = behead(block);
+  assert(head.startsWith('---'), "Missing '---'");
   hOptions = {
     skipInvalid: true
   };
@@ -974,6 +1012,70 @@ export var sliceBlock = function(block, start = 0, end = undef) {
     end = lLines.length;
   }
   return toBlock(lLines.slice(start, end));
+};
+
+// ---------------------------------------------------------------------------
+export var sortArrayOfHashes = (lHashes, key) => {
+  var compareFunc;
+  // --- NOTE: works whether values are strings or numbers
+  compareFunc = (a, b) => {
+    if (a[key] < b[key]) {
+      return -1;
+    } else if (a[key] > b[key]) {
+      return 1;
+    } else {
+      return 0;
+    }
+  };
+  lHashes.sort(compareFunc);
+  // --- NOTE: array is sorted in place, but sometimes
+  //           it's useful if we return a ref to it anyway
+  return lHashes;
+};
+
+// ---------------------------------------------------------------------------
+export var sortedArrayOfHashes = (lHashes, key) => {
+  var compareFunc;
+  // --- NOTE: works whether values are strings or numbers
+  compareFunc = (a, b) => {
+    if (a[key] < b[key]) {
+      return -1;
+    } else if (a[key] > b[key]) {
+      return 1;
+    } else {
+      return 0;
+    }
+  };
+  return lHashes.toSorted(compareFunc);
+};
+
+// ---------------------------------------------------------------------------
+export var cmdArgStr = (lArgs = undef) => {
+  if (isString(lArgs)) {
+    return lArgs;
+  }
+  if (defined(lArgs)) {
+    assert(isArray(lArgs), `Not an array: ${OL(lArgs)}`);
+  } else {
+    lArgs = process.argv.slice(2) || [];
+  }
+  return lArgs.map((str) => {
+    var _, lMatches, name, value;
+    if (lMatches = str.match(/^-([^=\s]+)=(.*)$/)) { // a dash
+      // option name
+      // equal sign
+      [_, name, value] = lMatches;
+      if (value.includes(' ')) {
+        return `-${name}=\"${value}\"`;
+      } else {
+        return `-${name}=${value}`;
+      }
+    } else if (str.includes(' ')) {
+      return `\"${str}\"`;
+    } else {
+      return str;
+    }
+  }).join(' ');
 };
 
 //# sourceMappingURL=llutils.js.map

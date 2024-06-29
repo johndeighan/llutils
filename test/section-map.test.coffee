@@ -262,6 +262,7 @@ elem = (tag, content) =>
 		'style'
 		], hProc)
 
+	sect = map.hSections
 	map.section('style').add   "p {", "...color: red", "...}"
 	map.section('code').add    "x = 42"
 	map.section('startup').add "LOG 'starting'"

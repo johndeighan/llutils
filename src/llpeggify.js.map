@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "llpeggify.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "src\\llpeggify.coffee"
+  ],
+  "names": [],
+  "mappings": "AAEgD;;;AAAA,IAAA,GAAA,EAAA,QAAA,EAAA,CAAA,EAAA,WAAA,EAAA;;AAEhD,OAAA;EAAQ,QAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,OAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,WAAR;CAAA,MAAA,0BAJgD;;;;;AAShD,WAAA,GAAc,QAAA,CAAS,oBAAT,EAA+B;EAC5C,MAAA,EAAQ;AADoC,CAA/B;;AAId,KAAA,6CAAA;;AACC;IACC,WAAA,CAAY,QAAZ,EADD;GAEA,aAAA;IAAM;IACL,OAAO,CAAC,GAAR,CAAY,CAAA,GAAA,CAAA,CAAM,QAAN,CAAA,EAAA,CAAA,CAAmB,GAAG,CAAC,OAAvB,CAAA,CAAZ,EADD;;AAHD",
+  "sourcesContent": [
+    "# llpeggify.coffee\r\n#\r\n# --- Part of build process, can't use getArgs()\r\n\r\nimport {globSync} from 'glob'\r\nimport {execCmd} from '@jdeighan/llutils'\r\nimport {peggifyFile} from '@jdeighan/llutils/peggy'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\n# --- Returns array of relative file paths\r\nlPeggyFiles = globSync('**/*.{pegjs,peggy}', {\r\n\tignore: 'node_modules/**'\r\n\t})\r\n\r\nfor filePath in lPeggyFiles\r\n\ttry\r\n\t\tpeggifyFile filePath\r\n\tcatch err\r\n\t\tconsole.log \"in #{filePath}: #{err.message}\"\r\n"
+  ]
+}

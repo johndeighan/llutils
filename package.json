@@ -5,11 +5,13 @@
 	"description": "compile coffee and peggy files",
 	"exports": {
 		".": "./src/lib/llutils.js",
+		"./PLL": "./src/lib/PLL.js",
 		"./node-walker": "./src/lib/node-walker.js",
 		"./ast-walker": "./src/lib/ast-walker.js",
 		"./fs": "./src/lib/fs.js",
 		"./indent": "./src/lib/indent.js",
 		"./metadata": "./src/lib/metadata.js",
+		"./llcoffee": "./src/lib/llcoffee.js",
 		"./coffee": "./src/lib/coffee.js",
 		"./cielo": "./src/lib/cielo.js",
 		"./fetcher": "./src/lib/fetcher.js",
@@ -23,20 +25,24 @@
 		"./dump": "./src/lib/dump.js",
 		"./data-extractor": "./src/lib/data-extractor.js",
 		"./source-map": "./src/lib/source-map.js",
+		"./v8-stack": "./src/lib/v8-stack.js",
 		"./tracer": "./src/lib/tracer.js",
 		"./lang": "./src/lib/lang.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {
 		"low-level-build": "src/bin/low-level-build.js",
-		"llb": "src/bin/low-level-build.js"
+		"llb": "src/bin/low-level-build.js",
+		"make-new-project": "src/bin/make-new-project.js",
+		"mnp": "src/bin/make-new-project.js"
 	},
 	"scripts": {
-		"build:extractor": "echo data-extractor.pegjs && peggy -m --format es --trace ./src/lib/data-extractor.pegjs ./src/lib/PLL.pegjs",
-		"build:lang": "echo lang.pegjs && peggy -m --format es --trace ./src/lib/lang.pegjs ./src/lib/PLL.pegjs",
 		"build:coffee": "coffee -cmb --no-header .",
-		"build": "npm run build:extractor && npm run build:lang && npm run build:coffee && node src/bin/low-level-build.js",
-		"test": "npm run build && npx ava --timeout=1m ./test/*.test.js && git status"
+		"build:peggy": "node ./src/llpeggify.js",
+		"build": "npm run build:coffee && npm run build:peggy && node src/bin/low-level-build.js",
+		"test": "clear && npm run build && npx ava --timeout=1m ./test/*.test.js && git status",
+		"tca": "npm run build && node ./src/bin/test-cmd-args.js",
+		"fef": "npm run build && node ./src/bin/for-each-file.js"
 	},
 	"keywords": [
 		"coffeescript",
@@ -51,9 +57,10 @@
 	},
 	"dependencies": {
 		"deep-equal": "^2.2.3",
-		"glob": "^10.3.15",
+		"glob": "^10.4.2",
 		"n-readlines": "^1.0.1",
-		"peggy": "^4.0.2",
-		"yaml": "^2.4.2"
+		"peggy": "^4.0.3",
+		"source-map": "^0.6.1",
+		"yaml": "^2.4.5"
 	}
 }

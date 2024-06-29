@@ -18,19 +18,19 @@ exprPath = './test/peggy/expr.peggy';
 parseExpr = (await getParser(exprPath));
 
 // ---------------------------------------------------------------------------
-symbol("peggify(code, hMeta, hOptions)"); // --- compile peggy code
-
+//symbol "peggify(code, hMeta, hOptions)"    # --- compile peggy code
 succeeds(() => {
   return peggify(`start
 	"abc"
 		return 42
 	"def"
-		return 13`);
+		return 13`, {
+    type: 'coffee'
+  });
 });
 
 // ---------------------------------------------------------------------------
-symbol("getParser(filePath)"); // --- get parser
-
+//symbol "getParser(filePath)"    # --- get parser
 
 // --- This has already been executed
 // parseExpr = await getParser(exprPath)

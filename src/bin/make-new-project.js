@@ -1,4 +1,4 @@
-// create-new-project.coffee
+// make-new-project.coffee
 var _, author, bin, bins, clear, dev_installs, dirname, hJson, hSetKeys, i, install, installdev, installs, isType, j, k, l, lNames, lValidTypes, len, len1, len2, len3, len4, len5, lib, libs, llutils_installed, m, n, name, newDir, pkg, pkgJson, prefix, ref, ref1, rootDir, type;
 
 import {
@@ -11,7 +11,8 @@ import {
   assert,
   croak,
   words,
-  hasKey
+  hasKey,
+  execAndLogCmd
 } from '@jdeighan/llutils';
 
 import {
@@ -31,7 +32,7 @@ import {
   createFile
 } from '@jdeighan/llutils/fs';
 
-console.log("Starting create-new-project");
+console.log("Starting make-new-project");
 
 type = undef;
 
@@ -103,16 +104,16 @@ newDir = mkpath(rootDir, dirname);
 
 if (isDir(newDir)) {
   if (clear) {
+    console.log(`Directory ${OL(newDir)} exists, clearing it out`);
     clearDir(newDir);
   } else {
     console.log(`Directory ${OL(newDir)} already exists`);
     process.exit();
   }
+} else {
+  console.log(`Creating directory ${newDir}`);
+  mkDir(newDir);
 }
-
-console.log(`Creating directory ${newDir}`);
-
-mkDir(newDir);
 
 process.chdir(newDir);
 
@@ -142,7 +143,7 @@ if (defined(installdev)) {
   lNames = installdev.split(',').map((str) => {
     return str.trim();
   });
-  assert(lNames.length > 0, "No names in 'install'");
+  assert(lNames.length > 0, "No names in 'installdev'");
   for (j = 0, len1 = lNames.length; j < len1; j++) {
     name = lNames[j];
     if (name === 'llutils') {
@@ -279,11 +280,6 @@ if (nonEmpty(dev_installs)) {
   }
 }
 
-if (isType('electron')) {
-  console.log("Installing (dev) electron");
-  execCmd("npm install -D electron");
-}
-
 console.log("Creating README.md");
 
 barf(`README.md file
@@ -320,15 +316,18 @@ if (isType('electron')) {
   barf(`import pathLib from 'node:path'
 import {app, BrowserWindow} from 'electron'
 
+dir = import.meta.dirname
 app.on 'ready', () =>
 	win = new BrowserWindow({
 		width: 800,
 		height: 600
 		webPreferences: {
+			nodeIntegration: true
 			preload: pathLib.join(import.meta.dirname, 'preload.js')
 			}
 		})
-	win.loadFile('src/index.html')`, "./src/main.coffee");
+	# --- win.loadFile('src/index.html')
+	win.loadURL("file://${dir}/index.html")`, "./src/main.coffee");
   // ..........................................................
   console.log("Creating src/index.html");
   barf(`<!DOCTYPE html>
@@ -371,6 +370,11 @@ if elem
 	elem.innerText = '${author}'
 else
 	console.log "No element with id 'myname'"`, "./src/renderer.coffee");
+  // ..........................................................
+  console.log("Installing (dev) \"electron\"");
+  execCmd("npm install -D electron");
 }
+
+console.log("DONE");
 
 //# sourceMappingURL=make-new-project.js.map

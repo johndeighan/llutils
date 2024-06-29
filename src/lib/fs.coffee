@@ -21,6 +21,25 @@ export lStatFields = words(
 	'atime mtime ctime birthtime',
 	)
 
+lDirs = []
+
+# ---------------------------------------------------------------------------
+
+export pushCWD = (dir) =>
+
+	lDirs.push process.cwd()
+	process.chdir(dir)
+	return
+
+# ---------------------------------------------------------------------------
+
+export popCWD = () =>
+
+	assert (lDirs.length > 0), "directory stack is empty"
+	dir = lDirs.pop()
+	process.chdir(dir)
+	return
+
 # ---------------------------------------------------------------------------
 
 export isProjRoot = (dir='.', hOptions={}) =>
@@ -305,7 +324,7 @@ export slurp = (filePath, hOptions={}) =>
 
 	assert isString(filePath, 'nonEmpty'), "empty path"
 	filePath = mkpath(filePath)
-	assert isFile(filePath), "Not a file: #{OL(filePath)}"
+	assert isFile(filePath), "No such file: #{OL(filePath)}"
 	block = fs.readFileSync(filePath, 'utf8') \
 			.toString() \
 			.replaceAll('\r', '')
@@ -421,7 +440,7 @@ export allFilesMatching = (pattern='*', hOptions={}) ->
 
 	{hGlobOptions, fileFilter} = getOptions(hOptions, {
 		hGlobOptions: {
-			ignore: "node_modules"
+			ignore: "node_modules/**"
 			}
 		fileFilter: (h) =>
 			{filePath: path} = h

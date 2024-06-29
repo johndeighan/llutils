@@ -12,7 +12,7 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
-symbol "lineToParts(line)"
+#symbol "lineToParts(line)"
 
 equal lineToParts('this is not a heredoc'), [
 	'this is not a heredoc'
@@ -65,7 +65,7 @@ equal lineToParts('<<<<<<'), [
 	]
 
 # ---------------------------------------------------------------------------
-symbol "mapHereDoc()"
+#symbol "mapHereDoc()"
 
 equal mapHereDoc("""
 		abc
@@ -110,7 +110,7 @@ equal mapHereDoc("""
 		'["a","b"]'
 
 # ---------------------------------------------------------------------------
-symbol "HereDocTester - a custom tester"
+#symbol "HereDocTester - a custom tester"
 
 class HereDocTester extends UnitTester
 
@@ -159,7 +159,7 @@ tester.equal """
 		'"this is a line of text"'
 
 # ---------------------------------------------------------------------------
-symbol "MatrixHereDoc - custom heredoc"
+#symbol "MatrixHereDoc - custom heredoc"
 
 class MatrixHereDoc extends BaseHereDoc
 
@@ -180,7 +180,7 @@ tester.equal """
 		'[[1,2,3],[2,4,6]]'
 
 # ------------------------------------------------------------------------
-symbol "UCHereDoc = custom heredoc"
+#symbol "UCHereDoc = custom heredoc"
 
 class UCHereDoc extends BaseHereDoc
 
@@ -202,7 +202,7 @@ tester.equal """
 		'"THIS IS A\\nBLOCK OF TEXT"'
 
 # ---------------------------------------------------------------------------
-symbol "UCHereDoc1 - custom heredoc"
+#symbol "UCHereDoc1 - custom heredoc"
 
 #
 #     e.g. with header line ***,
@@ -231,7 +231,7 @@ tester.equal """
 		'"SELECT ID,NAME FROM USERS"'
 
 # ---------------------------------------------------------------------------
-symbol "TAML heredoc"
+#symbol "TAML heredoc"
 
 tester.equal """
 		---
@@ -266,7 +266,7 @@ tester.equal """
 		'[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]'
 
 # ---------------------------------------------------------------------------
-symbol "HereDocReplacer - custom tester"
+#symbol "HereDocReplacer - custom tester"
 
 class HereDocReplacer extends UnitTester
 

@@ -28,8 +28,7 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-symbol("lineToParts(line)");
-
+//symbol "lineToParts(line)"
 equal(lineToParts('this is not a heredoc'), ['this is not a heredoc']);
 
 equal(lineToParts('this <<< is <<< heredoc'), ['this ', '<<<', ' is ', '<<<', ' heredoc']);
@@ -45,8 +44,7 @@ equal(lineToParts('<<<'), ['', '<<<', '']);
 equal(lineToParts('<<<<<<'), ['', '<<<', '', '<<<', '']);
 
 // ---------------------------------------------------------------------------
-symbol("mapHereDoc()");
-
+//symbol "mapHereDoc()"
 equal(mapHereDoc(`abc
 def`), '"abc\\ndef"');
 
@@ -71,8 +69,7 @@ equal(mapHereDoc(`---
 - b`), '["a","b"]');
 
 // ---------------------------------------------------------------------------
-symbol("HereDocTester - a custom tester");
-
+//symbol "HereDocTester - a custom tester"
 HereDocTester = class HereDocTester extends UnitTester {
   transformValue(block) {
     return mapHereDoc(block);
@@ -105,8 +102,7 @@ this is a
 line of text`, '"this is a line of text"');
 
 // ---------------------------------------------------------------------------
-symbol("MatrixHereDoc - custom heredoc");
-
+//symbol "MatrixHereDoc - custom heredoc"
 MatrixHereDoc = class MatrixHereDoc extends BaseHereDoc {
   map(block) {
     var lArray, line;
@@ -137,8 +133,7 @@ tester.equal(`1 2 3
 2 4 6`, '[[1,2,3],[2,4,6]]');
 
 // ------------------------------------------------------------------------
-symbol("UCHereDoc = custom heredoc");
-
+//symbol "UCHereDoc = custom heredoc"
 UCHereDoc = class UCHereDoc extends BaseHereDoc {
   map(block) {
     if (block.indexOf('^^^') !== 0) {
@@ -157,8 +152,7 @@ This is a
 block of text`, '"THIS IS A\\nBLOCK OF TEXT"');
 
 // ---------------------------------------------------------------------------
-symbol("UCHereDoc1 - custom heredoc");
-
+//symbol "UCHereDoc1 - custom heredoc"
 
 //     e.g. with header line ***,
 //     we'll create an upper-cased single line string
@@ -184,8 +178,7 @@ select ID,Name
 from Users`, '"SELECT ID,NAME FROM USERS"');
 
 // ---------------------------------------------------------------------------
-symbol("TAML heredoc");
-
+//symbol "TAML heredoc"
 tester.equal(`---
 - abc
 - def`, '["abc","def"]');
@@ -208,8 +201,7 @@ tester.equal(`---
 	url: /books`, '[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]');
 
 // ---------------------------------------------------------------------------
-symbol("HereDocReplacer - custom tester");
-
+//symbol "HereDocReplacer - custom tester"
 HereDocReplacer = class HereDocReplacer extends UnitTester {
   transformValue(block) {
     var head, lNewParts, part, rest, result;

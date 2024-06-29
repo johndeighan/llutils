@@ -17,10 +17,19 @@ import {
   isClass,
   isFunction,
   isRegExp,
+  isInteger,
   assert,
   croak,
   blockToArray
 } from '@jdeighan/llutils';
+
+import {
+  fileExt
+} from '@jdeighan/llutils/fs';
+
+import {
+  getMyOutsideCaller
+} from '@jdeighan/llutils/v8-stack';
 
 // ---------------------------------------------------------------------------
 // --- Available tests w/num required params
@@ -44,18 +53,26 @@ export var UnitTester = class UnitTester {
     // --- returns, e.g. "test 1"
     this.getLabel = this.getLabel.bind(this);
     this.depth = 0;
+    this.debug = false;
+    this.hFound = {};
   }
 
   getLabel(tag = undef) {
-    var label;
-    if (defined(tag)) {
-      assert(isString(tag), `tag = ${OL(tag)}`);
-      label = `test ${nextID} (${tag})`;
-    } else {
-      label = `test ${nextID}`;
+    var column, filePath, line;
+    // --- We need to figure out the line number of the caller
+    ({filePath, line, column} = getMyOutsideCaller());
+    if (this.debug) {
+      console.log("getLabel()");
+      console.log(`   filePath = '${filePath}'`);
+      console.log(`   line = ${line}, col = ${column}`);
     }
-    nextID += 1;
-    return label;
+    assert(isInteger(line), `getMyOutsideCaller() line = ${OL(line)}`);
+    assert((fileExt(filePath) === '.js') || (fileExt(filePath) === '.coffee'), `caller not a JS or Coffee file: ${OL(filePath)}`);
+    while (this.hFound[line]) {
+      line += 1000;
+    }
+    this.hFound[line] = true;
+    return `line ${line}`;
   }
 
   // ........................................................................
@@ -69,7 +86,7 @@ export var UnitTester = class UnitTester {
 
   // ........................................................................
   begin(val = undef, expected = undef, tag = undef) {
-    var label;
+    var err, label;
     if (tag === 'symbol') {
       return [`===== ${val} =====`];
     }
@@ -79,10 +96,20 @@ export var UnitTester = class UnitTester {
     this.depth += 1;
     label = this.getLabel(tag);
     if (defined(val)) {
-      val = this.transformValue(val);
+      try {
+        val = this.transformValue(val);
+      } catch (error) {
+        err = error;
+        val = `ERROR: ${err.message}`;
+      }
     }
     if (defined(expected)) {
-      expected = this.transformExpected(expected);
+      try {
+        expected = this.transformExpected(expected);
+      } catch (error) {
+        err = error;
+        expected = `ERROR: ${err.message}`;
+      }
     }
     return [label, val, expected];
   }
@@ -109,6 +136,7 @@ export var UnitTester = class UnitTester {
   // ..........................................................
   // ..........................................................
   symbol(label) {
+    croak("Deprecated test 'symbol'");
     [label] = this.begin(label, undef, 'symbol');
     test(label, (t) => {
       return t.is(1, 1);

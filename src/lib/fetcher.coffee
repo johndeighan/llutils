@@ -128,9 +128,15 @@ export class PLLFetcher extends LineFetcher
 
 	# ..........................................................
 
+	isComment: (str) ->
+
+		return defined(str) && str.match(/^\s*#(\s|$)/)
+
+	# ..........................................................
+
 	filter: ([level, str]) ->
 
-		return (level > 0) || nonEmpty(str)
+		return ((level > 0) || nonEmpty(str)) && !@isComment(str)
 
 	# ..........................................................
 

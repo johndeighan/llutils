@@ -12,8 +12,7 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-symbol("brew(code)");
-
+//symbol "brew(code)"
 succeeds(() => {
   return brew('v = 5');
 });
@@ -41,8 +40,7 @@ var v;
 v = 5;`);
 
 // ---------------------------------------------------------------------------
-symbol("brewFile(filePath)");
-
+//symbol "brewFile(filePath)"
 (() => {
   var filePath;
   filePath = './test/coffee/test1.coffee';
@@ -52,8 +50,7 @@ v = 5;`);
 })();
 
 // ---------------------------------------------------------------------------
-symbol("toAST(code)");
-
+//symbol "toAST(code)"
 succeeds(() => {
   return toAST('v = 5');
 });
@@ -63,8 +60,7 @@ fails(() => {
 });
 
 // ---------------------------------------------------------------------------
-symbol("coffeeInfo(astOrCode)");
-
+//symbol "coffeeInfo(astOrCode)"
 (() => {
   var code;
   code = `import {undef, defined} from '@jdeighan/llutils'`;

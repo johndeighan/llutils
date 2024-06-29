@@ -4,9 +4,11 @@ import test from 'ava'
 
 import {
 	undef, defined, notdefined, rtrim, isEmpty, nonEmpty, OL,
-	isString, isNumber, isArray, isClass, isFunction, isRegExp,
+	isString, isNumber, isArray, isClass, isFunction, isRegExp, isInteger,
 	assert, croak, blockToArray,
 	} from '@jdeighan/llutils'
+import {fileExt} from '@jdeighan/llutils/fs'
+import {getMyOutsideCaller} from '@jdeighan/llutils/v8-stack'
 
 # ---------------------------------------------------------------------------
 # --- Available tests w/num required params
@@ -30,19 +32,30 @@ export class UnitTester
 	constructor: () ->
 
 		@depth = 0
+		@debug = false
+		@hFound = {}
 
 	# ........................................................................
 	# --- returns, e.g. "test 1"
 
 	getLabel: (tag=undef) =>
 
-		if defined(tag)
-			assert isString(tag), "tag = #{OL(tag)}"
-			label = "test #{nextID} (#{tag})"
-		else
-			label = "test #{nextID}"
-		nextID += 1
-		return label
+		# --- We need to figure out the line number of the caller
+		{filePath, line, column} = getMyOutsideCaller()
+		if @debug
+			console.log "getLabel()"
+			console.log "   filePath = '#{filePath}'"
+			console.log "   line = #{line}, col = #{column}"
+
+		assert isInteger(line), "getMyOutsideCaller() line = #{OL(line)}"
+		assert (fileExt(filePath) == '.js') || (fileExt(filePath) == '.coffee'),
+			"caller not a JS or Coffee file: #{OL(filePath)}"
+
+		while @hFound[line]
+			line += 1000
+		@hFound[line] = true
+
+		return "line #{line}"
 
 	# ........................................................................
 
@@ -61,9 +74,15 @@ export class UnitTester
 		@depth += 1
 		label = @getLabel(tag)
 		if defined(val)
-			val = @transformValue(val)
+			try
+				val = @transformValue(val)
+			catch err
+				val = "ERROR: #{err.message}"
 		if defined(expected)
-			expected = @transformExpected(expected)
+			try
+				expected = @transformExpected(expected)
+			catch err
+				expected = "ERROR: #{err.message}"
 		return [label, val, expected]
 
 	# ........................................................................
@@ -98,6 +117,7 @@ export class UnitTester
 
 	symbol: (label) ->
 
+		croak "Deprecated test 'symbol'"
 		[label] = @begin(label, undef, 'symbol')
 		test label, (t) =>
 			t.is(1, 1)

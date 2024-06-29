@@ -14,8 +14,8 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-symbol("simple");
 
+//symbol "simple"
 succeeds(() => {
   return evaluate("x=3");
 });
@@ -28,8 +28,7 @@ succeeds(() => {
   return evaluate("x=3\n\n");
 });
 
-symbol("multiple");
-
+//symbol "multiple"
 succeeds(() => {
   return evaluate(`x=3
 y=4`);
@@ -45,8 +44,7 @@ succeeds(() => {
 y=4\n\n`);
 });
 
-symbol("indented");
-
+//symbol "indented"
 succeeds(() => {
   return evaluate(`if
 	y=5`);
@@ -69,8 +67,7 @@ succeeds(() => {
 	y=5\n\n\n`);
 });
 
-symbol("multi indent");
-
+//symbol "multi indent"
 succeeds(() => {
   return evaluate(`if
 	y=5
@@ -79,8 +76,7 @@ succeeds(() => {
 	z=2`);
 });
 
-symbol("allow blank lines");
-
+//symbol "allow blank lines"
 succeeds(() => {
   return evaluate(`if
 	y=5

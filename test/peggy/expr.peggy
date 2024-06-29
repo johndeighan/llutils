@@ -1,3 +1,6 @@
+---
+type: coffee
+---
 expr
 	left:term ws op:addOp ws right:expr
 		if (op == '+')
@@ -31,11 +34,11 @@ ws
 	' '*
 
 integer
-	str::[0-9]+
+	str: $ [0-9]+
 		return parseInt(str)
 
 float
-	digits::[0-9]+ '.' decimal::[0-9]+
+	digits: $ [0-9]+ '.' decimal: $ [0-9]+
 		return parseFloat(digits + '.' + decimal)
 
 number

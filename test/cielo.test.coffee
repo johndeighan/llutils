@@ -10,7 +10,7 @@ Object.assign(global, lib2)
 #    - Handles HEREDOC syntax
 #    - ends file upon seeing '__END__'
 # ---------------------------------------------------------------------------
-symbol "cieloPreProcess(code)"
+#symbol "cieloPreProcess(code)"
 
 bsl = "\\"
 

@@ -12,7 +12,7 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
-symbol "matches(lStack, str)"
+#symbol "matches(lStack, str)"
 
 (() =>
 	truthy itemMatches({key: 'program', hNode: {type: 'File'}}, ['program','File'])
@@ -22,7 +22,7 @@ symbol "matches(lStack, str)"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "stackMatches(lStack, str)"
+#symbol "stackMatches(lStack, str)"
 
 (() =>
 	lStack = [
@@ -36,7 +36,7 @@ symbol "stackMatches(lStack, str)"
 	)()
 
 # ---------------------------------------------------------------------------
-symbol "parsePath(str)"
+#symbol "parsePath(str)"
 
 equal parsePath("left:Expression"), [
 	['left', 'Expression']
@@ -69,7 +69,7 @@ equal parsePath("right:"), [['right','']]
 equal parsePath("right"), [['right','']]
 
 # ---------------------------------------------------------------------------
-symbol "NodeWalker"
+#symbol "NodeWalker"
 
 (() =>
 	hNode = fromTAML("""

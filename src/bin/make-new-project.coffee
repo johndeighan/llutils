@@ -1,8 +1,8 @@
-# create-new-project.coffee
+# make-new-project.coffee
 
 import {
 	undef, defined, notdefined, execCmd, OL, nonEmpty,
-	assert, croak, words, hasKey,
+	assert, croak, words, hasKey, execAndLogCmd,
 	} from '@jdeighan/llutils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
@@ -10,7 +10,7 @@ import {
 	slurpJSON, barfJSON, touch, createFile,
 	} from '@jdeighan/llutils/fs'
 
-console.log "Starting create-new-project"
+console.log "Starting make-new-project"
 
 type = undef
 lValidTypes = ['electron', 'codemirror']
@@ -64,13 +64,15 @@ if ! isDir(rootDir)
 newDir = mkpath(rootDir, dirname)
 if isDir(newDir)
 	if clear
+		console.log "Directory #{OL(newDir)} exists, clearing it out"
 		clearDir newDir
 	else
 		console.log "Directory #{OL(newDir)} already exists"
 		process.exit()
+else
+	console.log "Creating directory #{newDir}"
+	mkDir newDir
 
-console.log "Creating directory #{newDir}"
-mkDir newDir
 process.chdir newDir
 
 console.log "Initializing npm"
@@ -90,7 +92,7 @@ if defined(install)
 if defined(installdev)
 	console.log "Installing npm libs for development"
 	lNames = installdev.split(',').map((str) => str.trim())
-	assert (lNames.length > 0), "No names in 'install'"
+	assert (lNames.length > 0), "No names in 'installdev'"
 	for name in lNames
 		if (name == 'llutils')
 			llutils_installed = true
@@ -185,17 +187,13 @@ installs = process.env.PROJECT_INSTALLS
 if nonEmpty(installs)
 	for pkg in words(installs)
 		console.log "Installing #{OL(pkg)}"
-		execCmd("npm install #{pkg}")
+		execCmd "npm install #{pkg}"
 
 dev_installs = process.env.PROJECT_DEV_INSTALLS
 if nonEmpty(dev_installs)
 	for pkg in words(dev_installs)
 		console.log "Installing (dev) #{OL(pkg)}"
-		execCmd("npm install -D #{pkg}")
-
-if isType('electron')
-	console.log "Installing (dev) electron"
-	execCmd("npm install -D electron")
+		execCmd "npm install -D #{pkg}"
 
 console.log "Creating README.md"
 barf """
@@ -238,15 +236,18 @@ if isType('electron')
 	import pathLib from 'node:path'
 	import {app, BrowserWindow} from 'electron'
 
+	dir = import.meta.dirname
 	app.on 'ready', () =>
 		win = new BrowserWindow({
 			width: 800,
 			height: 600
 			webPreferences: {
+				nodeIntegration: true
 				preload: pathLib.join(import.meta.dirname, 'preload.js')
 				}
 			})
-		win.loadFile('src/index.html')
+		# --- win.loadFile('src/index.html')
+		win.loadURL("file://#{dir}/index.html")
 		""", "./src/main.coffee"
 
 	# ..........................................................
@@ -302,3 +303,10 @@ if isType('electron')
 		else
 			console.log "No element with id 'myname'"
 		""", "./src/renderer.coffee"
+
+	# ..........................................................
+
+	console.log "Installing (dev) \"electron\""
+	execCmd "npm install -D electron"
+
+console.log "DONE"

@@ -1,4 +1,4 @@
-# Section.coffee
+# section.coffee
 
 import {
 	undef, defined, toBlock, assert, croak, OL,

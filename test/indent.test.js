@@ -14,8 +14,7 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-symbol("indentLevel(str)");
-
+//symbol "indentLevel(str)"
 (() => {
   equal(indentLevel('abc'), 0);
   equal(indentLevel('\tabc'), 1);
@@ -42,8 +41,7 @@ symbol("indentLevel(str)");
 })();
 
 // ---------------------------------------------------------------------------
-symbol("splitLine(line, oneIndent)");
-
+//symbol "splitLine(line, oneIndent)"
 (() => {
   equal(splitLine('abc'), [0, 'abc']);
   equal(splitLine('\t\tabc'), [2, 'abc']);
@@ -59,8 +57,7 @@ symbol("splitLine(line, oneIndent)");
 })();
 
 // ---------------------------------------------------------------------------
-symbol("indented(input, level, oneIndent)");
-
+//symbol "indented(input, level, oneIndent)"
 (() => {
   equal(indented('abc'), '\tabc');
   equal(indented('abc', 2), '\t\tabc');
@@ -97,8 +94,7 @@ equal(indented(['first line', '\tsecond line', '\t\tthird line']), ['\tfirst lin
 equal(indented(['first line', '\tsecond line', '\t\tthird line'], 2), ['\t\tfirst line', '\t\t\tsecond line', '\t\t\t\tthird line']);
 
 // ---------------------------------------------------------------------------
-symbol("undented(input)");
-
+//symbol "undented(input)"
 equal(undented(`\t\tabc
 \t\t\tdef
 \t\t\t\tghi`), `abc

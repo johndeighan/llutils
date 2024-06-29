@@ -168,7 +168,7 @@ x = 42`);
 
 // ---------------------------------------------------------------------------
 (function() {
-  var hProc, map;
+  var hProc, map, sect;
   hProc = {
     Script: function(block) {
       return `<script>
@@ -182,6 +182,7 @@ ${indented(block)}
     }
   };
   map = new SectionMap(['html', ['Script', 'startup', '# |||| =', ['NonStartup', 'imports', 'code']], 'style'], hProc);
+  sect = map.hSections;
   map.section('style').add("p {", "...color: red", "...}");
   map.section('code').add("x = 42");
   map.section('startup').add("LOG 'starting'");

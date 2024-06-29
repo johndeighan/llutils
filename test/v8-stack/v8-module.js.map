@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "v8-module.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "test\\v8-stack\\v8-module.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAkB;AAAA,IAAA,UAAA,EAAA;;AAElB,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB,EAHkB;;;AAOlB,OAAA,IAAO,OAAA,GAAU,QAAA,CAAA,CAAA;AAEhB,SAAO,UAAA,CAAW,MAAX;AAFS,EAPC;;;AAalB,OAAA,IAAO,SAAA,GAAY,QAAA,CAAA,CAAA;AAElB,SAAO,UAAA,CAAW,QAAX;AAFW,EAbD;;;AAmBlB,OAAA,IAAO,UAAA,GAAa,QAAA,CAAA,CAAA;AAEnB,SAAO,UAAA,CAAW,SAAX;AAFY,EAnBF;;;AAyBlB,UAAA,GAAa,QAAA,CAAC,IAAD,CAAA;AAEZ,SAAO,SAAA,CAAU,IAAV;AAFK,EAzBK;;;AA+BlB,SAAA,GAAY,QAAA,CAAC,IAAD,CAAA,EAAA;;;AAIX,UAAO,IAAP;AAAA,SACM,MADN;AAEE,aAAO,CAAC,iBAAA,CAAA,CAAD,EAAsB,kBAAA,CAAA,CAAtB;AAFT,SAGM,QAHN;AAIE,aAAO,iBAAA,CAAA;AAJT,SAKM,SALN;AAME,aAAO,kBAAA,CAAA;AANT;aAQE,KAAA,CAAM,CAAA,cAAA,CAAA,CAAiB,IAAjB,CAAA,CAAN;AARF;AAJW",
+  "sourcesContent": [
+    "# v8-module.coffee\r\n\r\nimport * as lib from '@jdeighan/llutils/v8-stack'\r\nObject.assign(global, lib)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport getBoth = () ->\r\n\r\n\treturn secondFunc('both')\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport getDirect = () ->\r\n\r\n\treturn secondFunc('direct')\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport getOutside = () ->\r\n\r\n\treturn secondFunc('outside')\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nsecondFunc = (type) ->\r\n\r\n\treturn thirdFunc(type)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nthirdFunc = (type) ->\r\n\r\n\t# --- direct caller should be 'secondFunc'\r\n\t#     outside caller should be the function that called getCaller()\r\n\tswitch type\r\n\t\twhen 'both'\r\n\t\t\treturn [getMyDirectCaller(), getMyOutsideCaller()]\r\n\t\twhen 'direct'\r\n\t\t\treturn getMyDirectCaller()\r\n\t\twhen 'outside'\r\n\t\t\treturn getMyOutsideCaller()\r\n\t\telse\r\n\t\t\tcroak \"Unknown type: #{type}\"\r\n"
+  ]
+}

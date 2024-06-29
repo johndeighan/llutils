@@ -1,3 +1,6 @@
+---
+include: 'src/lib/PLL.peggy'
+---
 {{
 	import {
 		undef, defined, anyDefined, notdefined,
