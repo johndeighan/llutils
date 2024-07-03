@@ -23,12 +23,12 @@ Object.assign(global, lib2);
       return 42;
     }
   }, 'STR', 'width=11 !echo');
-  return equal(str, `--  STR  --
+  return equal(str, `------  STR  ------
 a: 1
 b: def
 c: .undef.
 d: .Function d.
------------`);
+-------------------`);
 })();
 
 (() => {
@@ -45,8 +45,8 @@ d: .Function d.
     d: (x) => {
       return 42;
     }
-  }, 'STR', 'width=11 !echo');
-  return equal(str, `--  STR  --
+  }, 'STR', '!echo');
+  return equal(str, `------  STR  ------
 a: 1
 b:
 	- def
@@ -59,7 +59,25 @@ c:
 	c: abc
 	d: .undef.
 d: .Function d.
------------`);
+-------------------`);
+})();
+
+(() => {
+  var str;
+  str = BOX({
+    a: 1,
+    b: 'def',
+    c: undef,
+    d: (x) => {
+      return 42;
+    }
+  }, 'STR', 'width=11 !echo');
+  return equal(str, `┌──────  STR  ────┐
+│ a: 1            │
+│ b: def          │
+│ c: .undef.      │
+│ d: .Function d. │
+└─────────────────┘`);
 })();
 
 //# sourceMappingURL=dump.test.js.map

@@ -15,7 +15,7 @@ Object.assign(global, lib2);
 //symbol "getTracer(type, inputStr, hVars={})"
 (() => {
   var tracer;
-  tracer = getTracer('default');
+  tracer = getTracer('advanced');
   equal(tracer.traceStr({
     type: 'rule.enter',
     rule: 'start'
@@ -23,7 +23,7 @@ Object.assign(global, lib2);
   tracer.level = 1;
   equal(tracer.traceStr({
     type: 'rule.fail'
-  }), `└─> NO`);
+  }), `x`);
   equal(tracer.traceStr({
     type: 'rule.match'
   }), `└─> YES`);
@@ -37,7 +37,7 @@ Object.assign(global, lib2);
   }), `│  ? start`);
   equal(tracer.traceStr({
     type: 'rule.fail'
-  }), `└─> NO`);
+  }), `x`);
   equal(tracer.traceStr({
     type: 'rule.match'
   }), `└─> YES`);

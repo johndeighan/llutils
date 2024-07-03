@@ -310,6 +310,9 @@ export escapeStr = (str, hReplace=hEsc, hOptions={}) =>
 	# --- hReplace can also be a string:
 	#        'esc'     - escape space, newline, tab
 	#        'escNoNL' - escape space, tab
+	#     Valid options:
+	#        offset    - indicate position of offset
+	#        poschar   - char to use to indicate position
 
 	assert isString(str), "not a string: #{typeof str}"
 	if isString(hReplace)
@@ -322,8 +325,9 @@ export escapeStr = (str, hReplace=hEsc, hOptions={}) =>
 				hReplace = {}
 	assert isHash(hReplace), "not a hash"
 
-	{offset} = getOptions hOptions, {
+	{offset, poschar} = getOptions hOptions, {
 		offset: undef
+		poschar: '┊'
 		}
 
 	lParts = []
@@ -331,9 +335,7 @@ export escapeStr = (str, hReplace=hEsc, hOptions={}) =>
 	for ch from str
 		if defined(offset)
 			if (i == offset)
-				lParts.push ':'
-			else
-				lParts.push ' '
+				lParts.push poschar
 		result = hReplace[ch]
 		if defined(result)
 			lParts.push result
@@ -341,7 +343,7 @@ export escapeStr = (str, hReplace=hEsc, hOptions={}) =>
 			lParts.push ch
 		i += 1
 	if (offset == str.length)
-		lParts.push ':'
+		lParts.push poschar
 	return lParts.join('')
 
 # ---------------------------------------------------------------------------
@@ -973,3 +975,72 @@ export cmdArgStr = (lArgs=undef) =>
 		else
 			return str
 		).join(' ')
+
+# ---------------------------------------------------------------------------
+
+export rpad = (str, len, ch=' ') =>
+
+	assert (ch.length == 1), "Not a char"
+	if notdefined(str)
+		return ch.repeat(len)
+	if !isString(str)
+		str = str.toString()
+	extra = len - str.length
+	if (extra < 0) then extra = 0
+	return str + ch.repeat(extra)
+
+# ---------------------------------------------------------------------------
+
+export lpad = (str, len, ch=' ') =>
+
+	assert (ch.length == 1), "Not a char"
+	if notdefined(str)
+		return ch.repeat(len)
+	if !isString(str)
+		str = str.toString()
+	extra = len - str.length
+	if (extra < 0) then extra = 0
+	return ch.repeat(extra) + str
+
+# ---------------------------------------------------------------------------
+
+export padString = (str, width, align) ->
+
+	switch align
+		when 'left' then return rpad(str, width)
+		when 'center' then return centered(str, width)
+		when 'right' then return lpad(str, width)
+
+# ---------------------------------------------------------------------------
+
+export zpad = (n, len) =>
+
+	nStr = n.toString()
+	return lpad(nStr, len, '0')
+
+# ---------------------------------------------------------------------------
+
+export class Block
+
+	constructor: () ->
+
+		@lLines = []
+		@maxLen = 0
+
+	getLines: () -> return @lLines
+	getBlock: () -> return toBlock(@lLines)
+
+	add: (block) ->
+
+		for str in toArray(block)
+			if (str.length > @maxLen)
+				@maxLen = str.length
+			@lLines.push str
+
+	prepend: (block) ->
+
+		for str in toArray(block).reverse()
+			if (str.length > @maxLen)
+				@maxLen = str.length
+			@lLines.unshift str
+

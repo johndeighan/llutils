@@ -1,5 +1,8 @@
 ---
 type: coffee
+opDumper: true
+byteCodeWriter: false
+dumpAST: true
 ---
 
 GLOBAL
@@ -25,18 +28,15 @@ GLOBAL
 	#
 	# --- If hDesc is undef, no checking is done
 
-	export getArgs = (argStr=undef, hDesc=undef, tracerStr='none') =>
+	export getArgs = (argStr=undef, hDesc=undef, hOptions={}) =>
 
-		debugger
 		argStr = cmdArgStr(argStr)
-		try
-			tracer = getTracer(tracerStr, argStr)
-		catch err
-			console.log "ERROR: getTracer() failed: #{err.message}"
-			process.exit()
+		hOptions = getOptions hOptions    # make it a hash
+		tracerStr = hOptions.tracer || 'none'
+		hOptions.tracer = getTracer(tracerStr)
 
 		try
-			hResult = peg$parse argStr, {tracer}
+			hResult = peg$parse argStr, hOptions
 		catch err
 			console.log "ERROR parsing #{OL(argStr)}: #{err.message}"
 			process.exit()
@@ -110,7 +110,7 @@ GLOBAL
 
 cmdArgs
 
-	lArgs: arg |.., ws|
+	lArgs: arg |.., _|
 
 		hOptions = {}
 		lNonOptions = []
@@ -155,5 +155,5 @@ stringVal
 	!'-' str: $ [^ \t]+
 		return str
 
-ws
+_
 	[ \t]+

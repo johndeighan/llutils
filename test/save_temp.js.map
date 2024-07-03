@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "save_temp.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\save_temp.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAkB;AAAA,IAAA,QAAA,EAAA;;AAElB,OAAA;EAAQ,KAAR;CAAA,MAAA;;AACA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB,EAJkB;;;AAQlB,MAAA,GAAS,OAAA,CAAQ,aAAR,EAAuB,KAAvB,EAA8B,cAA9B;;AACT,OAAO,CAAC,GAAR,CAAY,MAAZ;;AAGA,QAAA,GAAW;EACV,CAAA,EAAG,IADO;EAEV,CAAA,EAAG,IAFO;EAGV,EAAA,EAAI;AAHM",
+  "sourcesContent": [
+    "# save_temp.coffee\r\n\r\nimport {undef} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/cmd-args'\r\nObject.assign(global, lib)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nresult = getArgs('-ab -cd=why', undef, 'tracer=debug')\r\nconsole.log result\r\n\r\n\r\nexpected = {\r\n\ta: true\r\n\tb: true\r\n\tcd: 'why'\r\n\t}\r\n"
+  ]
+}

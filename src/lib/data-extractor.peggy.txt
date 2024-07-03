@@ -1,0 +1,209 @@
+{{
+	var ExtractError, addContext, assert, context, croak, lContext, mergeKeys, parse__data__1, parse__desc__1, parse__desc__2, parse__expr__1, parse__ident__1, parse__string__1, popContext;
+
+	import {
+	  undef,
+	  defined,
+	  anyDefined,
+	  notdefined,
+	  getOptions,
+	  OL,
+	  hasKey,
+	  keys,
+	  isEmpty,
+	  isString,
+	  isHash,
+	  isFunction
+	} from '@jdeighan/llutils';
+
+	import {
+	  DUMP
+	} from '@jdeighan/llutils/dump';
+
+	import {
+	  getTracer
+	} from '@jdeighan/llutils/tracer';
+
+	lContext = undef;
+
+	context = () => {
+	  return lContext.at(-1); // may be undef
+	};
+
+	addContext = (h) => {
+	  assert(notdefined(h) || isHash(h), `context not a hash: ${OL(h)}`);
+	  lContext.push(h);
+	  return true;
+	};
+
+	popContext = () => {
+	  lContext.pop();
+	  return true;
+	};
+
+	ExtractError = class ExtractError extends Error {
+	  constructor(message) {
+	    super(message);
+	    this.name = "ExtractError";
+	  }
+
+	};
+
+	croak = (errmsg) => {
+	  throw new ExtractError(errmsg);
+	};
+
+	assert = (cond, errmsg) => {
+	  if (!cond) {
+	    throw new ExtractError(errmsg);
+	  }
+	};
+
+	mergeKeys = (hObj, ...lMore) => {
+	  var h, i, j, key, len, len1, ref;
+	  assert(isHash(hObj), `hObj not a hash: ${OL(hObj)}`);
+	  for (i = 0, len = lMore.length; i < len; i++) {
+	    h = lMore[i];
+	    if (isEmpty(h)) {
+	      continue;
+	    }
+	    assert(isHash(h), `Not a hash: ${OL(h)}`);
+	    ref = keys(h);
+	    for (j = 0, len1 = ref.length; j < len1; j++) {
+	      key = ref[j];
+	      assert(!hasKey(hObj, key), `key ${key} already in hObj`);
+	      hObj[key] = h[key];
+	    }
+	  }
+	  return hObj;
+	};
+
+	export var extract = (obj, desc, hOptions = {}) => {
+	  debugger;
+	  var tracer;
+	  ({tracer} = getOptions(hOptions, {
+	    tracer: 'none'
+	  }));
+	  assert(isHash(obj), `Not a hash: ${OL(obj)}`);
+	  assert(isString(desc), `Not a string: ${OL(desc)}`);
+	  lContext = [obj];
+	  return peg$parse(desc, {
+	    tracer: getTracer(tracer, desc)
+	  });
+	};
+
+	// --------------------------------------------------------------
+	parse__data__1 = (lDesc) => {
+	  return mergeKeys({}, ...lDesc);
+	};
+
+	// --------------------------------------------------------------
+	parse__desc__1 = (result, h) => {
+	  return mergeKeys(result[0] || {}, h);
+	};
+
+	// --------------------------------------------------------------
+	parse__desc__2 = (result, h) => {
+	  return mergeKeys(result[0], h);
+	};
+
+	// --------------------------------------------------------------
+	parse__expr__1 = (lParen, optional, lSelectors, expect, as, rParen) => {
+	  var i, id, lastId, len, name, nostore, obj;
+	  assert(!(expect && as), "Can't use 'as' with expected value");
+	  obj = context();
+	  if (notdefined(obj)) {
+	    return [{}, undef];
+	  }
+	  if (defined(lParen, rParen)) {
+	    nostore = true;
+	  } else {
+	    assert(notdefined(lParen, rParen), 'Mismatched parens');
+	    nostore = false;
+	  }
+	  lastId = undef;
+	// --- there's at least 1
+	  for (i = 0, len = lSelectors.length; i < len; i++) {
+	    id = lSelectors[i];
+	    lastId = id; // --- key to store value under, unless 'as'
+	    obj = obj[id];
+	    if (notdefined(obj)) {
+	      if (optional) {
+	        return [undef, undef];
+	      } else {
+	        croak(`Missing key ${OL(id)}`);
+	      }
+	    }
+	  }
+	  name = as || lastId; // --- lastId will always be set
+	  if (defined(expect)) {
+	    assert(obj === expect, `Expected ${OL(expect)}, found ${OL(obj)}`);
+	    return [{}, undef];
+	  }
+	  if (isHash(obj)) {
+	    if (nostore) {
+	      return [{}, obj];
+	    } else {
+	      return [
+	        {
+	          [name]: obj
+	        },
+	        obj
+	      ];
+	    }
+	  } else {
+	    if (nostore) {
+	      return [{}, undef];
+	    } else {
+	      return [
+	        {
+	          [name]: obj
+	        },
+	        undef
+	      ];
+	    }
+	  }
+	};
+
+	// --------------------------------------------------------------
+	parse__ident__1 = (str) => {
+	  return str;
+	};
+
+	// --------------------------------------------------------------
+	parse__string__1 = (lChars) => {
+	  return lChars.join('');
+	};
+}}
+
+data
+
+	= lDesc: desc |1.., SEP| "\n"*
+		{ return parse__data__1(lDesc); }
+
+desc
+
+	= result: expr & {return addContext(result[1])} h: ( INDENT @data UNDENT) ? & {return popContext()}
+		{ return parse__desc__1(result, h); }
+
+	/ '[' _ result: expr _ ']' & {return addContext(result[1])} h: ( INDENT @data UNDENT) ? & {return popContext()}
+		{ return parse__desc__2(result, h); }
+
+expr
+
+	= lParen: "("? optional: ("?" _)? _ lSelectors: ident|1.., "."| expect: (_ "=" _ @string)? as: (_ "as" _ @ident)? rParen: ")"?
+		{ return parse__expr__1(lParen, optional, lSelectors, expect, as, rParen); }
+
+ident
+
+	= str: $ ([A-Za-z_][A-Za-z0-9_]*)
+		{ return parse__ident__1(str); }
+
+string
+
+	= '"' lChars:[^"]* '"'
+		{ return parse__string__1(lChars); }
+
+_
+
+	= " "*

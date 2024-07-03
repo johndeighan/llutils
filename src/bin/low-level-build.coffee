@@ -2,8 +2,6 @@
 #
 # --- Designed to run in ANY project that installs @jdeighan/llutils
 
-import {globSync} from 'glob'
-
 import {
 	assert, npmLogLevel, nonEmpty, add_s,
 	} from '@jdeighan/llutils'
@@ -14,6 +12,7 @@ import {
 import {brewFile} from '@jdeighan/llutils/coffee'
 import {peggifyFile} from '@jdeighan/llutils/peggy'
 
+debugger
 hFilesProcessed = {
 	coffee: 0
 	peggy: 0
@@ -32,7 +31,6 @@ doLog "-- low-level-build --"
 
 assert isProjRoot('.', 'strict'), "Not in package root dir"
 
-debugger
 if oneFilePath = process.argv[2]
 	if (fileExt(oneFilePath) == '.coffee')
 		doLog oneFilePath
@@ -70,7 +68,7 @@ for {relPath} from allFilesMatching('**/*.coffee', {fileFilter})
 # 3. Search src folder for *.peggy files and compile them
 #    unless newer *.js and *.js.map files exist OR it needs rebuilding
 
-for {relPath} from allFilesMatching('**/*.peggy', {fileFilter})
+for {relPath} from allFilesMatching('**/*.{pegjs,peggy}', {fileFilter})
 	doLog relPath
 	peggifyFile relPath
 	hFilesProcessed.peggy += 1

@@ -4,10 +4,6 @@
 var doLog, echo, fileFilter, hBin, hFilesProcessed, hJson, hMetaData, jsPath, key, nCoffee, nPeggy, oneFilePath, ref, ref1, ref2, relPath, short_name, stub, tla, value, x, y, z;
 
 import {
-  globSync
-} from 'glob';
-
-import {
   assert,
   npmLogLevel,
   nonEmpty,
@@ -31,6 +27,8 @@ import {
   peggifyFile
 } from '@jdeighan/llutils/peggy';
 
+debugger;
+
 hFilesProcessed = {
   coffee: 0,
   peggy: 0
@@ -49,8 +47,6 @@ doLog("-- low-level-build --");
 // ---------------------------------------------------------------------------
 // 1. Make sure we're in a project root directory
 assert(isProjRoot('.', 'strict'), "Not in package root dir");
-
-debugger;
 
 if (oneFilePath = process.argv[2]) {
   if (fileExt(oneFilePath) === '.coffee') {
@@ -91,7 +87,7 @@ for (x of ref) {
   hFilesProcessed.coffee += 1;
 }
 
-ref1 = allFilesMatching('**/*.peggy', {fileFilter});
+ref1 = allFilesMatching('**/*.{pegjs,peggy}', {fileFilter});
 // ---------------------------------------------------------------------------
 // 3. Search src folder for *.peggy files and compile them
 //    unless newer *.js and *.js.map files exist OR it needs rebuilding

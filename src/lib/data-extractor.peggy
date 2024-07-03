@@ -1,208 +1,180 @@
 ---
-include: 'src/lib/PLL.peggy'
+type: coffee
+include: src/lib/PLL.peggy
 ---
-{{
+GLOBAL
+
 	import {
 		undef, defined, anyDefined, notdefined,
-		getOptions, OL, hasKey,
+		getOptions, OL, hasKey, keys,
 		isEmpty, isString, isHash, isFunction,
-		} from '@jdeighan/llutils';
-	import {DUMP} from '@jdeighan/llutils/dump';
-	import {getTracer} from '@jdeighan/llutils/tracer';
+		} from '@jdeighan/llutils'
+	import {DUMP} from '@jdeighan/llutils/dump'
+	import {getTracer} from '@jdeighan/llutils/tracer'
 
-	let lStack = undef;
+	# --- Context manipulation
 
-	class ExtractError extends Error {
-		constructor(message) {
-			super(message);
-			this.name = "ExtractError";
-			}
-		}
+	lContext = undef
 
-	// -----------------------------------------------------------------------
+	context = () =>
+		return lContext.at(-1)    # may be undef
 
-	function croak(errmsg) {
+	addContext = (h) =>
+		assert notdefined(h) || isHash(h), "context not a hash: #{OL(h)}"
+		lContext.push h
+		return true
 
-		throw new ExtractError(errmsg);
-		return;
-		}
+	popContext = () =>
+		lContext.pop(); return true
 
-	// -----------------------------------------------------------------------
+	# -----------------------------------------------------------------------
 
-	function assert(cond, errmsg) {
+	class ExtractError extends Error
 
-		if (! cond)
-			throw new ExtractError(errmsg);
-		return;
-		}
+		constructor: (message) ->
+			super message
+			@name = "ExtractError"
 
-	// -----------------------------------------------------------------------
-	// --- Duplicates throw exception
+	# -----------------------------------------------------------------------
 
-	function mergeKeys(hObj, ...lMore) {
+	croak = (errmsg) =>
 
-		assert(isHash(hObj), `hObj not a hash: ${OL(hObj)}`);
-		for (let h of lMore) {
-			if (isEmpty(h)) {
-				continue;
-				}
-			assert(isHash(h), `Not a hash: ${OL(h)}`);
-			for (let key of Object.keys(h)) {
-				assert(!hasKey(hObj, key),
-					`key ${OL(key)} already exists in hObj`);
-				hObj[key] = h[key];
-				}
-			}
-		return hObj;
-		}
+		throw new ExtractError(errmsg)
+		return
 
-	// -----------------------------------------------------------------------
+	# -----------------------------------------------------------------------
 
-	export function extract(obj, desc, tracer='none') {
+	assert = (cond, errmsg) =>
+
+		if ! cond
+			throw new ExtractError(errmsg)
+		return
+
+	# -----------------------------------------------------------------------
+	# --- Duplicates throw exception
+
+	mergeKeys = (hObj, ...lMore) =>
+
+		assert isHash(hObj), "hObj not a hash: #{OL(hObj)}"
+		for h in lMore
+			if isEmpty(h)
+				continue
+			assert isHash(h), "Not a hash: #{OL(h)}"
+			for key in keys(h)
+				assert !hasKey(hObj, key), "key #{key} already in hObj"
+				hObj[key] = h[key]
+		return hObj
+
+	# -----------------------------------------------------------------------
+
+	export extract = (obj, desc, hOptions={}) =>
 
 		debugger
-		assert(isHash(obj), `obj = ${OL(obj)}`);
-		assert(isString(desc), `desc = ${OL(desc)}`);
-		lStack = [obj];
-		return peg$parse(desc, {tracer: getTracer(tracer, desc)});
-		}
-}}
-
-// --------------------------------------------------------------------------
-
-program
-	= lDesc: desc |1.., SEP| "\n"*
-
-		{
-			return mergeKeys({}, ...lDesc);
+		{tracer} = getOptions hOptions, {
+			tracer: 'none'
 			}
+		assert isHash(obj), "Not a hash: #{OL(obj)}"
+		assert isString(desc), "Not a string: #{OL(desc)}"
+		lContext = [obj]
+		return peg$parse(desc, {tracer: getTracer(tracer, desc)})
+
+# ===========================================================================
+
+data
+
+	lDesc: desc |1.., SEP| "\n"*
+
+		return mergeKeys({}, ...lDesc)
 
 desc
-	= result: expr
 
-		& {
-			// --- if name is undef, we're not storing it
-			//     if obj is undef, it wasn't found but was optional
-			// NOTE: name is defined => obj is defined
+	result: expr
+			& {return addContext(result[1])}
+			h: ( INDENT @data UNDENT) ?
+			& {return popContext()}
 
-			let [name, obj] = result;
-			lStack.push(obj)
+		return mergeKeys result[0] || {}, h
 
-			// --- NOTE: obj may be undef
-			//           in that case, there should be no 'more'
-			return true;
-			}
+	'[' _ result: expr _ ']'
+			& {return addContext(result[1])}
+			h: ( INDENT @data UNDENT) ?
+			& {return popContext()}
 
-		hMore: more?
-
-		{
-			lStack.pop();
-			let [name, obj] = result;
-			let hResult = defined(name) ? {[name]: obj} : {};
-			if (defined(hMore)) {
-				assert(defined(obj), "obj undef, but more found");
-				mergeKeys(hResult, hMore);
-				}
-			return hResult;
-			}
-
-	/ '[' _ result: expr _ ']'
-
-		& {
-			let [name, obj] = result;
-			lStack.push(obj)
-			return true;
-			}
-
-		INDENT h: program UNDENT
-
-		{
-			lStack.pop();
-			let [name, obj] = result;
-			return 'OK'
-			}
-
-more
-	= INDENT h: program UNDENT
-		{
-			return h;
-			}
+		return mergeKeys result[0], h
 
 expr
-	= lParen: "("?
-		optional: ("?" _)?
-		_ lSelectors: identifier|1.., "."|
-		expected: (_ "=" _ @string)?
-		as: (_ "as" _ @identifier)?
-		rParen: ")"?
 
-		{
-		// --- Will return [name, obj, store]
+	lParen: "("?
+			optional: ("?" _)?
+			_ lSelectors: ident|1.., "."|
+			expect: (_ "=" _ @string)?
+			as: (_ "as" _ @ident)?
+			rParen: ")"?
 
-		let obj = lStack.at(-1); // --- Top of Stack
-		assert(isHash(obj), `obj = ${OL(obj)}`);
+		# --- Returns [ <hash to merge>, <context to set> ]
 
-		// --- Don't store if expression inside '(' and ')'
-		//     or expected is defined
-		//     or it's optional and missing
-		let store = notdefined(expected);
-		if (defined(lParen, rParen)) {
-			store = false;
-			}
-		else {
-			assert(notdefined(lParen, rParen), 'Mismatched parens');
-			}
+		# --- Returns [{}, undef] if key not found, but was optional
+		#                            or current context is undef
+		#     Returns [{}, obj]   if obj shouldn't be stored
+		#                            but is context for subexpressions
+		#     Returns [{name: obj}, obj]    if obj should be stored under name
 
-		// --- Apply selectors
-		//     For now, all selectors are ("." identifier)
-		let lastIdent = undef;
-		for (let ident of lSelectors) {
-			lastIdent = ident;       // --- key to store value under
-			if (hasKey(obj, ident)) {
-				obj = obj[ident];
-				}
-			else {
-				obj = undef;
-				break;
-				}
-			}
+		assert ! (expect && as), "Can't use 'as' with expected value"
 
-		let name = as || lastIdent;
+		obj = context()
+		if notdefined(obj)
+			return [{}, undef]
 
-		// --- If there's an expected value (always a string),
-		//     obj must exist and be that string
-
-		if (defined(expected)) {
-			assert(obj == expected,
-				`Expecting ${name} = ${OL(expected)}, found ${OL(obj)}`);
-			}
-
-		// --- If no obj && not optional, throw exception
-		if (notdefined(obj)) {
-			if (notdefined(optional)) {
-				croak(`key ${OL(name)} is missing`);
-				}
-			store = false;
-			}
-
-		if (store)
-			return [name, obj]
+		# --- set nostore - if true, don't store
+		if defined(lParen, rParen)
+			nostore = true
 		else
-			return [undef, obj]
-		}
+			assert notdefined(lParen, rParen), 'Mismatched parens'
+			nostore = false
 
+		# --- Apply selectors to context() to get an object
+		lastId = undef
+		for id in lSelectors  # --- there's at least 1
+			lastId = id        # --- key to store value under, unless 'as'
+			obj = obj[id]
+			if notdefined(obj)
+				if optional
+					return [undef, undef]
+				else
+					croak "Missing key #{OL(id)}"
+		name = as || lastId    # --- lastId will always be set
+		# --- We now have a name, obj pair
 
-identifier
-	= str: $ ([A-Za-z_][A-Za-z0-9_]*)
-		{
-		return str;
-		}
+		# --- If there's an expected value (always a string),
+		#     obj must exist and be that string
+
+		if defined(expect)
+			assert (obj == expect), "Expected #{OL(expect)}, found #{OL(obj)}"
+			return [{}, undef]
+
+		if isHash(obj)
+			if nostore
+				return [{}, obj]
+			else
+				return [{[name]: obj}, obj]
+		else
+			if nostore
+				return [{}, undef]
+			else
+				return [{[name]: obj}, undef]
+
+ident
+
+	str: $ ([A-Za-z_][A-Za-z0-9_]*)
+
+		return str
 
 string
-	= '"' lChars:[^"]* '"'
-		{
-		return lChars.join('');
-		}
+
+	'"' lChars:[^"]* '"'
+
+		return lChars.join('')
 
 _
-	= " "*
+
+	" "*

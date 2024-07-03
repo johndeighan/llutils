@@ -18,12 +18,12 @@ Object.assign(global, lib2)
 		}, 'STR', 'width=11 !echo'
 
 	equal str, """
-		--  STR  --
+		------  STR  ------
 		a: 1
 		b: def
 		c: .undef.
 		d: .Function d.
-		-----------
+		-------------------
 		"""
 	)()
 
@@ -43,10 +43,10 @@ Object.assign(global, lib2)
 			d: undef
 			}
 		d: (x) => return 42
-		}, 'STR', 'width=11 !echo'
+		}, 'STR', '!echo'
 
 	equal str, """
-		--  STR  --
+		------  STR  ------
 		a: 1
 		b:
 			- def
@@ -59,6 +59,25 @@ Object.assign(global, lib2)
 			c: abc
 			d: .undef.
 		d: .Function d.
-		-----------
+		-------------------
 		"""
 	)()
+
+(() =>
+	str = BOX {
+		a: 1
+		b: 'def'
+		c: undef
+		d: (x) => return 42
+		}, 'STR', 'width=11 !echo'
+
+	equal str, """
+		┌──────  STR  ────┐
+		│ a: 1            │
+		│ b: def          │
+		│ c: .undef.      │
+		│ d: .Function d. │
+		└─────────────────┘
+		"""
+	)()
+

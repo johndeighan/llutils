@@ -268,4 +268,94 @@ exportKind="value"
   });
 })();
 
+// ---------------------------------------------------------------------------
+(() => {
+  var hAST, result;
+  hAST = {
+    type: 'program',
+    name: 'John',
+    body: {
+      type: 'if',
+      cond: 'x==2',
+      body: {
+        type: 'assign',
+        left: 'x',
+        right: 2
+      }
+    }
+  };
+  result = extract(hAST, `type="program"
+name
+(body)
+	type as bodyType
+	cond`);
+  return equal(result, {
+    name: 'John',
+    bodyType: 'if',
+    cond: 'x==2'
+  });
+})();
+
+// ---------------------------------------------------------------------------
+(() => {
+  var hAST, result;
+  hAST = {
+    type: 'program',
+    name: 'John'
+  };
+  result = extract(hAST, `type="program"
+name
+?body
+	type as bodyType
+	cond`);
+  return equal(result, {
+    name: 'John'
+  });
+})();
+
+// ---------------------------------------------------------------------------
+(() => {
+  var hAST, result;
+  hAST = {
+    type: 'program',
+    name: 'John'
+  };
+  result = extract(hAST, `type="program"
+name
+(?body)
+	type as bodyType
+	cond`);
+  return equal(result, {
+    name: 'John'
+  });
+})();
+
+// ---------------------------------------------------------------------------
+(() => {
+  var hAST, result;
+  hAST = {
+    type: 'program',
+    name: 'John',
+    body: {
+      type: 'if',
+      cond: 'x==2',
+      body: {
+        type: 'assign',
+        left: 'x',
+        right: 2
+      }
+    }
+  };
+  result = extract(hAST, `type="program"
+name
+(?body)
+	type as bodyType
+	cond`);
+  return equal(result, {
+    name: 'John',
+    bodyType: 'if',
+    cond: 'x==2'
+  });
+})();
+
 //# sourceMappingURL=data-extractor.test.js.map

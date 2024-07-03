@@ -297,3 +297,109 @@ Object.assign(global, lib2)
 		""")
 	equal hResult, {name: 'func'}
 	)()
+
+# ---------------------------------------------------------------------------
+
+(() =>
+	hAST = {
+		type: 'program'
+		name: 'John'
+		body: {
+			type: 'if'
+			cond: 'x==2'
+			body: {
+				type: 'assign'
+				left: 'x'
+				right: 2
+				}
+			}
+		}
+
+	result = extract(hAST, """
+		type="program"
+		name
+		(body)
+			type as bodyType
+			cond
+		""")
+
+	equal result, {
+		name: 'John'
+		bodyType: 'if'
+		cond: 'x==2'
+		}
+	)()
+
+# ---------------------------------------------------------------------------
+
+(() =>
+	hAST = {
+		type: 'program'
+		name: 'John'
+		}
+
+	result = extract(hAST, """
+		type="program"
+		name
+		?body
+			type as bodyType
+			cond
+		""")
+
+	equal result, {
+		name: 'John'
+		}
+	)()
+
+# ---------------------------------------------------------------------------
+
+(() =>
+	hAST = {
+		type: 'program'
+		name: 'John'
+		}
+
+	result = extract(hAST, """
+		type="program"
+		name
+		(?body)
+			type as bodyType
+			cond
+		""")
+
+	equal result, {
+		name: 'John'
+		}
+	)()
+
+# ---------------------------------------------------------------------------
+
+(() =>
+	hAST = {
+		type: 'program'
+		name: 'John'
+		body: {
+			type: 'if'
+			cond: 'x==2'
+			body: {
+				type: 'assign'
+				left: 'x'
+				right: 2
+				}
+			}
+		}
+
+	result = extract(hAST, """
+		type="program"
+		name
+		(?body)
+			type as bodyType
+			cond
+		""")
+
+	equal result, {
+		name: 'John'
+		bodyType: 'if'
+		cond: 'x==2'
+		}
+	)()

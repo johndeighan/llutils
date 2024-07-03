@@ -33,19 +33,14 @@
 
 	hOptions = {};
 
-	export var getArgs = (argStr = undef, hDesc = undef, tracerStr = 'none') => {
-	  debugger;
-	  var err, hResult, tracer;
+	export var getArgs = (argStr = undef, hDesc = undef, hOptions = {}) => {
+	  var err, hResult, tracerStr;
 	  argStr = cmdArgStr(argStr);
+	  hOptions = getOptions(hOptions); // make it a hash
+	  tracerStr = hOptions.tracer || 'none';
+	  hOptions.tracer = getTracer(tracerStr);
 	  try {
-	    tracer = getTracer(tracerStr, argStr);
-	  } catch (error) {
-	    err = error;
-	    console.log(`ERROR: getTracer() failed: ${err.message}`);
-	    process.exit();
-	  }
-	  try {
-	    hResult = peg$parse(argStr, {tracer});
+	    hResult = peg$parse(argStr, hOptions);
 	  } catch (error) {
 	    err = error;
 	    console.log(`ERROR parsing ${OL(argStr)}: ${err.message}`);
@@ -191,7 +186,7 @@
 
 cmdArgs
 
-	= lArgs: arg |.., ws|
+	= lArgs: arg |.., _|
 		{ return parse__cmdArgs__1(lArgs); }
 
 arg
@@ -213,6 +208,6 @@ stringVal
 	/ !'-' str: $ [^ \t]+
 		{ return parse__stringVal__3(str); }
 
-ws
+_
 
 	= [ \t]+

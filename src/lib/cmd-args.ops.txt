@@ -1,0 +1,2491 @@
+========================================
+RULE: cmdArgs
+========================================
+  OP[ 2]:  5 PUSH_CURR_POS
+  ┌────  New Code  ───┐
+  │ s0 = peg$currPos; │
+  └───────────────────┘
+  OP[11]:  4 PUSH_EMPTY_ARRAY
+  ┌  New Code┐
+  │ s1 = []; │
+  └──────────┘
+  OP[14]: 27 RULE
+  ┌──────  New Code  ─────┐
+  │ s2 = peg$parse_arg(); │
+  └───────────────────────┘
+  OP[17]: 16 WHILE_NOT_ERROR
+    OP[ 0]: 10 APPEND
+    ┌──  New Code  ┐
+    │ s1.push(s2); │
+    └──────────────┘
+    OP[ 1]:  5 PUSH_CURR_POS
+    ┌────  New Code  ───┐
+    │ s2 = peg$currPos; │
+    └───────────────────┘
+    OP[ 4]: 27 RULE
+    ┌─────  New Code  ────┐
+    │ s3 = peg$parse__(); │
+    └─────────────────────┘
+    OP[ 7]: 15 IF_NOT_ERROR
+      OP[ 0]:  6 POP
+      OP[ 3]: 27 RULE
+      ┌──────  New Code  ─────┐
+      │ s3 = peg$parse_arg(); │
+      └───────────────────────┘
+      OP[ 6]: 14 IF_ERROR
+        OP[ 0]:  6 POP
+        OP[ 1]:  7 POP_CURR_POS
+        ┌────  New Code  ───┐
+        │ peg$currPos = s2; │
+        └───────────────────┘
+        OP[ 2]:  3 PUSH_FAILED
+        ┌────  New Code  ──┐
+        │ s2 = peg$FAILED; │
+        └──────────────────┘
+        OP[ 0]:  9 NIP
+        ┌  New Code┐
+        │ s2 = s3; │
+        └──────────┘
+      ┌────────  New Code  ──────┐
+      │ if (s3 === peg$FAILED) { │
+      │   peg$currPos = s2;      │
+      │   s2 = peg$FAILED;       │
+      │ } else {                 │
+      │   s2 = s3;               │
+      │ }                        │
+      └──────────────────────────┘
+      OP[ 0]:  9 NIP
+      ┌  New Code┐
+      │ s2 = s3; │
+      └──────────┘
+    ┌─────────  New Code  ───────┐
+    │ if (s3 !== peg$FAILED) {   │
+    │   s3 = peg$parse_arg();    │
+    │   if (s3 === peg$FAILED) { │
+    │     peg$currPos = s2;      │
+    │     s2 = peg$FAILED;       │
+    │   } else {                 │
+    │     s2 = s3;               │
+    │   }                        │
+    │ } else {                   │
+    │   s2 = s3;                 │
+    │ }                          │
+    └────────────────────────────┘
+  ┌──────────  New Code  ────────┐
+  │ while (s2 !== peg$FAILED) {  │
+  │   s1.push(s2);               │
+  │   s2 = peg$currPos;          │
+  │   s3 = peg$parse__();        │
+  │   if (s3 !== peg$FAILED) {   │
+  │     s3 = peg$parse_arg();    │
+  │     if (s3 === peg$FAILED) { │
+  │       peg$currPos = s2;      │
+  │       s2 = peg$FAILED;       │
+  │     } else {                 │
+  │       s2 = s3;               │
+  │     }                        │
+  │   } else {                   │
+  │     s2 = s3;                 │
+  │   }                          │
+  │ }                            │
+  └──────────────────────────────┘
+  OP[43]:  6 POP
+  OP[48]: 24 LOAD_SAVED_POS
+  ┌─────  New Code  ───┐
+  │ peg$savedPos = s0; │
+  └────────────────────┘
+  OP[50]: 26 CALL
+  ┌────  New Code  ──┐
+  │ s1 = peg$f0(s1); │
+  └──────────────────┘
+  OP[55]:  9 NIP
+  ┌  New Code┐
+  │ s0 = s1; │
+  └──────────┘
+
+┌──────────────────────────  cmdArgs CODE  ─────────────────────────┐
+│ function peg$parse_cmdArgs() {                                    │
+│   var startPos = peg$currPos;                                     │
+│   var s0, s1, s2, s3;                                             │
+│   peg$tracer.trace({                                              │
+│     type: "rule.enter",                                           │
+│     rule: "cmdArgs",                                              │
+│     location: peg$computeLocation(startPos, startPos, true),      │
+│   });                                                             │
+│   s0 = peg$currPos;                                               │
+│   s1 = [];                                                        │
+│   s2 = peg$parse_arg();                                           │
+│   while (s2 !== peg$FAILED) {                                     │
+│     s1.push(s2);                                                  │
+│     s2 = peg$currPos;                                             │
+│     s3 = peg$parse__();                                           │
+│     if (s3 !== peg$FAILED) {                                      │
+│       s3 = peg$parse_arg();                                       │
+│       if (s3 === peg$FAILED) {                                    │
+│         peg$currPos = s2;                                         │
+│         s2 = peg$FAILED;                                          │
+│       } else {                                                    │
+│         s2 = s3;                                                  │
+│       }                                                           │
+│     } else {                                                      │
+│       s2 = s3;                                                    │
+│     }                                                             │
+│   }                                                               │
+│   peg$savedPos = s0;                                              │
+│   s1 = peg$f0(s1);                                                │
+│   s0 = s1;                                                        │
+│   if (s0 !== peg$FAILED) {                                        │
+│     peg$tracer.trace({                                            │
+│       type: "rule.match",                                         │
+│       rule: "cmdArgs",                                            │
+│       result: s0,                                                 │
+│       location: peg$computeLocation(startPos, peg$currPos, true), │
+│     });                                                           │
+│   } else {                                                        │
+│     peg$tracer.trace({                                            │
+│       type: "rule.fail",                                          │
+│       rule: "cmdArgs",                                            │
+│       location: peg$computeLocation(startPos, startPos, true),    │
+│     });                                                           │
+│   }                                                               │
+│   return s0;                                                      │
+│ }                                                                 │
+└───────────────────────────────────────────────────────────────────┘
+========================================
+RULE: arg
+========================================
+  OP[ 6]:  5 PUSH_CURR_POS
+  ┌────  New Code  ───┐
+  │ s0 = peg$currPos; │
+  └───────────────────┘
+  OP[ 9]: 18 MATCH_STRING
+    OP[ 0]: 22 ACCEPT_STRING
+    ┌───  New Code  ─┐
+    │ s1 = peg$c1;   │
+    │ peg$currPos++; │
+    └────────────────┘
+    OP[ 0]: 23 FAIL
+    ┌────────────────────  New Code  ──────────────────┐
+    │ s1 = peg$FAILED;                                 │
+    │ if (peg$silentFails === 0) { peg$fail(peg$e0); } │
+    └──────────────────────────────────────────────────┘
+  ┌─────────────────────────────  New Code  ───────────────────────────┐
+  │ if (input.charCodeAt(peg$currPos) === 45) {                        │
+  │   s1 = peg$c1;                                                     │
+  │   peg$currPos++;                                                   │
+  │   peg$tracer.trace({                                               │
+  │     type: "string.match",                                          │
+  │     rule: "arg",                                                   │
+  │     result: "-",                                                   │
+  │     location: peg$computeLocation(startPos, peg$currPos, true),    │
+  │   });                                                              │
+  │ } else {                                                           │
+  │   s1 = peg$FAILED;                                                 │
+  │   if (peg$silentFails === 0) { peg$fail(peg$e0); }                 │
+  │   peg$tracer.trace({                                               │
+  │     type: "string.fail",                                           │
+  │     rule: "arg",                                                   │
+  │     details: "-",                                                  │
+  │     location: peg$computeLocation(peg$currPos, peg$currPos, true), │
+  │   });                                                              │
+  │ }                                                                  │
+  └────────────────────────────────────────────────────────────────────┘
+  OP[18]: 15 IF_NOT_ERROR
+    OP[ 8]:  4 PUSH_EMPTY_ARRAY
+    ┌  New Code┐
+    │ s2 = []; │
+    └──────────┘
+    OP[11]: 20 MATCH_CHAR_CLASS
+      OP[ 0]: 23 FAIL
+      ┌────────────────────  New Code  ──────────────────┐
+      │ s3 = peg$FAILED;                                 │
+      │ if (peg$silentFails === 0) { peg$fail(peg$e1); } │
+      └──────────────────────────────────────────────────┘
+    ┌──────────────────────────────  New Code  ────────────────────────────┐
+    │ s3 = input.charAt(peg$currPos);                                      │
+    │ if (peg$r0.test(s3)) {                                               │
+    │   peg$currPos++;                                                     │
+    │   peg$tracer.trace({                                                 │
+    │     type: "class.match",                                             │
+    │     rule: "arg",                                                     │
+    │     result: input.charAt(peg$currPos-1),                             │
+    │     details: peg$r0.toString(),                                      │
+    │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+    │   });                                                                │
+    │ } else {                                                             │
+    │   s3 = peg$FAILED;                                                   │
+    │   if (peg$silentFails === 0) { peg$fail(peg$e1); }                   │
+    │   peg$tracer.trace({                                                 │
+    │     type: "class.fail",                                              │
+    │     rule: "arg",                                                     │
+    │     details: peg$r0.toString(),                                      │
+    │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+    │   });                                                                │
+    │ }                                                                    │
+    └──────────────────────────────────────────────────────────────────────┘
+    OP[20]: 15 IF_NOT_ERROR
+      OP[ 0]: 16 WHILE_NOT_ERROR
+        OP[ 0]: 10 APPEND
+        ┌──  New Code  ┐
+        │ s2.push(s3); │
+        └──────────────┘
+        OP[ 3]: 20 MATCH_CHAR_CLASS
+          OP[ 0]: 23 FAIL
+          ┌────────────────────  New Code  ──────────────────┐
+          │ s3 = peg$FAILED;                                 │
+          │ if (peg$silentFails === 0) { peg$fail(peg$e1); } │
+          └──────────────────────────────────────────────────┘
+        ┌──────────────────────────────  New Code  ────────────────────────────┐
+        │ s3 = input.charAt(peg$currPos);                                      │
+        │ if (peg$r0.test(s3)) {                                               │
+        │   peg$currPos++;                                                     │
+        │   peg$tracer.trace({                                                 │
+        │     type: "class.match",                                             │
+        │     rule: "arg",                                                     │
+        │     result: input.charAt(peg$currPos-1),                             │
+        │     details: peg$r0.toString(),                                      │
+        │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+        │   });                                                                │
+        │ } else {                                                             │
+        │   s3 = peg$FAILED;                                                   │
+        │   if (peg$silentFails === 0) { peg$fail(peg$e1); }                   │
+        │   peg$tracer.trace({                                                 │
+        │     type: "class.fail",                                              │
+        │     rule: "arg",                                                     │
+        │     details: peg$r0.toString(),                                      │
+        │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+        │   });                                                                │
+        │ }                                                                    │
+        └──────────────────────────────────────────────────────────────────────┘
+      ┌───────────────────────────────  New Code  ─────────────────────────────┐
+      │ while (s3 !== peg$FAILED) {                                            │
+      │   s2.push(s3);                                                         │
+      │   s3 = input.charAt(peg$currPos);                                      │
+      │   if (peg$r0.test(s3)) {                                               │
+      │     peg$currPos++;                                                     │
+      │     peg$tracer.trace({                                                 │
+      │       type: "class.match",                                             │
+      │       rule: "arg",                                                     │
+      │       result: input.charAt(peg$currPos-1),                             │
+      │       details: peg$r0.toString(),                                      │
+      │       location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+      │     });                                                                │
+      │   } else {                                                             │
+      │     s3 = peg$FAILED;                                                   │
+      │     if (peg$silentFails === 0) { peg$fail(peg$e1); }                   │
+      │     peg$tracer.trace({                                                 │
+      │       type: "class.fail",                                              │
+      │       rule: "arg",                                                     │
+      │       details: peg$r0.toString(),                                      │
+      │       location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+      │     });                                                                │
+      │   }                                                                    │
+      │ }                                                                      │
+      └────────────────────────────────────────────────────────────────────────┘
+      OP[14]:  6 POP
+      OP[ 0]:  6 POP
+      OP[ 1]:  6 POP
+      OP[ 2]:  3 PUSH_FAILED
+      ┌────  New Code  ──┐
+      │ s2 = peg$FAILED; │
+      └──────────────────┘
+    ┌────────────────────────────────  New Code  ──────────────────────────────┐
+    │ if (s3 !== peg$FAILED) {                                                 │
+    │   while (s3 !== peg$FAILED) {                                            │
+    │     s2.push(s3);                                                         │
+    │     s3 = input.charAt(peg$currPos);                                      │
+    │     if (peg$r0.test(s3)) {                                               │
+    │       peg$currPos++;                                                     │
+    │       peg$tracer.trace({                                                 │
+    │         type: "class.match",                                             │
+    │         rule: "arg",                                                     │
+    │         result: input.charAt(peg$currPos-1),                             │
+    │         details: peg$r0.toString(),                                      │
+    │         location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+    │       });                                                                │
+    │     } else {                                                             │
+    │       s3 = peg$FAILED;                                                   │
+    │       if (peg$silentFails === 0) { peg$fail(peg$e1); }                   │
+    │       peg$tracer.trace({                                                 │
+    │         type: "class.fail",                                              │
+    │         rule: "arg",                                                     │
+    │         details: peg$r0.toString(),                                      │
+    │         location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+    │       });                                                                │
+    │     }                                                                    │
+    │   }                                                                      │
+    │ } else {                                                                 │
+    │   s2 = peg$FAILED;                                                       │
+    │ }                                                                        │
+    └──────────────────────────────────────────────────────────────────────────┘
+    OP[45]: 15 IF_NOT_ERROR
+      OP[12]:  5 PUSH_CURR_POS
+      ┌────  New Code  ───┐
+      │ s3 = peg$currPos; │
+      └───────────────────┘
+      OP[15]: 18 MATCH_STRING
+        OP[ 0]: 22 ACCEPT_STRING
+        ┌───  New Code  ─┐
+        │ s4 = peg$c3;   │
+        │ peg$currPos++; │
+        └────────────────┘
+        OP[ 0]: 23 FAIL
+        ┌────────────────────  New Code  ──────────────────┐
+        │ s4 = peg$FAILED;                                 │
+        │ if (peg$silentFails === 0) { peg$fail(peg$e2); } │
+        └──────────────────────────────────────────────────┘
+      ┌─────────────────────────────  New Code  ───────────────────────────┐
+      │ if (input.charCodeAt(peg$currPos) === 61) {                        │
+      │   s4 = peg$c3;                                                     │
+      │   peg$currPos++;                                                   │
+      │   peg$tracer.trace({                                               │
+      │     type: "string.match",                                          │
+      │     rule: "arg",                                                   │
+      │     result: "=",                                                   │
+      │     location: peg$computeLocation(startPos, peg$currPos, true),    │
+      │   });                                                              │
+      │ } else {                                                           │
+      │   s4 = peg$FAILED;                                                 │
+      │   if (peg$silentFails === 0) { peg$fail(peg$e2); }                 │
+      │   peg$tracer.trace({                                               │
+      │     type: "string.fail",                                           │
+      │     rule: "arg",                                                   │
+      │     details: "=",                                                  │
+      │     location: peg$computeLocation(peg$currPos, peg$currPos, true), │
+      │   });                                                              │
+      │ }                                                                  │
+      └────────────────────────────────────────────────────────────────────┘
+      OP[24]: 15 IF_NOT_ERROR
+        OP[ 4]: 27 RULE
+        ┌─────────  New Code  ────────┐
+        │ s5 = peg$parse_stringVal(); │
+        └─────────────────────────────┘
+        OP[ 8]: 15 IF_NOT_ERROR
+          OP[ 0]: 36 PLUCK
+          ┌  New Code┐
+          │ s3 = s5; │
+          └──────────┘
+          OP[ 0]:  8 POP_N
+          OP[ 2]:  7 POP_CURR_POS
+          ┌────  New Code  ───┐
+          │ peg$currPos = s3; │
+          └───────────────────┘
+          OP[ 3]:  3 PUSH_FAILED
+          ┌────  New Code  ──┐
+          │ s3 = peg$FAILED; │
+          └──────────────────┘
+        ┌────────  New Code  ──────┐
+        │ if (s5 !== peg$FAILED) { │
+        │   s3 = s5;               │
+        │ } else {                 │
+        │   peg$currPos = s3;      │
+        │   s3 = peg$FAILED;       │
+        │ }                        │
+        └──────────────────────────┘
+        OP[ 0]:  6 POP
+        OP[ 1]:  7 POP_CURR_POS
+        ┌────  New Code  ───┐
+        │ peg$currPos = s3; │
+        └───────────────────┘
+        OP[ 2]:  3 PUSH_FAILED
+        ┌────  New Code  ──┐
+        │ s3 = peg$FAILED; │
+        └──────────────────┘
+      ┌──────────  New Code  ─────────┐
+      │ if (s4 !== peg$FAILED) {      │
+      │   s5 = peg$parse_stringVal(); │
+      │   if (s5 !== peg$FAILED) {    │
+      │     s3 = s5;                  │
+      │   } else {                    │
+      │     peg$currPos = s3;         │
+      │     s3 = peg$FAILED;          │
+      │   }                           │
+      │ } else {                      │
+      │   peg$currPos = s3;           │
+      │   s3 = peg$FAILED;            │
+      │ }                             │
+      └───────────────────────────────┘
+      OP[51]: 14 IF_ERROR
+        OP[ 0]:  6 POP
+        OP[ 1]:  2 PUSH_NULL
+        ┌─  New Code ┐
+        │ s3 = null; │
+        └────────────┘
+      ┌────────  New Code  ──────┐
+      │ if (s3 === peg$FAILED) { │
+      │   s3 = null;             │
+      │ }                        │
+      └──────────────────────────┘
+      OP[60]: 24 LOAD_SAVED_POS
+      ┌─────  New Code  ───┐
+      │ peg$savedPos = s0; │
+      └────────────────────┘
+      OP[62]: 26 CALL
+      ┌──────  New Code  ────┐
+      │ s0 = peg$f1(s2, s3); │
+      └──────────────────────┘
+      OP[ 0]:  8 POP_N
+      OP[ 2]:  7 POP_CURR_POS
+      ┌────  New Code  ───┐
+      │ peg$currPos = s0; │
+      └───────────────────┘
+      OP[ 3]:  3 PUSH_FAILED
+      ┌────  New Code  ──┐
+      │ s0 = peg$FAILED; │
+      └──────────────────┘
+    ┌──────────────────────────────  New Code  ────────────────────────────┐
+    │ if (s2 !== peg$FAILED) {                                             │
+    │   s3 = peg$currPos;                                                  │
+    │   if (input.charCodeAt(peg$currPos) === 61) {                        │
+    │     s4 = peg$c3;                                                     │
+    │     peg$currPos++;                                                   │
+    │     peg$tracer.trace({                                               │
+    │       type: "string.match",                                          │
+    │       rule: "arg",                                                   │
+    │       result: "=",                                                   │
+    │       location: peg$computeLocation(startPos, peg$currPos, true),    │
+    │     });                                                              │
+    │   } else {                                                           │
+    │     s4 = peg$FAILED;                                                 │
+    │     if (peg$silentFails === 0) { peg$fail(peg$e2); }                 │
+    │     peg$tracer.trace({                                               │
+    │       type: "string.fail",                                           │
+    │       rule: "arg",                                                   │
+    │       details: "=",                                                  │
+    │       location: peg$computeLocation(peg$currPos, peg$currPos, true), │
+    │     });                                                              │
+    │   }                                                                  │
+    │   if (s4 !== peg$FAILED) {                                           │
+    │     s5 = peg$parse_stringVal();                                      │
+    │     if (s5 !== peg$FAILED) {                                         │
+    │       s3 = s5;                                                       │
+    │     } else {                                                         │
+    │       peg$currPos = s3;                                              │
+    │       s3 = peg$FAILED;                                               │
+    │     }                                                                │
+    │   } else {                                                           │
+    │     peg$currPos = s3;                                                │
+    │     s3 = peg$FAILED;                                                 │
+    │   }                                                                  │
+    │   if (s3 === peg$FAILED) {                                           │
+    │     s3 = null;                                                       │
+    │   }                                                                  │
+    │   peg$savedPos = s0;                                                 │
+    │   s0 = peg$f1(s2, s3);                                               │
+    │ } else {                                                             │
+    │   peg$currPos = s0;                                                  │
+    │   s0 = peg$FAILED;                                                   │
+    │ }                                                                    │
+    └──────────────────────────────────────────────────────────────────────┘
+    OP[ 0]:  6 POP
+    OP[ 1]:  7 POP_CURR_POS
+    ┌────  New Code  ───┐
+    │ peg$currPos = s0; │
+    └───────────────────┘
+    OP[ 2]:  3 PUSH_FAILED
+    ┌────  New Code  ──┐
+    │ s0 = peg$FAILED; │
+    └──────────────────┘
+  ┌─────────────────────────────────  New Code  ───────────────────────────────┐
+  │ if (s1 !== peg$FAILED) {                                                   │
+  │   s2 = [];                                                                 │
+  │   s3 = input.charAt(peg$currPos);                                          │
+  │   if (peg$r0.test(s3)) {                                                   │
+  │     peg$currPos++;                                                         │
+  │     peg$tracer.trace({                                                     │
+  │       type: "class.match",                                                 │
+  │       rule: "arg",                                                         │
+  │       result: input.charAt(peg$currPos-1),                                 │
+  │       details: peg$r0.toString(),                                          │
+  │       location: peg$computeLocation(peg$currPos-1, peg$currPos, true),     │
+  │     });                                                                    │
+  │   } else {                                                                 │
+  │     s3 = peg$FAILED;                                                       │
+  │     if (peg$silentFails === 0) { peg$fail(peg$e1); }                       │
+  │     peg$tracer.trace({                                                     │
+  │       type: "class.fail",                                                  │
+  │       rule: "arg",                                                         │
+  │       details: peg$r0.toString(),                                          │
+  │       location: peg$computeLocation(peg$currPos, peg$currPos, true),       │
+  │     });                                                                    │
+  │   }                                                                        │
+  │   if (s3 !== peg$FAILED) {                                                 │
+  │     while (s3 !== peg$FAILED) {                                            │
+  │       s2.push(s3);                                                         │
+  │       s3 = input.charAt(peg$currPos);                                      │
+  │       if (peg$r0.test(s3)) {                                               │
+  │         peg$currPos++;                                                     │
+  │         peg$tracer.trace({                                                 │
+  │           type: "class.match",                                             │
+  │           rule: "arg",                                                     │
+  │           result: input.charAt(peg$currPos-1),                             │
+  │           details: peg$r0.toString(),                                      │
+  │           location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+  │         });                                                                │
+  │       } else {                                                             │
+  │         s3 = peg$FAILED;                                                   │
+  │         if (peg$silentFails === 0) { peg$fail(peg$e1); }                   │
+  │         peg$tracer.trace({                                                 │
+  │           type: "class.fail",                                              │
+  │           rule: "arg",                                                     │
+  │           details: peg$r0.toString(),                                      │
+  │           location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+  │         });                                                                │
+  │       }                                                                    │
+  │     }                                                                      │
+  │   } else {                                                                 │
+  │     s2 = peg$FAILED;                                                       │
+  │   }                                                                        │
+  │   if (s2 !== peg$FAILED) {                                                 │
+  │     s3 = peg$currPos;                                                      │
+  │     if (input.charCodeAt(peg$currPos) === 61) {                            │
+  │       s4 = peg$c3;                                                         │
+  │       peg$currPos++;                                                       │
+  │       peg$tracer.trace({                                                   │
+  │         type: "string.match",                                              │
+  │         rule: "arg",                                                       │
+  │         result: "=",                                                       │
+  │         location: peg$computeLocation(startPos, peg$currPos, true),        │
+  │       });                                                                  │
+  │     } else {                                                               │
+  │       s4 = peg$FAILED;                                                     │
+  │       if (peg$silentFails === 0) { peg$fail(peg$e2); }                     │
+  │       peg$tracer.trace({                                                   │
+  │         type: "string.fail",                                               │
+  │         rule: "arg",                                                       │
+  │         details: "=",                                                      │
+  │         location: peg$computeLocation(peg$currPos, peg$currPos, true),     │
+  │       });                                                                  │
+  │     }                                                                      │
+  │     if (s4 !== peg$FAILED) {                                               │
+  │       s5 = peg$parse_stringVal();                                          │
+  │       if (s5 !== peg$FAILED) {                                             │
+  │         s3 = s5;                                                           │
+  │       } else {                                                             │
+  │         peg$currPos = s3;                                                  │
+  │         s3 = peg$FAILED;                                                   │
+  │       }                                                                    │
+  │     } else {                                                               │
+  │       peg$currPos = s3;                                                    │
+  │       s3 = peg$FAILED;                                                     │
+  │     }                                                                      │
+  │     if (s3 === peg$FAILED) {                                               │
+  │       s3 = null;                                                           │
+  │     }                                                                      │
+  │     peg$savedPos = s0;                                                     │
+  │     s0 = peg$f1(s2, s3);                                                   │
+  │   } else {                                                                 │
+  │     peg$currPos = s0;                                                      │
+  │     s0 = peg$FAILED;                                                       │
+  │   }                                                                        │
+  │ } else {                                                                   │
+  │   peg$currPos = s0;                                                        │
+  │   s0 = peg$FAILED;                                                         │
+  │ }                                                                          │
+  └────────────────────────────────────────────────────────────────────────────┘
+  OP[146]: 14 IF_ERROR
+    OP[ 0]:  6 POP
+    OP[ 3]:  5 PUSH_CURR_POS
+    ┌────  New Code  ───┐
+    │ s0 = peg$currPos; │
+    └───────────────────┘
+    OP[12]: 27 RULE
+    ┌─────────  New Code  ────────┐
+    │ s1 = peg$parse_stringVal(); │
+    └─────────────────────────────┘
+    OP[18]: 15 IF_NOT_ERROR
+      OP[ 0]: 24 LOAD_SAVED_POS
+      ┌─────  New Code  ───┐
+      │ peg$savedPos = s0; │
+      └────────────────────┘
+      OP[ 2]: 26 CALL
+      ┌────  New Code  ──┐
+      │ s1 = peg$f2(s1); │
+      └──────────────────┘
+    ┌────────  New Code  ──────┐
+    │ if (s1 !== peg$FAILED) { │
+    │   peg$savedPos = s0;     │
+    │   s1 = peg$f2(s1);       │
+    │ }                        │
+    └──────────────────────────┘
+    OP[28]:  9 NIP
+    ┌  New Code┐
+    │ s0 = s1; │
+    └──────────┘
+  ┌──────────  New Code  ─────────┐
+  │ if (s0 === peg$FAILED) {      │
+  │   s0 = peg$currPos;           │
+  │   s1 = peg$parse_stringVal(); │
+  │   if (s1 !== peg$FAILED) {    │
+  │     peg$savedPos = s0;        │
+  │     s1 = peg$f2(s1);          │
+  │   }                           │
+  │   s0 = s1;                    │
+  │ }                             │
+  └───────────────────────────────┘
+
+┌──────────────────────────────────  arg CODE  ────────────────────────────────┐
+│ function peg$parse_arg() {                                                   │
+│   var startPos = peg$currPos;                                                │
+│   var s0, s1, s2, s3, s4, s5;                                                │
+│   peg$tracer.trace({                                                         │
+│     type: "rule.enter",                                                      │
+│     rule: "arg",                                                             │
+│     location: peg$computeLocation(startPos, startPos, true),                 │
+│   });                                                                        │
+│   s0 = peg$currPos;                                                          │
+│   if (input.charCodeAt(peg$currPos) === 45) {                                │
+│     s1 = peg$c1;                                                             │
+│     peg$currPos++;                                                           │
+│     peg$tracer.trace({                                                       │
+│       type: "string.match",                                                  │
+│       rule: "arg",                                                           │
+│       result: "-",                                                           │
+│       location: peg$computeLocation(startPos, peg$currPos, true),            │
+│     });                                                                      │
+│   } else {                                                                   │
+│     s1 = peg$FAILED;                                                         │
+│     if (peg$silentFails === 0) { peg$fail(peg$e0); }                         │
+│     peg$tracer.trace({                                                       │
+│       type: "string.fail",                                                   │
+│       rule: "arg",                                                           │
+│       details: "-",                                                          │
+│       location: peg$computeLocation(peg$currPos, peg$currPos, true),         │
+│     });                                                                      │
+│   }                                                                          │
+│   if (s1 !== peg$FAILED) {                                                   │
+│     s2 = [];                                                                 │
+│     s3 = input.charAt(peg$currPos);                                          │
+│     if (peg$r0.test(s3)) {                                                   │
+│       peg$currPos++;                                                         │
+│       peg$tracer.trace({                                                     │
+│         type: "class.match",                                                 │
+│         rule: "arg",                                                         │
+│         result: input.charAt(peg$currPos-1),                                 │
+│         details: peg$r0.toString(),                                          │
+│         location: peg$computeLocation(peg$currPos-1, peg$currPos, true),     │
+│       });                                                                    │
+│     } else {                                                                 │
+│       s3 = peg$FAILED;                                                       │
+│       if (peg$silentFails === 0) { peg$fail(peg$e1); }                       │
+│       peg$tracer.trace({                                                     │
+│         type: "class.fail",                                                  │
+│         rule: "arg",                                                         │
+│         details: peg$r0.toString(),                                          │
+│         location: peg$computeLocation(peg$currPos, peg$currPos, true),       │
+│       });                                                                    │
+│     }                                                                        │
+│     if (s3 !== peg$FAILED) {                                                 │
+│       while (s3 !== peg$FAILED) {                                            │
+│         s2.push(s3);                                                         │
+│         s3 = input.charAt(peg$currPos);                                      │
+│         if (peg$r0.test(s3)) {                                               │
+│           peg$currPos++;                                                     │
+│           peg$tracer.trace({                                                 │
+│             type: "class.match",                                             │
+│             rule: "arg",                                                     │
+│             result: input.charAt(peg$currPos-1),                             │
+│             details: peg$r0.toString(),                                      │
+│             location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+│           });                                                                │
+│         } else {                                                             │
+│           s3 = peg$FAILED;                                                   │
+│           if (peg$silentFails === 0) { peg$fail(peg$e1); }                   │
+│           peg$tracer.trace({                                                 │
+│             type: "class.fail",                                              │
+│             rule: "arg",                                                     │
+│             details: peg$r0.toString(),                                      │
+│             location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+│           });                                                                │
+│         }                                                                    │
+│       }                                                                      │
+│     } else {                                                                 │
+│       s2 = peg$FAILED;                                                       │
+│     }                                                                        │
+│     if (s2 !== peg$FAILED) {                                                 │
+│       s3 = peg$currPos;                                                      │
+│       if (input.charCodeAt(peg$currPos) === 61) {                            │
+│         s4 = peg$c3;                                                         │
+│         peg$currPos++;                                                       │
+│         peg$tracer.trace({                                                   │
+│           type: "string.match",                                              │
+│           rule: "arg",                                                       │
+│           result: "=",                                                       │
+│           location: peg$computeLocation(startPos, peg$currPos, true),        │
+│         });                                                                  │
+│       } else {                                                               │
+│         s4 = peg$FAILED;                                                     │
+│         if (peg$silentFails === 0) { peg$fail(peg$e2); }                     │
+│         peg$tracer.trace({                                                   │
+│           type: "string.fail",                                               │
+│           rule: "arg",                                                       │
+│           details: "=",                                                      │
+│           location: peg$computeLocation(peg$currPos, peg$currPos, true),     │
+│         });                                                                  │
+│       }                                                                      │
+│       if (s4 !== peg$FAILED) {                                               │
+│         s5 = peg$parse_stringVal();                                          │
+│         if (s5 !== peg$FAILED) {                                             │
+│           s3 = s5;                                                           │
+│         } else {                                                             │
+│           peg$currPos = s3;                                                  │
+│           s3 = peg$FAILED;                                                   │
+│         }                                                                    │
+│       } else {                                                               │
+│         peg$currPos = s3;                                                    │
+│         s3 = peg$FAILED;                                                     │
+│       }                                                                      │
+│       if (s3 === peg$FAILED) {                                               │
+│         s3 = null;                                                           │
+│       }                                                                      │
+│       peg$savedPos = s0;                                                     │
+│       s0 = peg$f1(s2, s3);                                                   │
+│     } else {                                                                 │
+│       peg$currPos = s0;                                                      │
+│       s0 = peg$FAILED;                                                       │
+│     }                                                                        │
+│   } else {                                                                   │
+│     peg$currPos = s0;                                                        │
+│     s0 = peg$FAILED;                                                         │
+│   }                                                                          │
+│   if (s0 === peg$FAILED) {                                                   │
+│     s0 = peg$currPos;                                                        │
+│     s1 = peg$parse_stringVal();                                              │
+│     if (s1 !== peg$FAILED) {                                                 │
+│       peg$savedPos = s0;                                                     │
+│       s1 = peg$f2(s1);                                                       │
+│     }                                                                        │
+│     s0 = s1;                                                                 │
+│   }                                                                          │
+│   if (s0 !== peg$FAILED) {                                                   │
+│     peg$tracer.trace({                                                       │
+│       type: "rule.match",                                                    │
+│       rule: "arg",                                                           │
+│       result: s0,                                                            │
+│       location: peg$computeLocation(startPos, peg$currPos, true),            │
+│     });                                                                      │
+│   } else {                                                                   │
+│     peg$tracer.trace({                                                       │
+│       type: "rule.fail",                                                     │
+│       rule: "arg",                                                           │
+│       location: peg$computeLocation(startPos, startPos, true),               │
+│     });                                                                      │
+│   }                                                                          │
+│   return s0;                                                                 │
+│ }                                                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+========================================
+RULE: stringVal
+========================================
+  OP[ 6]:  5 PUSH_CURR_POS
+  ┌────  New Code  ───┐
+  │ s0 = peg$currPos; │
+  └───────────────────┘
+  OP[ 9]: 18 MATCH_STRING
+    OP[ 0]: 22 ACCEPT_STRING
+    ┌───  New Code  ─┐
+    │ s1 = peg$c6;   │
+    │ peg$currPos++; │
+    └────────────────┘
+    OP[ 0]: 23 FAIL
+    ┌────────────────────  New Code  ──────────────────┐
+    │ s1 = peg$FAILED;                                 │
+    │ if (peg$silentFails === 0) { peg$fail(peg$e3); } │
+    └──────────────────────────────────────────────────┘
+  ┌─────────────────────────────  New Code  ───────────────────────────┐
+  │ if (input.charCodeAt(peg$currPos) === 34) {                        │
+  │   s1 = peg$c6;                                                     │
+  │   peg$currPos++;                                                   │
+  │   peg$tracer.trace({                                               │
+  │     type: "string.match",                                          │
+  │     rule: "stringVal",                                             │
+  │     result: "\"",                                                  │
+  │     location: peg$computeLocation(startPos, peg$currPos, true),    │
+  │   });                                                              │
+  │ } else {                                                           │
+  │   s1 = peg$FAILED;                                                 │
+  │   if (peg$silentFails === 0) { peg$fail(peg$e3); }                 │
+  │   peg$tracer.trace({                                               │
+  │     type: "string.fail",                                           │
+  │     rule: "stringVal",                                             │
+  │     details: "\"",                                                 │
+  │     location: peg$computeLocation(peg$currPos, peg$currPos, true), │
+  │   });                                                              │
+  │ }                                                                  │
+  └────────────────────────────────────────────────────────────────────┘
+  OP[18]: 15 IF_NOT_ERROR
+    OP[ 8]:  5 PUSH_CURR_POS
+    ┌────  New Code  ───┐
+    │ s2 = peg$currPos; │
+    └───────────────────┘
+    OP[11]:  4 PUSH_EMPTY_ARRAY
+    ┌  New Code┐
+    │ s3 = []; │
+    └──────────┘
+    OP[14]: 20 MATCH_CHAR_CLASS
+      OP[ 0]: 23 FAIL
+      ┌────────────────────  New Code  ──────────────────┐
+      │ s4 = peg$FAILED;                                 │
+      │ if (peg$silentFails === 0) { peg$fail(peg$e4); } │
+      └──────────────────────────────────────────────────┘
+    ┌──────────────────────────────  New Code  ────────────────────────────┐
+    │ s4 = input.charAt(peg$currPos);                                      │
+    │ if (peg$r1.test(s4)) {                                               │
+    │   peg$currPos++;                                                     │
+    │   peg$tracer.trace({                                                 │
+    │     type: "class.match",                                             │
+    │     rule: "stringVal",                                               │
+    │     result: input.charAt(peg$currPos-1),                             │
+    │     details: peg$r1.toString(),                                      │
+    │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+    │   });                                                                │
+    │ } else {                                                             │
+    │   s4 = peg$FAILED;                                                   │
+    │   if (peg$silentFails === 0) { peg$fail(peg$e4); }                   │
+    │   peg$tracer.trace({                                                 │
+    │     type: "class.fail",                                              │
+    │     rule: "stringVal",                                               │
+    │     details: peg$r1.toString(),                                      │
+    │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+    │   });                                                                │
+    │ }                                                                    │
+    └──────────────────────────────────────────────────────────────────────┘
+    OP[23]: 16 WHILE_NOT_ERROR
+      OP[ 0]: 10 APPEND
+      ┌──  New Code  ┐
+      │ s3.push(s4); │
+      └──────────────┘
+      OP[ 3]: 20 MATCH_CHAR_CLASS
+        OP[ 0]: 23 FAIL
+        ┌────────────────────  New Code  ──────────────────┐
+        │ s4 = peg$FAILED;                                 │
+        │ if (peg$silentFails === 0) { peg$fail(peg$e4); } │
+        └──────────────────────────────────────────────────┘
+      ┌──────────────────────────────  New Code  ────────────────────────────┐
+      │ s4 = input.charAt(peg$currPos);                                      │
+      │ if (peg$r1.test(s4)) {                                               │
+      │   peg$currPos++;                                                     │
+      │   peg$tracer.trace({                                                 │
+      │     type: "class.match",                                             │
+      │     rule: "stringVal",                                               │
+      │     result: input.charAt(peg$currPos-1),                             │
+      │     details: peg$r1.toString(),                                      │
+      │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+      │   });                                                                │
+      │ } else {                                                             │
+      │   s4 = peg$FAILED;                                                   │
+      │   if (peg$silentFails === 0) { peg$fail(peg$e4); }                   │
+      │   peg$tracer.trace({                                                 │
+      │     type: "class.fail",                                              │
+      │     rule: "stringVal",                                               │
+      │     details: peg$r1.toString(),                                      │
+      │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+      │   });                                                                │
+      │ }                                                                    │
+      └──────────────────────────────────────────────────────────────────────┘
+    ┌───────────────────────────────  New Code  ─────────────────────────────┐
+    │ while (s4 !== peg$FAILED) {                                            │
+    │   s3.push(s4);                                                         │
+    │   s4 = input.charAt(peg$currPos);                                      │
+    │   if (peg$r1.test(s4)) {                                               │
+    │     peg$currPos++;                                                     │
+    │     peg$tracer.trace({                                                 │
+    │       type: "class.match",                                             │
+    │       rule: "stringVal",                                               │
+    │       result: input.charAt(peg$currPos-1),                             │
+    │       details: peg$r1.toString(),                                      │
+    │       location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+    │     });                                                                │
+    │   } else {                                                             │
+    │     s4 = peg$FAILED;                                                   │
+    │     if (peg$silentFails === 0) { peg$fail(peg$e4); }                   │
+    │     peg$tracer.trace({                                                 │
+    │       type: "class.fail",                                              │
+    │       rule: "stringVal",                                               │
+    │       details: peg$r1.toString(),                                      │
+    │       location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+    │     });                                                                │
+    │   }                                                                    │
+    │ }                                                                      │
+    └────────────────────────────────────────────────────────────────────────┘
+    OP[37]:  6 POP
+    OP[39]:  6 POP
+    OP[40]: 12 TEXT
+    OP[47]: 18 MATCH_STRING
+      OP[ 0]: 22 ACCEPT_STRING
+      ┌───  New Code  ─┐
+      │ s3 = peg$c6;   │
+      │ peg$currPos++; │
+      └────────────────┘
+      OP[ 0]: 23 FAIL
+      ┌────────────────────  New Code  ──────────────────┐
+      │ s3 = peg$FAILED;                                 │
+      │ if (peg$silentFails === 0) { peg$fail(peg$e3); } │
+      └──────────────────────────────────────────────────┘
+    ┌─────────────────────────────  New Code  ───────────────────────────┐
+    │ if (input.charCodeAt(peg$currPos) === 34) {                        │
+    │   s3 = peg$c6;                                                     │
+    │   peg$currPos++;                                                   │
+    │   peg$tracer.trace({                                               │
+    │     type: "string.match",                                          │
+    │     rule: "stringVal",                                             │
+    │     result: "\"",                                                  │
+    │     location: peg$computeLocation(startPos, peg$currPos, true),    │
+    │   });                                                              │
+    │ } else {                                                           │
+    │   s3 = peg$FAILED;                                                 │
+    │   if (peg$silentFails === 0) { peg$fail(peg$e3); }                 │
+    │   peg$tracer.trace({                                               │
+    │     type: "string.fail",                                           │
+    │     rule: "stringVal",                                             │
+    │     details: "\"",                                                 │
+    │     location: peg$computeLocation(peg$currPos, peg$currPos, true), │
+    │   });                                                              │
+    │ }                                                                  │
+    └────────────────────────────────────────────────────────────────────┘
+    OP[56]: 15 IF_NOT_ERROR
+      OP[ 0]: 24 LOAD_SAVED_POS
+      ┌─────  New Code  ───┐
+      │ peg$savedPos = s0; │
+      └────────────────────┘
+      OP[ 2]: 26 CALL
+      ┌────  New Code  ──┐
+      │ s0 = peg$f3(s2); │
+      └──────────────────┘
+      OP[ 0]:  8 POP_N
+      OP[ 2]:  7 POP_CURR_POS
+      ┌────  New Code  ───┐
+      │ peg$currPos = s0; │
+      └───────────────────┘
+      OP[ 3]:  3 PUSH_FAILED
+      ┌────  New Code  ──┐
+      │ s0 = peg$FAILED; │
+      └──────────────────┘
+    ┌────────  New Code  ──────┐
+    │ if (s3 !== peg$FAILED) { │
+    │   peg$savedPos = s0;     │
+    │   s0 = peg$f3(s2);       │
+    │ } else {                 │
+    │   peg$currPos = s0;      │
+    │   s0 = peg$FAILED;       │
+    │ }                        │
+    └──────────────────────────┘
+    OP[ 0]:  6 POP
+    OP[ 1]:  7 POP_CURR_POS
+    ┌────  New Code  ───┐
+    │ peg$currPos = s0; │
+    └───────────────────┘
+    OP[ 2]:  3 PUSH_FAILED
+    ┌────  New Code  ──┐
+    │ s0 = peg$FAILED; │
+    └──────────────────┘
+  ┌────────────────────────────────  New Code  ──────────────────────────────┐
+  │ if (s1 !== peg$FAILED) {                                                 │
+  │   s2 = peg$currPos;                                                      │
+  │   s3 = [];                                                               │
+  │   s4 = input.charAt(peg$currPos);                                        │
+  │   if (peg$r1.test(s4)) {                                                 │
+  │     peg$currPos++;                                                       │
+  │     peg$tracer.trace({                                                   │
+  │       type: "class.match",                                               │
+  │       rule: "stringVal",                                                 │
+  │       result: input.charAt(peg$currPos-1),                               │
+  │       details: peg$r1.toString(),                                        │
+  │       location: peg$computeLocation(peg$currPos-1, peg$currPos, true),   │
+  │     });                                                                  │
+  │   } else {                                                               │
+  │     s4 = peg$FAILED;                                                     │
+  │     if (peg$silentFails === 0) { peg$fail(peg$e4); }                     │
+  │     peg$tracer.trace({                                                   │
+  │       type: "class.fail",                                                │
+  │       rule: "stringVal",                                                 │
+  │       details: peg$r1.toString(),                                        │
+  │       location: peg$computeLocation(peg$currPos, peg$currPos, true),     │
+  │     });                                                                  │
+  │   }                                                                      │
+  │   while (s4 !== peg$FAILED) {                                            │
+  │     s3.push(s4);                                                         │
+  │     s4 = input.charAt(peg$currPos);                                      │
+  │     if (peg$r1.test(s4)) {                                               │
+  │       peg$currPos++;                                                     │
+  │       peg$tracer.trace({                                                 │
+  │         type: "class.match",                                             │
+  │         rule: "stringVal",                                               │
+  │         result: input.charAt(peg$currPos-1),                             │
+  │         details: peg$r1.toString(),                                      │
+  │         location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+  │       });                                                                │
+  │     } else {                                                             │
+  │       s4 = peg$FAILED;                                                   │
+  │       if (peg$silentFails === 0) { peg$fail(peg$e4); }                   │
+  │       peg$tracer.trace({                                                 │
+  │         type: "class.fail",                                              │
+  │         rule: "stringVal",                                               │
+  │         details: peg$r1.toString(),                                      │
+  │         location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+  │       });                                                                │
+  │     }                                                                    │
+  │   }                                                                      │
+  │   s2 = input.substring(s2, peg$currPos);                                 │
+  │   if (input.charCodeAt(peg$currPos) === 34) {                            │
+  │     s3 = peg$c6;                                                         │
+  │     peg$currPos++;                                                       │
+  │     peg$tracer.trace({                                                   │
+  │       type: "string.match",                                              │
+  │       rule: "stringVal",                                                 │
+  │       result: "\"",                                                      │
+  │       location: peg$computeLocation(startPos, peg$currPos, true),        │
+  │     });                                                                  │
+  │   } else {                                                               │
+  │     s3 = peg$FAILED;                                                     │
+  │     if (peg$silentFails === 0) { peg$fail(peg$e3); }                     │
+  │     peg$tracer.trace({                                                   │
+  │       type: "string.fail",                                               │
+  │       rule: "stringVal",                                                 │
+  │       details: "\"",                                                     │
+  │       location: peg$computeLocation(peg$currPos, peg$currPos, true),     │
+  │     });                                                                  │
+  │   }                                                                      │
+  │   if (s3 !== peg$FAILED) {                                               │
+  │     peg$savedPos = s0;                                                   │
+  │     s0 = peg$f3(s2);                                                     │
+  │   } else {                                                               │
+  │     peg$currPos = s0;                                                    │
+  │     s0 = peg$FAILED;                                                     │
+  │   }                                                                      │
+  │ } else {                                                                 │
+  │   peg$currPos = s0;                                                      │
+  │   s0 = peg$FAILED;                                                       │
+  │ }                                                                        │
+  └──────────────────────────────────────────────────────────────────────────┘
+  OP[96]: 14 IF_ERROR
+    OP[ 0]:  6 POP
+    OP[ 5]:  5 PUSH_CURR_POS
+    ┌────  New Code  ───┐
+    │ s0 = peg$currPos; │
+    └───────────────────┘
+    OP[ 8]: 18 MATCH_STRING
+      OP[ 0]: 22 ACCEPT_STRING
+      ┌───  New Code  ─┐
+      │ s1 = peg$c8;   │
+      │ peg$currPos++; │
+      └────────────────┘
+      OP[ 0]: 23 FAIL
+      ┌────────────────────  New Code  ──────────────────┐
+      │ s1 = peg$FAILED;                                 │
+      │ if (peg$silentFails === 0) { peg$fail(peg$e5); } │
+      └──────────────────────────────────────────────────┘
+    ┌─────────────────────────────  New Code  ───────────────────────────┐
+    │ if (input.charCodeAt(peg$currPos) === 39) {                        │
+    │   s1 = peg$c8;                                                     │
+    │   peg$currPos++;                                                   │
+    │   peg$tracer.trace({                                               │
+    │     type: "string.match",                                          │
+    │     rule: "stringVal",                                             │
+    │     result: "'",                                                   │
+    │     location: peg$computeLocation(startPos, peg$currPos, true),    │
+    │   });                                                              │
+    │ } else {                                                           │
+    │   s1 = peg$FAILED;                                                 │
+    │   if (peg$silentFails === 0) { peg$fail(peg$e5); }                 │
+    │   peg$tracer.trace({                                               │
+    │     type: "string.fail",                                           │
+    │     rule: "stringVal",                                             │
+    │     details: "'",                                                  │
+    │     location: peg$computeLocation(peg$currPos, peg$currPos, true), │
+    │   });                                                              │
+    │ }                                                                  │
+    └────────────────────────────────────────────────────────────────────┘
+    OP[17]: 15 IF_NOT_ERROR
+      OP[ 8]:  5 PUSH_CURR_POS
+      ┌────  New Code  ───┐
+      │ s2 = peg$currPos; │
+      └───────────────────┘
+      OP[11]:  4 PUSH_EMPTY_ARRAY
+      ┌  New Code┐
+      │ s3 = []; │
+      └──────────┘
+      OP[14]: 20 MATCH_CHAR_CLASS
+        OP[ 0]: 23 FAIL
+        ┌────────────────────  New Code  ──────────────────┐
+        │ s4 = peg$FAILED;                                 │
+        │ if (peg$silentFails === 0) { peg$fail(peg$e6); } │
+        └──────────────────────────────────────────────────┘
+      ┌──────────────────────────────  New Code  ────────────────────────────┐
+      │ s4 = input.charAt(peg$currPos);                                      │
+      │ if (peg$r2.test(s4)) {                                               │
+      │   peg$currPos++;                                                     │
+      │   peg$tracer.trace({                                                 │
+      │     type: "class.match",                                             │
+      │     rule: "stringVal",                                               │
+      │     result: input.charAt(peg$currPos-1),                             │
+      │     details: peg$r2.toString(),                                      │
+      │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+      │   });                                                                │
+      │ } else {                                                             │
+      │   s4 = peg$FAILED;                                                   │
+      │   if (peg$silentFails === 0) { peg$fail(peg$e6); }                   │
+      │   peg$tracer.trace({                                                 │
+      │     type: "class.fail",                                              │
+      │     rule: "stringVal",                                               │
+      │     details: peg$r2.toString(),                                      │
+      │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+      │   });                                                                │
+      │ }                                                                    │
+      └──────────────────────────────────────────────────────────────────────┘
+      OP[23]: 16 WHILE_NOT_ERROR
+        OP[ 0]: 10 APPEND
+        ┌──  New Code  ┐
+        │ s3.push(s4); │
+        └──────────────┘
+        OP[ 3]: 20 MATCH_CHAR_CLASS
+          OP[ 0]: 23 FAIL
+          ┌────────────────────  New Code  ──────────────────┐
+          │ s4 = peg$FAILED;                                 │
+          │ if (peg$silentFails === 0) { peg$fail(peg$e6); } │
+          └──────────────────────────────────────────────────┘
+        ┌──────────────────────────────  New Code  ────────────────────────────┐
+        │ s4 = input.charAt(peg$currPos);                                      │
+        │ if (peg$r2.test(s4)) {                                               │
+        │   peg$currPos++;                                                     │
+        │   peg$tracer.trace({                                                 │
+        │     type: "class.match",                                             │
+        │     rule: "stringVal",                                               │
+        │     result: input.charAt(peg$currPos-1),                             │
+        │     details: peg$r2.toString(),                                      │
+        │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+        │   });                                                                │
+        │ } else {                                                             │
+        │   s4 = peg$FAILED;                                                   │
+        │   if (peg$silentFails === 0) { peg$fail(peg$e6); }                   │
+        │   peg$tracer.trace({                                                 │
+        │     type: "class.fail",                                              │
+        │     rule: "stringVal",                                               │
+        │     details: peg$r2.toString(),                                      │
+        │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+        │   });                                                                │
+        │ }                                                                    │
+        └──────────────────────────────────────────────────────────────────────┘
+      ┌───────────────────────────────  New Code  ─────────────────────────────┐
+      │ while (s4 !== peg$FAILED) {                                            │
+      │   s3.push(s4);                                                         │
+      │   s4 = input.charAt(peg$currPos);                                      │
+      │   if (peg$r2.test(s4)) {                                               │
+      │     peg$currPos++;                                                     │
+      │     peg$tracer.trace({                                                 │
+      │       type: "class.match",                                             │
+      │       rule: "stringVal",                                               │
+      │       result: input.charAt(peg$currPos-1),                             │
+      │       details: peg$r2.toString(),                                      │
+      │       location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+      │     });                                                                │
+      │   } else {                                                             │
+      │     s4 = peg$FAILED;                                                   │
+      │     if (peg$silentFails === 0) { peg$fail(peg$e6); }                   │
+      │     peg$tracer.trace({                                                 │
+      │       type: "class.fail",                                              │
+      │       rule: "stringVal",                                               │
+      │       details: peg$r2.toString(),                                      │
+      │       location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+      │     });                                                                │
+      │   }                                                                    │
+      │ }                                                                      │
+      └────────────────────────────────────────────────────────────────────────┘
+      OP[37]:  6 POP
+      OP[39]:  6 POP
+      OP[40]: 12 TEXT
+      OP[47]: 18 MATCH_STRING
+        OP[ 0]: 22 ACCEPT_STRING
+        ┌───  New Code  ─┐
+        │ s3 = peg$c8;   │
+        │ peg$currPos++; │
+        └────────────────┘
+        OP[ 0]: 23 FAIL
+        ┌────────────────────  New Code  ──────────────────┐
+        │ s3 = peg$FAILED;                                 │
+        │ if (peg$silentFails === 0) { peg$fail(peg$e5); } │
+        └──────────────────────────────────────────────────┘
+      ┌─────────────────────────────  New Code  ───────────────────────────┐
+      │ if (input.charCodeAt(peg$currPos) === 39) {                        │
+      │   s3 = peg$c8;                                                     │
+      │   peg$currPos++;                                                   │
+      │   peg$tracer.trace({                                               │
+      │     type: "string.match",                                          │
+      │     rule: "stringVal",                                             │
+      │     result: "'",                                                   │
+      │     location: peg$computeLocation(startPos, peg$currPos, true),    │
+      │   });                                                              │
+      │ } else {                                                           │
+      │   s3 = peg$FAILED;                                                 │
+      │   if (peg$silentFails === 0) { peg$fail(peg$e5); }                 │
+      │   peg$tracer.trace({                                               │
+      │     type: "string.fail",                                           │
+      │     rule: "stringVal",                                             │
+      │     details: "'",                                                  │
+      │     location: peg$computeLocation(peg$currPos, peg$currPos, true), │
+      │   });                                                              │
+      │ }                                                                  │
+      └────────────────────────────────────────────────────────────────────┘
+      OP[56]: 15 IF_NOT_ERROR
+        OP[ 0]: 24 LOAD_SAVED_POS
+        ┌─────  New Code  ───┐
+        │ peg$savedPos = s0; │
+        └────────────────────┘
+        OP[ 2]: 26 CALL
+        ┌────  New Code  ──┐
+        │ s0 = peg$f4(s2); │
+        └──────────────────┘
+        OP[ 0]:  8 POP_N
+        OP[ 2]:  7 POP_CURR_POS
+        ┌────  New Code  ───┐
+        │ peg$currPos = s0; │
+        └───────────────────┘
+        OP[ 3]:  3 PUSH_FAILED
+        ┌────  New Code  ──┐
+        │ s0 = peg$FAILED; │
+        └──────────────────┘
+      ┌────────  New Code  ──────┐
+      │ if (s3 !== peg$FAILED) { │
+      │   peg$savedPos = s0;     │
+      │   s0 = peg$f4(s2);       │
+      │ } else {                 │
+      │   peg$currPos = s0;      │
+      │   s0 = peg$FAILED;       │
+      │ }                        │
+      └──────────────────────────┘
+      OP[ 0]:  6 POP
+      OP[ 1]:  7 POP_CURR_POS
+      ┌────  New Code  ───┐
+      │ peg$currPos = s0; │
+      └───────────────────┘
+      OP[ 2]:  3 PUSH_FAILED
+      ┌────  New Code  ──┐
+      │ s0 = peg$FAILED; │
+      └──────────────────┘
+    ┌────────────────────────────────  New Code  ──────────────────────────────┐
+    │ if (s1 !== peg$FAILED) {                                                 │
+    │   s2 = peg$currPos;                                                      │
+    │   s3 = [];                                                               │
+    │   s4 = input.charAt(peg$currPos);                                        │
+    │   if (peg$r2.test(s4)) {                                                 │
+    │     peg$currPos++;                                                       │
+    │     peg$tracer.trace({                                                   │
+    │       type: "class.match",                                               │
+    │       rule: "stringVal",                                                 │
+    │       result: input.charAt(peg$currPos-1),                               │
+    │       details: peg$r2.toString(),                                        │
+    │       location: peg$computeLocation(peg$currPos-1, peg$currPos, true),   │
+    │     });                                                                  │
+    │   } else {                                                               │
+    │     s4 = peg$FAILED;                                                     │
+    │     if (peg$silentFails === 0) { peg$fail(peg$e6); }                     │
+    │     peg$tracer.trace({                                                   │
+    │       type: "class.fail",                                                │
+    │       rule: "stringVal",                                                 │
+    │       details: peg$r2.toString(),                                        │
+    │       location: peg$computeLocation(peg$currPos, peg$currPos, true),     │
+    │     });                                                                  │
+    │   }                                                                      │
+    │   while (s4 !== peg$FAILED) {                                            │
+    │     s3.push(s4);                                                         │
+    │     s4 = input.charAt(peg$currPos);                                      │
+    │     if (peg$r2.test(s4)) {                                               │
+    │       peg$currPos++;                                                     │
+    │       peg$tracer.trace({                                                 │
+    │         type: "class.match",                                             │
+    │         rule: "stringVal",                                               │
+    │         result: input.charAt(peg$currPos-1),                             │
+    │         details: peg$r2.toString(),                                      │
+    │         location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+    │       });                                                                │
+    │     } else {                                                             │
+    │       s4 = peg$FAILED;                                                   │
+    │       if (peg$silentFails === 0) { peg$fail(peg$e6); }                   │
+    │       peg$tracer.trace({                                                 │
+    │         type: "class.fail",                                              │
+    │         rule: "stringVal",                                               │
+    │         details: peg$r2.toString(),                                      │
+    │         location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+    │       });                                                                │
+    │     }                                                                    │
+    │   }                                                                      │
+    │   s2 = input.substring(s2, peg$currPos);                                 │
+    │   if (input.charCodeAt(peg$currPos) === 39) {                            │
+    │     s3 = peg$c8;                                                         │
+    │     peg$currPos++;                                                       │
+    │     peg$tracer.trace({                                                   │
+    │       type: "string.match",                                              │
+    │       rule: "stringVal",                                                 │
+    │       result: "'",                                                       │
+    │       location: peg$computeLocation(startPos, peg$currPos, true),        │
+    │     });                                                                  │
+    │   } else {                                                               │
+    │     s3 = peg$FAILED;                                                     │
+    │     if (peg$silentFails === 0) { peg$fail(peg$e5); }                     │
+    │     peg$tracer.trace({                                                   │
+    │       type: "string.fail",                                               │
+    │       rule: "stringVal",                                                 │
+    │       details: "'",                                                      │
+    │       location: peg$computeLocation(peg$currPos, peg$currPos, true),     │
+    │     });                                                                  │
+    │   }                                                                      │
+    │   if (s3 !== peg$FAILED) {                                               │
+    │     peg$savedPos = s0;                                                   │
+    │     s0 = peg$f4(s2);                                                     │
+    │   } else {                                                               │
+    │     peg$currPos = s0;                                                    │
+    │     s0 = peg$FAILED;                                                     │
+    │   }                                                                      │
+    │ } else {                                                                 │
+    │   peg$currPos = s0;                                                      │
+    │   s0 = peg$FAILED;                                                       │
+    │ }                                                                        │
+    └──────────────────────────────────────────────────────────────────────────┘
+    OP[95]: 14 IF_ERROR
+      OP[ 0]:  6 POP
+      OP[ 5]:  5 PUSH_CURR_POS
+      ┌────  New Code  ───┐
+      │ s0 = peg$currPos; │
+      └───────────────────┘
+      OP[ 8]:  5 PUSH_CURR_POS
+      ┌────  New Code  ───┐
+      │ s1 = peg$currPos; │
+      └───────────────────┘
+      OP[ 9]: 28 SILENT_FAILS_ON
+      ┌─────  New Code  ───┐
+      │ peg$silentFails++; │
+      └────────────────────┘
+      OP[12]: 18 MATCH_STRING
+        OP[ 0]: 22 ACCEPT_STRING
+        ┌───  New Code  ─┐
+        │ s2 = peg$c1;   │
+        │ peg$currPos++; │
+        └────────────────┘
+        OP[ 0]: 23 FAIL
+        ┌────────────────────  New Code  ──────────────────┐
+        │ s2 = peg$FAILED;                                 │
+        │ if (peg$silentFails === 0) { peg$fail(peg$e0); } │
+        └──────────────────────────────────────────────────┘
+      ┌─────────────────────────────  New Code  ───────────────────────────┐
+      │ if (input.charCodeAt(peg$currPos) === 45) {                        │
+      │   s2 = peg$c1;                                                     │
+      │   peg$currPos++;                                                   │
+      │   peg$tracer.trace({                                               │
+      │     type: "string.match",                                          │
+      │     rule: "stringVal",                                             │
+      │     result: "-",                                                   │
+      │     location: peg$computeLocation(startPos, peg$currPos, true),    │
+      │   });                                                              │
+      │ } else {                                                           │
+      │   s2 = peg$FAILED;                                                 │
+      │   if (peg$silentFails === 0) { peg$fail(peg$e0); }                 │
+      │   peg$tracer.trace({                                               │
+      │     type: "string.fail",                                           │
+      │     rule: "stringVal",                                             │
+      │     details: "-",                                                  │
+      │     location: peg$computeLocation(peg$currPos, peg$currPos, true), │
+      │   });                                                              │
+      │ }                                                                  │
+      └────────────────────────────────────────────────────────────────────┘
+      OP[21]: 29 SILENT_FAILS_OFF
+      ┌─────  New Code  ───┐
+      │ peg$silentFails--; │
+      └────────────────────┘
+      OP[22]: 14 IF_ERROR
+        OP[ 0]:  6 POP
+        OP[ 1]:  6 POP
+        OP[ 2]:  1 PUSH_UNDEFINED
+        ┌───  New Code  ──┐
+        │ s1 = undefined; │
+        └─────────────────┘
+        OP[ 0]:  6 POP
+        OP[ 1]:  7 POP_CURR_POS
+        ┌────  New Code  ───┐
+        │ peg$currPos = s1; │
+        └───────────────────┘
+        OP[ 2]:  3 PUSH_FAILED
+        ┌────  New Code  ──┐
+        │ s1 = peg$FAILED; │
+        └──────────────────┘
+      ┌────────  New Code  ──────┐
+      │ if (s2 === peg$FAILED) { │
+      │   s1 = undefined;        │
+      │ } else {                 │
+      │   peg$currPos = s1;      │
+      │   s1 = peg$FAILED;       │
+      │ }                        │
+      └──────────────────────────┘
+      OP[32]: 15 IF_NOT_ERROR
+        OP[ 8]:  5 PUSH_CURR_POS
+        ┌────  New Code  ───┐
+        │ s2 = peg$currPos; │
+        └───────────────────┘
+        OP[11]:  4 PUSH_EMPTY_ARRAY
+        ┌  New Code┐
+        │ s3 = []; │
+        └──────────┘
+        OP[14]: 20 MATCH_CHAR_CLASS
+          OP[ 0]: 23 FAIL
+          ┌────────────────────  New Code  ──────────────────┐
+          │ s4 = peg$FAILED;                                 │
+          │ if (peg$silentFails === 0) { peg$fail(peg$e7); } │
+          └──────────────────────────────────────────────────┘
+        ┌──────────────────────────────  New Code  ────────────────────────────┐
+        │ s4 = input.charAt(peg$currPos);                                      │
+        │ if (peg$r3.test(s4)) {                                               │
+        │   peg$currPos++;                                                     │
+        │   peg$tracer.trace({                                                 │
+        │     type: "class.match",                                             │
+        │     rule: "stringVal",                                               │
+        │     result: input.charAt(peg$currPos-1),                             │
+        │     details: peg$r3.toString(),                                      │
+        │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+        │   });                                                                │
+        │ } else {                                                             │
+        │   s4 = peg$FAILED;                                                   │
+        │   if (peg$silentFails === 0) { peg$fail(peg$e7); }                   │
+        │   peg$tracer.trace({                                                 │
+        │     type: "class.fail",                                              │
+        │     rule: "stringVal",                                               │
+        │     details: peg$r3.toString(),                                      │
+        │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+        │   });                                                                │
+        │ }                                                                    │
+        └──────────────────────────────────────────────────────────────────────┘
+        OP[23]: 15 IF_NOT_ERROR
+          OP[ 0]: 16 WHILE_NOT_ERROR
+            OP[ 0]: 10 APPEND
+            ┌──  New Code  ┐
+            │ s3.push(s4); │
+            └──────────────┘
+            OP[ 3]: 20 MATCH_CHAR_CLASS
+              OP[ 0]: 23 FAIL
+              ┌────────────────────  New Code  ──────────────────┐
+              │ s4 = peg$FAILED;                                 │
+              │ if (peg$silentFails === 0) { peg$fail(peg$e7); } │
+              └──────────────────────────────────────────────────┘
+            ┌──────────────────────────────  New Code  ────────────────────────────┐
+            │ s4 = input.charAt(peg$currPos);                                      │
+            │ if (peg$r3.test(s4)) {                                               │
+            │   peg$currPos++;                                                     │
+            │   peg$tracer.trace({                                                 │
+            │     type: "class.match",                                             │
+            │     rule: "stringVal",                                               │
+            │     result: input.charAt(peg$currPos-1),                             │
+            │     details: peg$r3.toString(),                                      │
+            │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+            │   });                                                                │
+            │ } else {                                                             │
+            │   s4 = peg$FAILED;                                                   │
+            │   if (peg$silentFails === 0) { peg$fail(peg$e7); }                   │
+            │   peg$tracer.trace({                                                 │
+            │     type: "class.fail",                                              │
+            │     rule: "stringVal",                                               │
+            │     details: peg$r3.toString(),                                      │
+            │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+            │   });                                                                │
+            │ }                                                                    │
+            └──────────────────────────────────────────────────────────────────────┘
+          ┌───────────────────────────────  New Code  ─────────────────────────────┐
+          │ while (s4 !== peg$FAILED) {                                            │
+          │   s3.push(s4);                                                         │
+          │   s4 = input.charAt(peg$currPos);                                      │
+          │   if (peg$r3.test(s4)) {                                               │
+          │     peg$currPos++;                                                     │
+          │     peg$tracer.trace({                                                 │
+          │       type: "class.match",                                             │
+          │       rule: "stringVal",                                               │
+          │       result: input.charAt(peg$currPos-1),                             │
+          │       details: peg$r3.toString(),                                      │
+          │       location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+          │     });                                                                │
+          │   } else {                                                             │
+          │     s4 = peg$FAILED;                                                   │
+          │     if (peg$silentFails === 0) { peg$fail(peg$e7); }                   │
+          │     peg$tracer.trace({                                                 │
+          │       type: "class.fail",                                              │
+          │       rule: "stringVal",                                               │
+          │       details: peg$r3.toString(),                                      │
+          │       location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+          │     });                                                                │
+          │   }                                                                    │
+          │ }                                                                      │
+          └────────────────────────────────────────────────────────────────────────┘
+          OP[14]:  6 POP
+          OP[ 0]:  6 POP
+          OP[ 1]:  6 POP
+          OP[ 2]:  3 PUSH_FAILED
+          ┌────  New Code  ──┐
+          │ s3 = peg$FAILED; │
+          └──────────────────┘
+        ┌────────────────────────────────  New Code  ──────────────────────────────┐
+        │ if (s4 !== peg$FAILED) {                                                 │
+        │   while (s4 !== peg$FAILED) {                                            │
+        │     s3.push(s4);                                                         │
+        │     s4 = input.charAt(peg$currPos);                                      │
+        │     if (peg$r3.test(s4)) {                                               │
+        │       peg$currPos++;                                                     │
+        │       peg$tracer.trace({                                                 │
+        │         type: "class.match",                                             │
+        │         rule: "stringVal",                                               │
+        │         result: input.charAt(peg$currPos-1),                             │
+        │         details: peg$r3.toString(),                                      │
+        │         location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+        │       });                                                                │
+        │     } else {                                                             │
+        │       s4 = peg$FAILED;                                                   │
+        │       if (peg$silentFails === 0) { peg$fail(peg$e7); }                   │
+        │       peg$tracer.trace({                                                 │
+        │         type: "class.fail",                                              │
+        │         rule: "stringVal",                                               │
+        │         details: peg$r3.toString(),                                      │
+        │         location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+        │       });                                                                │
+        │     }                                                                    │
+        │   }                                                                      │
+        │ } else {                                                                 │
+        │   s3 = peg$FAILED;                                                       │
+        │ }                                                                        │
+        └──────────────────────────────────────────────────────────────────────────┘
+        OP[45]: 15 IF_NOT_ERROR
+          OP[ 0]:  6 POP
+          OP[ 1]: 12 TEXT
+          ┌───────────────  New Code  ─────────────┐
+          │ s2 = input.substring(s2, peg$currPos); │
+          └────────────────────────────────────────┘
+          OP[ 0]:  9 NIP
+          ┌  New Code┐
+          │ s2 = s3; │
+          └──────────┘
+        ┌────────────────  New Code  ──────────────┐
+        │   s2 = input.substring(s2, peg$currPos); │
+        │ } else {                                 │
+        │   s2 = s3;                               │
+        │ }                                        │
+        └──────────────────────────────────────────┘
+        OP[55]: 15 IF_NOT_ERROR
+          OP[ 0]: 24 LOAD_SAVED_POS
+          ┌─────  New Code  ───┐
+          │ peg$savedPos = s0; │
+          └────────────────────┘
+          OP[ 2]: 26 CALL
+          ┌────  New Code  ──┐
+          │ s0 = peg$f5(s2); │
+          └──────────────────┘
+          OP[ 0]:  8 POP_N
+          OP[ 2]:  7 POP_CURR_POS
+          ┌────  New Code  ───┐
+          │ peg$currPos = s0; │
+          └───────────────────┘
+          OP[ 3]:  3 PUSH_FAILED
+          ┌────  New Code  ──┐
+          │ s0 = peg$FAILED; │
+          └──────────────────┘
+        ┌────────  New Code  ──────┐
+        │ if (s2 !== peg$FAILED) { │
+        │   peg$savedPos = s0;     │
+        │   s0 = peg$f5(s2);       │
+        │ } else {                 │
+        │   peg$currPos = s0;      │
+        │   s0 = peg$FAILED;       │
+        │ }                        │
+        └──────────────────────────┘
+        OP[ 0]:  6 POP
+        OP[ 1]:  7 POP_CURR_POS
+        ┌────  New Code  ───┐
+        │ peg$currPos = s0; │
+        └───────────────────┘
+        OP[ 2]:  3 PUSH_FAILED
+        ┌────  New Code  ──┐
+        │ s0 = peg$FAILED; │
+        └──────────────────┘
+      ┌─────────────────────────────────  New Code  ───────────────────────────────┐
+      │ if (s1 !== peg$FAILED) {                                                   │
+      │   s2 = peg$currPos;                                                        │
+      │   s3 = [];                                                                 │
+      │   s4 = input.charAt(peg$currPos);                                          │
+      │   if (peg$r3.test(s4)) {                                                   │
+      │     peg$currPos++;                                                         │
+      │     peg$tracer.trace({                                                     │
+      │       type: "class.match",                                                 │
+      │       rule: "stringVal",                                                   │
+      │       result: input.charAt(peg$currPos-1),                                 │
+      │       details: peg$r3.toString(),                                          │
+      │       location: peg$computeLocation(peg$currPos-1, peg$currPos, true),     │
+      │     });                                                                    │
+      │   } else {                                                                 │
+      │     s4 = peg$FAILED;                                                       │
+      │     if (peg$silentFails === 0) { peg$fail(peg$e7); }                       │
+      │     peg$tracer.trace({                                                     │
+      │       type: "class.fail",                                                  │
+      │       rule: "stringVal",                                                   │
+      │       details: peg$r3.toString(),                                          │
+      │       location: peg$computeLocation(peg$currPos, peg$currPos, true),       │
+      │     });                                                                    │
+      │   }                                                                        │
+      │   if (s4 !== peg$FAILED) {                                                 │
+      │     while (s4 !== peg$FAILED) {                                            │
+      │       s3.push(s4);                                                         │
+      │       s4 = input.charAt(peg$currPos);                                      │
+      │       if (peg$r3.test(s4)) {                                               │
+      │         peg$currPos++;                                                     │
+      │         peg$tracer.trace({                                                 │
+      │           type: "class.match",                                             │
+      │           rule: "stringVal",                                               │
+      │           result: input.charAt(peg$currPos-1),                             │
+      │           details: peg$r3.toString(),                                      │
+      │           location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+      │         });                                                                │
+      │       } else {                                                             │
+      │         s4 = peg$FAILED;                                                   │
+      │         if (peg$silentFails === 0) { peg$fail(peg$e7); }                   │
+      │         peg$tracer.trace({                                                 │
+      │           type: "class.fail",                                              │
+      │           rule: "stringVal",                                               │
+      │           details: peg$r3.toString(),                                      │
+      │           location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+      │         });                                                                │
+      │       }                                                                    │
+      │     }                                                                      │
+      │   } else {                                                                 │
+      │     s3 = peg$FAILED;                                                       │
+      │   }                                                                        │
+      │   if (s3 !== peg$FAILED) {                                                 │
+      │     s2 = input.substring(s2, peg$currPos);                                 │
+      │   } else {                                                                 │
+      │     s2 = s3;                                                               │
+      │   }                                                                        │
+      │   if (s2 !== peg$FAILED) {                                                 │
+      │     peg$savedPos = s0;                                                     │
+      │     s0 = peg$f5(s2);                                                       │
+      │   } else {                                                                 │
+      │     peg$currPos = s0;                                                      │
+      │     s0 = peg$FAILED;                                                       │
+      │   }                                                                        │
+      │ } else {                                                                   │
+      │   peg$currPos = s0;                                                        │
+      │   s0 = peg$FAILED;                                                         │
+      │ }                                                                          │
+      └────────────────────────────────────────────────────────────────────────────┘
+    ┌──────────────────────────────────  New Code  ────────────────────────────────┐
+    │ if (s0 === peg$FAILED) {                                                     │
+    │   s0 = peg$currPos;                                                          │
+    │   s1 = peg$currPos;                                                          │
+    │   peg$silentFails++;                                                         │
+    │   if (input.charCodeAt(peg$currPos) === 45) {                                │
+    │     s2 = peg$c1;                                                             │
+    │     peg$currPos++;                                                           │
+    │     peg$tracer.trace({                                                       │
+    │       type: "string.match",                                                  │
+    │       rule: "stringVal",                                                     │
+    │       result: "-",                                                           │
+    │       location: peg$computeLocation(startPos, peg$currPos, true),            │
+    │     });                                                                      │
+    │   } else {                                                                   │
+    │     s2 = peg$FAILED;                                                         │
+    │     if (peg$silentFails === 0) { peg$fail(peg$e0); }                         │
+    │     peg$tracer.trace({                                                       │
+    │       type: "string.fail",                                                   │
+    │       rule: "stringVal",                                                     │
+    │       details: "-",                                                          │
+    │       location: peg$computeLocation(peg$currPos, peg$currPos, true),         │
+    │     });                                                                      │
+    │   }                                                                          │
+    │   peg$silentFails--;                                                         │
+    │   if (s2 === peg$FAILED) {                                                   │
+    │     s1 = undefined;                                                          │
+    │   } else {                                                                   │
+    │     peg$currPos = s1;                                                        │
+    │     s1 = peg$FAILED;                                                         │
+    │   }                                                                          │
+    │   if (s1 !== peg$FAILED) {                                                   │
+    │     s2 = peg$currPos;                                                        │
+    │     s3 = [];                                                                 │
+    │     s4 = input.charAt(peg$currPos);                                          │
+    │     if (peg$r3.test(s4)) {                                                   │
+    │       peg$currPos++;                                                         │
+    │       peg$tracer.trace({                                                     │
+    │         type: "class.match",                                                 │
+    │         rule: "stringVal",                                                   │
+    │         result: input.charAt(peg$currPos-1),                                 │
+    │         details: peg$r3.toString(),                                          │
+    │         location: peg$computeLocation(peg$currPos-1, peg$currPos, true),     │
+    │       });                                                                    │
+    │     } else {                                                                 │
+    │       s4 = peg$FAILED;                                                       │
+    │       if (peg$silentFails === 0) { peg$fail(peg$e7); }                       │
+    │       peg$tracer.trace({                                                     │
+    │         type: "class.fail",                                                  │
+    │         rule: "stringVal",                                                   │
+    │         details: peg$r3.toString(),                                          │
+    │         location: peg$computeLocation(peg$currPos, peg$currPos, true),       │
+    │       });                                                                    │
+    │     }                                                                        │
+    │     if (s4 !== peg$FAILED) {                                                 │
+    │       while (s4 !== peg$FAILED) {                                            │
+    │         s3.push(s4);                                                         │
+    │         s4 = input.charAt(peg$currPos);                                      │
+    │         if (peg$r3.test(s4)) {                                               │
+    │           peg$currPos++;                                                     │
+    │           peg$tracer.trace({                                                 │
+    │             type: "class.match",                                             │
+    │             rule: "stringVal",                                               │
+    │             result: input.charAt(peg$currPos-1),                             │
+    │             details: peg$r3.toString(),                                      │
+    │             location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+    │           });                                                                │
+    │         } else {                                                             │
+    │           s4 = peg$FAILED;                                                   │
+    │           if (peg$silentFails === 0) { peg$fail(peg$e7); }                   │
+    │           peg$tracer.trace({                                                 │
+    │             type: "class.fail",                                              │
+    │             rule: "stringVal",                                               │
+    │             details: peg$r3.toString(),                                      │
+    │             location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+    │           });                                                                │
+    │         }                                                                    │
+    │       }                                                                      │
+    │     } else {                                                                 │
+    │       s3 = peg$FAILED;                                                       │
+    │     }                                                                        │
+    │     if (s3 !== peg$FAILED) {                                                 │
+    │       s2 = input.substring(s2, peg$currPos);                                 │
+    │     } else {                                                                 │
+    │       s2 = s3;                                                               │
+    │     }                                                                        │
+    │     if (s2 !== peg$FAILED) {                                                 │
+    │       peg$savedPos = s0;                                                     │
+    │       s0 = peg$f5(s2);                                                       │
+    │     } else {                                                                 │
+    │       peg$currPos = s0;                                                      │
+    │       s0 = peg$FAILED;                                                       │
+    │     }                                                                        │
+    │   } else {                                                                   │
+    │     peg$currPos = s0;                                                        │
+    │     s0 = peg$FAILED;                                                         │
+    │   }                                                                          │
+    │ }                                                                            │
+    └──────────────────────────────────────────────────────────────────────────────┘
+  ┌───────────────────────────────────  New Code  ─────────────────────────────────┐
+  │ if (s0 === peg$FAILED) {                                                       │
+  │   s0 = peg$currPos;                                                            │
+  │   if (input.charCodeAt(peg$currPos) === 39) {                                  │
+  │     s1 = peg$c8;                                                               │
+  │     peg$currPos++;                                                             │
+  │     peg$tracer.trace({                                                         │
+  │       type: "string.match",                                                    │
+  │       rule: "stringVal",                                                       │
+  │       result: "'",                                                             │
+  │       location: peg$computeLocation(startPos, peg$currPos, true),              │
+  │     });                                                                        │
+  │   } else {                                                                     │
+  │     s1 = peg$FAILED;                                                           │
+  │     if (peg$silentFails === 0) { peg$fail(peg$e5); }                           │
+  │     peg$tracer.trace({                                                         │
+  │       type: "string.fail",                                                     │
+  │       rule: "stringVal",                                                       │
+  │       details: "'",                                                            │
+  │       location: peg$computeLocation(peg$currPos, peg$currPos, true),           │
+  │     });                                                                        │
+  │   }                                                                            │
+  │   if (s1 !== peg$FAILED) {                                                     │
+  │     s2 = peg$currPos;                                                          │
+  │     s3 = [];                                                                   │
+  │     s4 = input.charAt(peg$currPos);                                            │
+  │     if (peg$r2.test(s4)) {                                                     │
+  │       peg$currPos++;                                                           │
+  │       peg$tracer.trace({                                                       │
+  │         type: "class.match",                                                   │
+  │         rule: "stringVal",                                                     │
+  │         result: input.charAt(peg$currPos-1),                                   │
+  │         details: peg$r2.toString(),                                            │
+  │         location: peg$computeLocation(peg$currPos-1, peg$currPos, true),       │
+  │       });                                                                      │
+  │     } else {                                                                   │
+  │       s4 = peg$FAILED;                                                         │
+  │       if (peg$silentFails === 0) { peg$fail(peg$e6); }                         │
+  │       peg$tracer.trace({                                                       │
+  │         type: "class.fail",                                                    │
+  │         rule: "stringVal",                                                     │
+  │         details: peg$r2.toString(),                                            │
+  │         location: peg$computeLocation(peg$currPos, peg$currPos, true),         │
+  │       });                                                                      │
+  │     }                                                                          │
+  │     while (s4 !== peg$FAILED) {                                                │
+  │       s3.push(s4);                                                             │
+  │       s4 = input.charAt(peg$currPos);                                          │
+  │       if (peg$r2.test(s4)) {                                                   │
+  │         peg$currPos++;                                                         │
+  │         peg$tracer.trace({                                                     │
+  │           type: "class.match",                                                 │
+  │           rule: "stringVal",                                                   │
+  │           result: input.charAt(peg$currPos-1),                                 │
+  │           details: peg$r2.toString(),                                          │
+  │           location: peg$computeLocation(peg$currPos-1, peg$currPos, true),     │
+  │         });                                                                    │
+  │       } else {                                                                 │
+  │         s4 = peg$FAILED;                                                       │
+  │         if (peg$silentFails === 0) { peg$fail(peg$e6); }                       │
+  │         peg$tracer.trace({                                                     │
+  │           type: "class.fail",                                                  │
+  │           rule: "stringVal",                                                   │
+  │           details: peg$r2.toString(),                                          │
+  │           location: peg$computeLocation(peg$currPos, peg$currPos, true),       │
+  │         });                                                                    │
+  │       }                                                                        │
+  │     }                                                                          │
+  │     s2 = input.substring(s2, peg$currPos);                                     │
+  │     if (input.charCodeAt(peg$currPos) === 39) {                                │
+  │       s3 = peg$c8;                                                             │
+  │       peg$currPos++;                                                           │
+  │       peg$tracer.trace({                                                       │
+  │         type: "string.match",                                                  │
+  │         rule: "stringVal",                                                     │
+  │         result: "'",                                                           │
+  │         location: peg$computeLocation(startPos, peg$currPos, true),            │
+  │       });                                                                      │
+  │     } else {                                                                   │
+  │       s3 = peg$FAILED;                                                         │
+  │       if (peg$silentFails === 0) { peg$fail(peg$e5); }                         │
+  │       peg$tracer.trace({                                                       │
+  │         type: "string.fail",                                                   │
+  │         rule: "stringVal",                                                     │
+  │         details: "'",                                                          │
+  │         location: peg$computeLocation(peg$currPos, peg$currPos, true),         │
+  │       });                                                                      │
+  │     }                                                                          │
+  │     if (s3 !== peg$FAILED) {                                                   │
+  │       peg$savedPos = s0;                                                       │
+  │       s0 = peg$f4(s2);                                                         │
+  │     } else {                                                                   │
+  │       peg$currPos = s0;                                                        │
+  │       s0 = peg$FAILED;                                                         │
+  │     }                                                                          │
+  │   } else {                                                                     │
+  │     peg$currPos = s0;                                                          │
+  │     s0 = peg$FAILED;                                                           │
+  │   }                                                                            │
+  │   if (s0 === peg$FAILED) {                                                     │
+  │     s0 = peg$currPos;                                                          │
+  │     s1 = peg$currPos;                                                          │
+  │     peg$silentFails++;                                                         │
+  │     if (input.charCodeAt(peg$currPos) === 45) {                                │
+  │       s2 = peg$c1;                                                             │
+  │       peg$currPos++;                                                           │
+  │       peg$tracer.trace({                                                       │
+  │         type: "string.match",                                                  │
+  │         rule: "stringVal",                                                     │
+  │         result: "-",                                                           │
+  │         location: peg$computeLocation(startPos, peg$currPos, true),            │
+  │       });                                                                      │
+  │     } else {                                                                   │
+  │       s2 = peg$FAILED;                                                         │
+  │       if (peg$silentFails === 0) { peg$fail(peg$e0); }                         │
+  │       peg$tracer.trace({                                                       │
+  │         type: "string.fail",                                                   │
+  │         rule: "stringVal",                                                     │
+  │         details: "-",                                                          │
+  │         location: peg$computeLocation(peg$currPos, peg$currPos, true),         │
+  │       });                                                                      │
+  │     }                                                                          │
+  │     peg$silentFails--;                                                         │
+  │     if (s2 === peg$FAILED) {                                                   │
+  │       s1 = undefined;                                                          │
+  │     } else {                                                                   │
+  │       peg$currPos = s1;                                                        │
+  │       s1 = peg$FAILED;                                                         │
+  │     }                                                                          │
+  │     if (s1 !== peg$FAILED) {                                                   │
+  │       s2 = peg$currPos;                                                        │
+  │       s3 = [];                                                                 │
+  │       s4 = input.charAt(peg$currPos);                                          │
+  │       if (peg$r3.test(s4)) {                                                   │
+  │         peg$currPos++;                                                         │
+  │         peg$tracer.trace({                                                     │
+  │           type: "class.match",                                                 │
+  │           rule: "stringVal",                                                   │
+  │           result: input.charAt(peg$currPos-1),                                 │
+  │           details: peg$r3.toString(),                                          │
+  │           location: peg$computeLocation(peg$currPos-1, peg$currPos, true),     │
+  │         });                                                                    │
+  │       } else {                                                                 │
+  │         s4 = peg$FAILED;                                                       │
+  │         if (peg$silentFails === 0) { peg$fail(peg$e7); }                       │
+  │         peg$tracer.trace({                                                     │
+  │           type: "class.fail",                                                  │
+  │           rule: "stringVal",                                                   │
+  │           details: peg$r3.toString(),                                          │
+  │           location: peg$computeLocation(peg$currPos, peg$currPos, true),       │
+  │         });                                                                    │
+  │       }                                                                        │
+  │       if (s4 !== peg$FAILED) {                                                 │
+  │         while (s4 !== peg$FAILED) {                                            │
+  │           s3.push(s4);                                                         │
+  │           s4 = input.charAt(peg$currPos);                                      │
+  │           if (peg$r3.test(s4)) {                                               │
+  │             peg$currPos++;                                                     │
+  │             peg$tracer.trace({                                                 │
+  │               type: "class.match",                                             │
+  │               rule: "stringVal",                                               │
+  │               result: input.charAt(peg$currPos-1),                             │
+  │               details: peg$r3.toString(),                                      │
+  │               location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+  │             });                                                                │
+  │           } else {                                                             │
+  │             s4 = peg$FAILED;                                                   │
+  │             if (peg$silentFails === 0) { peg$fail(peg$e7); }                   │
+  │             peg$tracer.trace({                                                 │
+  │               type: "class.fail",                                              │
+  │               rule: "stringVal",                                               │
+  │               details: peg$r3.toString(),                                      │
+  │               location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+  │             });                                                                │
+  │           }                                                                    │
+  │         }                                                                      │
+  │       } else {                                                                 │
+  │         s3 = peg$FAILED;                                                       │
+  │       }                                                                        │
+  │       if (s3 !== peg$FAILED) {                                                 │
+  │         s2 = input.substring(s2, peg$currPos);                                 │
+  │       } else {                                                                 │
+  │         s2 = s3;                                                               │
+  │       }                                                                        │
+  │       if (s2 !== peg$FAILED) {                                                 │
+  │         peg$savedPos = s0;                                                     │
+  │         s0 = peg$f5(s2);                                                       │
+  │       } else {                                                                 │
+  │         peg$currPos = s0;                                                      │
+  │         s0 = peg$FAILED;                                                       │
+  │       }                                                                        │
+  │     } else {                                                                   │
+  │       peg$currPos = s0;                                                        │
+  │       s0 = peg$FAILED;                                                         │
+  │     }                                                                          │
+  │   }                                                                            │
+  │ }                                                                              │
+  └────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────  stringVal CODE  ───────────────────────────────┐
+│ function peg$parse_stringVal() {                                                 │
+│   var startPos = peg$currPos;                                                    │
+│   var s0, s1, s2, s3, s4;                                                        │
+│   peg$tracer.trace({                                                             │
+│     type: "rule.enter",                                                          │
+│     rule: "stringVal",                                                           │
+│     location: peg$computeLocation(startPos, startPos, true),                     │
+│   });                                                                            │
+│   s0 = peg$currPos;                                                              │
+│   if (input.charCodeAt(peg$currPos) === 34) {                                    │
+│     s1 = peg$c6;                                                                 │
+│     peg$currPos++;                                                               │
+│     peg$tracer.trace({                                                           │
+│       type: "string.match",                                                      │
+│       rule: "stringVal",                                                         │
+│       result: "\"",                                                              │
+│       location: peg$computeLocation(startPos, peg$currPos, true),                │
+│     });                                                                          │
+│   } else {                                                                       │
+│     s1 = peg$FAILED;                                                             │
+│     if (peg$silentFails === 0) { peg$fail(peg$e3); }                             │
+│     peg$tracer.trace({                                                           │
+│       type: "string.fail",                                                       │
+│       rule: "stringVal",                                                         │
+│       details: "\"",                                                             │
+│       location: peg$computeLocation(peg$currPos, peg$currPos, true),             │
+│     });                                                                          │
+│   }                                                                              │
+│   if (s1 !== peg$FAILED) {                                                       │
+│     s2 = peg$currPos;                                                            │
+│     s3 = [];                                                                     │
+│     s4 = input.charAt(peg$currPos);                                              │
+│     if (peg$r1.test(s4)) {                                                       │
+│       peg$currPos++;                                                             │
+│       peg$tracer.trace({                                                         │
+│         type: "class.match",                                                     │
+│         rule: "stringVal",                                                       │
+│         result: input.charAt(peg$currPos-1),                                     │
+│         details: peg$r1.toString(),                                              │
+│         location: peg$computeLocation(peg$currPos-1, peg$currPos, true),         │
+│       });                                                                        │
+│     } else {                                                                     │
+│       s4 = peg$FAILED;                                                           │
+│       if (peg$silentFails === 0) { peg$fail(peg$e4); }                           │
+│       peg$tracer.trace({                                                         │
+│         type: "class.fail",                                                      │
+│         rule: "stringVal",                                                       │
+│         details: peg$r1.toString(),                                              │
+│         location: peg$computeLocation(peg$currPos, peg$currPos, true),           │
+│       });                                                                        │
+│     }                                                                            │
+│     while (s4 !== peg$FAILED) {                                                  │
+│       s3.push(s4);                                                               │
+│       s4 = input.charAt(peg$currPos);                                            │
+│       if (peg$r1.test(s4)) {                                                     │
+│         peg$currPos++;                                                           │
+│         peg$tracer.trace({                                                       │
+│           type: "class.match",                                                   │
+│           rule: "stringVal",                                                     │
+│           result: input.charAt(peg$currPos-1),                                   │
+│           details: peg$r1.toString(),                                            │
+│           location: peg$computeLocation(peg$currPos-1, peg$currPos, true),       │
+│         });                                                                      │
+│       } else {                                                                   │
+│         s4 = peg$FAILED;                                                         │
+│         if (peg$silentFails === 0) { peg$fail(peg$e4); }                         │
+│         peg$tracer.trace({                                                       │
+│           type: "class.fail",                                                    │
+│           rule: "stringVal",                                                     │
+│           details: peg$r1.toString(),                                            │
+│           location: peg$computeLocation(peg$currPos, peg$currPos, true),         │
+│         });                                                                      │
+│       }                                                                          │
+│     }                                                                            │
+│     s2 = input.substring(s2, peg$currPos);                                       │
+│     if (input.charCodeAt(peg$currPos) === 34) {                                  │
+│       s3 = peg$c6;                                                               │
+│       peg$currPos++;                                                             │
+│       peg$tracer.trace({                                                         │
+│         type: "string.match",                                                    │
+│         rule: "stringVal",                                                       │
+│         result: "\"",                                                            │
+│         location: peg$computeLocation(startPos, peg$currPos, true),              │
+│       });                                                                        │
+│     } else {                                                                     │
+│       s3 = peg$FAILED;                                                           │
+│       if (peg$silentFails === 0) { peg$fail(peg$e3); }                           │
+│       peg$tracer.trace({                                                         │
+│         type: "string.fail",                                                     │
+│         rule: "stringVal",                                                       │
+│         details: "\"",                                                           │
+│         location: peg$computeLocation(peg$currPos, peg$currPos, true),           │
+│       });                                                                        │
+│     }                                                                            │
+│     if (s3 !== peg$FAILED) {                                                     │
+│       peg$savedPos = s0;                                                         │
+│       s0 = peg$f3(s2);                                                           │
+│     } else {                                                                     │
+│       peg$currPos = s0;                                                          │
+│       s0 = peg$FAILED;                                                           │
+│     }                                                                            │
+│   } else {                                                                       │
+│     peg$currPos = s0;                                                            │
+│     s0 = peg$FAILED;                                                             │
+│   }                                                                              │
+│   if (s0 === peg$FAILED) {                                                       │
+│     s0 = peg$currPos;                                                            │
+│     if (input.charCodeAt(peg$currPos) === 39) {                                  │
+│       s1 = peg$c8;                                                               │
+│       peg$currPos++;                                                             │
+│       peg$tracer.trace({                                                         │
+│         type: "string.match",                                                    │
+│         rule: "stringVal",                                                       │
+│         result: "'",                                                             │
+│         location: peg$computeLocation(startPos, peg$currPos, true),              │
+│       });                                                                        │
+│     } else {                                                                     │
+│       s1 = peg$FAILED;                                                           │
+│       if (peg$silentFails === 0) { peg$fail(peg$e5); }                           │
+│       peg$tracer.trace({                                                         │
+│         type: "string.fail",                                                     │
+│         rule: "stringVal",                                                       │
+│         details: "'",                                                            │
+│         location: peg$computeLocation(peg$currPos, peg$currPos, true),           │
+│       });                                                                        │
+│     }                                                                            │
+│     if (s1 !== peg$FAILED) {                                                     │
+│       s2 = peg$currPos;                                                          │
+│       s3 = [];                                                                   │
+│       s4 = input.charAt(peg$currPos);                                            │
+│       if (peg$r2.test(s4)) {                                                     │
+│         peg$currPos++;                                                           │
+│         peg$tracer.trace({                                                       │
+│           type: "class.match",                                                   │
+│           rule: "stringVal",                                                     │
+│           result: input.charAt(peg$currPos-1),                                   │
+│           details: peg$r2.toString(),                                            │
+│           location: peg$computeLocation(peg$currPos-1, peg$currPos, true),       │
+│         });                                                                      │
+│       } else {                                                                   │
+│         s4 = peg$FAILED;                                                         │
+│         if (peg$silentFails === 0) { peg$fail(peg$e6); }                         │
+│         peg$tracer.trace({                                                       │
+│           type: "class.fail",                                                    │
+│           rule: "stringVal",                                                     │
+│           details: peg$r2.toString(),                                            │
+│           location: peg$computeLocation(peg$currPos, peg$currPos, true),         │
+│         });                                                                      │
+│       }                                                                          │
+│       while (s4 !== peg$FAILED) {                                                │
+│         s3.push(s4);                                                             │
+│         s4 = input.charAt(peg$currPos);                                          │
+│         if (peg$r2.test(s4)) {                                                   │
+│           peg$currPos++;                                                         │
+│           peg$tracer.trace({                                                     │
+│             type: "class.match",                                                 │
+│             rule: "stringVal",                                                   │
+│             result: input.charAt(peg$currPos-1),                                 │
+│             details: peg$r2.toString(),                                          │
+│             location: peg$computeLocation(peg$currPos-1, peg$currPos, true),     │
+│           });                                                                    │
+│         } else {                                                                 │
+│           s4 = peg$FAILED;                                                       │
+│           if (peg$silentFails === 0) { peg$fail(peg$e6); }                       │
+│           peg$tracer.trace({                                                     │
+│             type: "class.fail",                                                  │
+│             rule: "stringVal",                                                   │
+│             details: peg$r2.toString(),                                          │
+│             location: peg$computeLocation(peg$currPos, peg$currPos, true),       │
+│           });                                                                    │
+│         }                                                                        │
+│       }                                                                          │
+│       s2 = input.substring(s2, peg$currPos);                                     │
+│       if (input.charCodeAt(peg$currPos) === 39) {                                │
+│         s3 = peg$c8;                                                             │
+│         peg$currPos++;                                                           │
+│         peg$tracer.trace({                                                       │
+│           type: "string.match",                                                  │
+│           rule: "stringVal",                                                     │
+│           result: "'",                                                           │
+│           location: peg$computeLocation(startPos, peg$currPos, true),            │
+│         });                                                                      │
+│       } else {                                                                   │
+│         s3 = peg$FAILED;                                                         │
+│         if (peg$silentFails === 0) { peg$fail(peg$e5); }                         │
+│         peg$tracer.trace({                                                       │
+│           type: "string.fail",                                                   │
+│           rule: "stringVal",                                                     │
+│           details: "'",                                                          │
+│           location: peg$computeLocation(peg$currPos, peg$currPos, true),         │
+│         });                                                                      │
+│       }                                                                          │
+│       if (s3 !== peg$FAILED) {                                                   │
+│         peg$savedPos = s0;                                                       │
+│         s0 = peg$f4(s2);                                                         │
+│       } else {                                                                   │
+│         peg$currPos = s0;                                                        │
+│         s0 = peg$FAILED;                                                         │
+│       }                                                                          │
+│     } else {                                                                     │
+│       peg$currPos = s0;                                                          │
+│       s0 = peg$FAILED;                                                           │
+│     }                                                                            │
+│     if (s0 === peg$FAILED) {                                                     │
+│       s0 = peg$currPos;                                                          │
+│       s1 = peg$currPos;                                                          │
+│       peg$silentFails++;                                                         │
+│       if (input.charCodeAt(peg$currPos) === 45) {                                │
+│         s2 = peg$c1;                                                             │
+│         peg$currPos++;                                                           │
+│         peg$tracer.trace({                                                       │
+│           type: "string.match",                                                  │
+│           rule: "stringVal",                                                     │
+│           result: "-",                                                           │
+│           location: peg$computeLocation(startPos, peg$currPos, true),            │
+│         });                                                                      │
+│       } else {                                                                   │
+│         s2 = peg$FAILED;                                                         │
+│         if (peg$silentFails === 0) { peg$fail(peg$e0); }                         │
+│         peg$tracer.trace({                                                       │
+│           type: "string.fail",                                                   │
+│           rule: "stringVal",                                                     │
+│           details: "-",                                                          │
+│           location: peg$computeLocation(peg$currPos, peg$currPos, true),         │
+│         });                                                                      │
+│       }                                                                          │
+│       peg$silentFails--;                                                         │
+│       if (s2 === peg$FAILED) {                                                   │
+│         s1 = undefined;                                                          │
+│       } else {                                                                   │
+│         peg$currPos = s1;                                                        │
+│         s1 = peg$FAILED;                                                         │
+│       }                                                                          │
+│       if (s1 !== peg$FAILED) {                                                   │
+│         s2 = peg$currPos;                                                        │
+│         s3 = [];                                                                 │
+│         s4 = input.charAt(peg$currPos);                                          │
+│         if (peg$r3.test(s4)) {                                                   │
+│           peg$currPos++;                                                         │
+│           peg$tracer.trace({                                                     │
+│             type: "class.match",                                                 │
+│             rule: "stringVal",                                                   │
+│             result: input.charAt(peg$currPos-1),                                 │
+│             details: peg$r3.toString(),                                          │
+│             location: peg$computeLocation(peg$currPos-1, peg$currPos, true),     │
+│           });                                                                    │
+│         } else {                                                                 │
+│           s4 = peg$FAILED;                                                       │
+│           if (peg$silentFails === 0) { peg$fail(peg$e7); }                       │
+│           peg$tracer.trace({                                                     │
+│             type: "class.fail",                                                  │
+│             rule: "stringVal",                                                   │
+│             details: peg$r3.toString(),                                          │
+│             location: peg$computeLocation(peg$currPos, peg$currPos, true),       │
+│           });                                                                    │
+│         }                                                                        │
+│         if (s4 !== peg$FAILED) {                                                 │
+│           while (s4 !== peg$FAILED) {                                            │
+│             s3.push(s4);                                                         │
+│             s4 = input.charAt(peg$currPos);                                      │
+│             if (peg$r3.test(s4)) {                                               │
+│               peg$currPos++;                                                     │
+│               peg$tracer.trace({                                                 │
+│                 type: "class.match",                                             │
+│                 rule: "stringVal",                                               │
+│                 result: input.charAt(peg$currPos-1),                             │
+│                 details: peg$r3.toString(),                                      │
+│                 location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+│               });                                                                │
+│             } else {                                                             │
+│               s4 = peg$FAILED;                                                   │
+│               if (peg$silentFails === 0) { peg$fail(peg$e7); }                   │
+│               peg$tracer.trace({                                                 │
+│                 type: "class.fail",                                              │
+│                 rule: "stringVal",                                               │
+│                 details: peg$r3.toString(),                                      │
+│                 location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+│               });                                                                │
+│             }                                                                    │
+│           }                                                                      │
+│         } else {                                                                 │
+│           s3 = peg$FAILED;                                                       │
+│         }                                                                        │
+│         if (s3 !== peg$FAILED) {                                                 │
+│           s2 = input.substring(s2, peg$currPos);                                 │
+│         } else {                                                                 │
+│           s2 = s3;                                                               │
+│         }                                                                        │
+│         if (s2 !== peg$FAILED) {                                                 │
+│           peg$savedPos = s0;                                                     │
+│           s0 = peg$f5(s2);                                                       │
+│         } else {                                                                 │
+│           peg$currPos = s0;                                                      │
+│           s0 = peg$FAILED;                                                       │
+│         }                                                                        │
+│       } else {                                                                   │
+│         peg$currPos = s0;                                                        │
+│         s0 = peg$FAILED;                                                         │
+│       }                                                                          │
+│     }                                                                            │
+│   }                                                                              │
+│   if (s0 !== peg$FAILED) {                                                       │
+│     peg$tracer.trace({                                                           │
+│       type: "rule.match",                                                        │
+│       rule: "stringVal",                                                         │
+│       result: s0,                                                                │
+│       location: peg$computeLocation(startPos, peg$currPos, true),                │
+│     });                                                                          │
+│   } else {                                                                       │
+│     peg$tracer.trace({                                                           │
+│       type: "rule.fail",                                                         │
+│       rule: "stringVal",                                                         │
+│       location: peg$computeLocation(startPos, startPos, true),                   │
+│     });                                                                          │
+│   }                                                                              │
+│   return s0;                                                                     │
+│ }                                                                                │
+└──────────────────────────────────────────────────────────────────────────────────┘
+========================================
+RULE: _
+========================================
+  OP[ 2]:  4 PUSH_EMPTY_ARRAY
+  ┌  New Code┐
+  │ s0 = []; │
+  └──────────┘
+  OP[ 5]: 20 MATCH_CHAR_CLASS
+    OP[ 0]: 23 FAIL
+    ┌────────────────────  New Code  ──────────────────┐
+    │ s1 = peg$FAILED;                                 │
+    │ if (peg$silentFails === 0) { peg$fail(peg$e8); } │
+    └──────────────────────────────────────────────────┘
+  ┌──────────────────────────────  New Code  ────────────────────────────┐
+  │ s1 = input.charAt(peg$currPos);                                      │
+  │ if (peg$r4.test(s1)) {                                               │
+  │   peg$currPos++;                                                     │
+  │   peg$tracer.trace({                                                 │
+  │     type: "class.match",                                             │
+  │     rule: "_",                                                       │
+  │     result: input.charAt(peg$currPos-1),                             │
+  │     details: peg$r4.toString(),                                      │
+  │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+  │   });                                                                │
+  │ } else {                                                             │
+  │   s1 = peg$FAILED;                                                   │
+  │   if (peg$silentFails === 0) { peg$fail(peg$e8); }                   │
+  │   peg$tracer.trace({                                                 │
+  │     type: "class.fail",                                              │
+  │     rule: "_",                                                       │
+  │     details: peg$r4.toString(),                                      │
+  │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+  │   });                                                                │
+  │ }                                                                    │
+  └──────────────────────────────────────────────────────────────────────┘
+  OP[14]: 15 IF_NOT_ERROR
+    OP[ 0]: 16 WHILE_NOT_ERROR
+      OP[ 0]: 10 APPEND
+      ┌──  New Code  ┐
+      │ s0.push(s1); │
+      └──────────────┘
+      OP[ 3]: 20 MATCH_CHAR_CLASS
+        OP[ 0]: 23 FAIL
+        ┌────────────────────  New Code  ──────────────────┐
+        │ s1 = peg$FAILED;                                 │
+        │ if (peg$silentFails === 0) { peg$fail(peg$e8); } │
+        └──────────────────────────────────────────────────┘
+      ┌──────────────────────────────  New Code  ────────────────────────────┐
+      │ s1 = input.charAt(peg$currPos);                                      │
+      │ if (peg$r4.test(s1)) {                                               │
+      │   peg$currPos++;                                                     │
+      │   peg$tracer.trace({                                                 │
+      │     type: "class.match",                                             │
+      │     rule: "_",                                                       │
+      │     result: input.charAt(peg$currPos-1),                             │
+      │     details: peg$r4.toString(),                                      │
+      │     location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+      │   });                                                                │
+      │ } else {                                                             │
+      │   s1 = peg$FAILED;                                                   │
+      │   if (peg$silentFails === 0) { peg$fail(peg$e8); }                   │
+      │   peg$tracer.trace({                                                 │
+      │     type: "class.fail",                                              │
+      │     rule: "_",                                                       │
+      │     details: peg$r4.toString(),                                      │
+      │     location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+      │   });                                                                │
+      │ }                                                                    │
+      └──────────────────────────────────────────────────────────────────────┘
+    ┌───────────────────────────────  New Code  ─────────────────────────────┐
+    │ while (s1 !== peg$FAILED) {                                            │
+    │   s0.push(s1);                                                         │
+    │   s1 = input.charAt(peg$currPos);                                      │
+    │   if (peg$r4.test(s1)) {                                               │
+    │     peg$currPos++;                                                     │
+    │     peg$tracer.trace({                                                 │
+    │       type: "class.match",                                             │
+    │       rule: "_",                                                       │
+    │       result: input.charAt(peg$currPos-1),                             │
+    │       details: peg$r4.toString(),                                      │
+    │       location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+    │     });                                                                │
+    │   } else {                                                             │
+    │     s1 = peg$FAILED;                                                   │
+    │     if (peg$silentFails === 0) { peg$fail(peg$e8); }                   │
+    │     peg$tracer.trace({                                                 │
+    │       type: "class.fail",                                              │
+    │       rule: "_",                                                       │
+    │       details: peg$r4.toString(),                                      │
+    │       location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+    │     });                                                                │
+    │   }                                                                    │
+    │ }                                                                      │
+    └────────────────────────────────────────────────────────────────────────┘
+    OP[14]:  6 POP
+    OP[ 0]:  6 POP
+    OP[ 1]:  6 POP
+    OP[ 2]:  3 PUSH_FAILED
+    ┌────  New Code  ──┐
+    │ s0 = peg$FAILED; │
+    └──────────────────┘
+  ┌────────────────────────────────  New Code  ──────────────────────────────┐
+  │ if (s1 !== peg$FAILED) {                                                 │
+  │   while (s1 !== peg$FAILED) {                                            │
+  │     s0.push(s1);                                                         │
+  │     s1 = input.charAt(peg$currPos);                                      │
+  │     if (peg$r4.test(s1)) {                                               │
+  │       peg$currPos++;                                                     │
+  │       peg$tracer.trace({                                                 │
+  │         type: "class.match",                                             │
+  │         rule: "_",                                                       │
+  │         result: input.charAt(peg$currPos-1),                             │
+  │         details: peg$r4.toString(),                                      │
+  │         location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+  │       });                                                                │
+  │     } else {                                                             │
+  │       s1 = peg$FAILED;                                                   │
+  │       if (peg$silentFails === 0) { peg$fail(peg$e8); }                   │
+  │       peg$tracer.trace({                                                 │
+  │         type: "class.fail",                                              │
+  │         rule: "_",                                                       │
+  │         details: peg$r4.toString(),                                      │
+  │         location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+  │       });                                                                │
+  │     }                                                                    │
+  │   }                                                                      │
+  │ } else {                                                                 │
+  │   s0 = peg$FAILED;                                                       │
+  │ }                                                                        │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────    CODE  ────────────────────────────────┐
+│ function peg$parse__() {                                                   │
+│   var startPos = peg$currPos;                                              │
+│   var s0, s1;                                                              │
+│   peg$tracer.trace({                                                       │
+│     type: "rule.enter",                                                    │
+│     rule: "_",                                                             │
+│     location: peg$computeLocation(startPos, startPos, true),               │
+│   });                                                                      │
+│   s0 = [];                                                                 │
+│   s1 = input.charAt(peg$currPos);                                          │
+│   if (peg$r4.test(s1)) {                                                   │
+│     peg$currPos++;                                                         │
+│     peg$tracer.trace({                                                     │
+│       type: "class.match",                                                 │
+│       rule: "_",                                                           │
+│       result: input.charAt(peg$currPos-1),                                 │
+│       details: peg$r4.toString(),                                          │
+│       location: peg$computeLocation(peg$currPos-1, peg$currPos, true),     │
+│     });                                                                    │
+│   } else {                                                                 │
+│     s1 = peg$FAILED;                                                       │
+│     if (peg$silentFails === 0) { peg$fail(peg$e8); }                       │
+│     peg$tracer.trace({                                                     │
+│       type: "class.fail",                                                  │
+│       rule: "_",                                                           │
+│       details: peg$r4.toString(),                                          │
+│       location: peg$computeLocation(peg$currPos, peg$currPos, true),       │
+│     });                                                                    │
+│   }                                                                        │
+│   if (s1 !== peg$FAILED) {                                                 │
+│     while (s1 !== peg$FAILED) {                                            │
+│       s0.push(s1);                                                         │
+│       s1 = input.charAt(peg$currPos);                                      │
+│       if (peg$r4.test(s1)) {                                               │
+│         peg$currPos++;                                                     │
+│         peg$tracer.trace({                                                 │
+│           type: "class.match",                                             │
+│           rule: "_",                                                       │
+│           result: input.charAt(peg$currPos-1),                             │
+│           details: peg$r4.toString(),                                      │
+│           location: peg$computeLocation(peg$currPos-1, peg$currPos, true), │
+│         });                                                                │
+│       } else {                                                             │
+│         s1 = peg$FAILED;                                                   │
+│         if (peg$silentFails === 0) { peg$fail(peg$e8); }                   │
+│         peg$tracer.trace({                                                 │
+│           type: "class.fail",                                              │
+│           rule: "_",                                                       │
+│           details: peg$r4.toString(),                                      │
+│           location: peg$computeLocation(peg$currPos, peg$currPos, true),   │
+│         });                                                                │
+│       }                                                                    │
+│     }                                                                      │
+│   } else {                                                                 │
+│     s0 = peg$FAILED;                                                       │
+│   }                                                                        │
+│   if (s0 !== peg$FAILED) {                                                 │
+│     peg$tracer.trace({                                                     │
+│       type: "rule.match",                                                  │
+│       rule: "_",                                                           │
+│       result: s0,                                                          │
+│       location: peg$computeLocation(startPos, peg$currPos, true),          │
+│     });                                                                    │
+│   } else {                                                                 │
+│     peg$tracer.trace({                                                     │
+│       type: "rule.fail",                                                   │
+│       rule: "_",                                                           │
+│       location: peg$computeLocation(startPos, startPos, true),             │
+│     });                                                                    │
+│   }                                                                        │
+│   return s0;                                                               │
+│ }                                                                          │
+└────────────────────────────────────────────────────────────────────────────┘

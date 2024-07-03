@@ -10,7 +10,7 @@ Object.assign(global, lib2)
 #symbol "getTracer(type, inputStr, hVars={})"
 
 (() =>
-	tracer = getTracer('default')
+	tracer = getTracer('advanced')
 
 	equal tracer.traceStr({
 		type: 'rule.enter'
@@ -24,7 +24,7 @@ Object.assign(global, lib2)
 	equal tracer.traceStr({
 		type: 'rule.fail'
 		}), """
-		└─> NO
+		x
 		"""
 
 	equal tracer.traceStr({
@@ -50,7 +50,7 @@ Object.assign(global, lib2)
 	equal tracer.traceStr({
 		type: 'rule.fail'
 		}), """
-		└─> NO
+		x
 		"""
 
 	equal tracer.traceStr({

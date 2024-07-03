@@ -1,74 +1,134 @@
 # tracer.coffee
 
 import {
-	undef, defined, pass, OL, escapeStr, keys,
-	assert, isString, isArray, isEmpty, getOptions,
+	undef, defined, notdefined, pass, OL, escapeStr, keys,
+	assert, isString, isArray, isHash, isEmpty, getOptions,
+	lpad, rpad, zpad, words,
 	} from '@jdeighan/llutils'
+import {TextTable} from '@jdeighan/llutils/text-table'
 
 # ---------------------------------------------------------------------------
 
 export class NullTracer
 
-	trace: () ->
-		return
+	constructor: (@posType='offset') ->
+
+	# ..........................................................
+
+	destroy: () ->
+
+	# ..........................................................
+
+	trace: (hInfo) ->
+
+	# ..........................................................
+
+	posStr: (location) ->
+
+		if notdefined(location) || !isHash(location)
+			return rpad('unknown', 12)
+		{start: s, end: e} = location
+		sl = zpad(s.line)
+		sc = zpad(s.column)
+		so = zpad(s.offset)
+		el = zpad(e.line)
+		ec = zpad(e.column)
+		eo = zpad(e.offset)
+
+		switch @posType
+			when 'linecol'
+				if (so == eo)
+					return "#{sl}:#{sc}"
+				else
+					return "#{sl}:#{sc}-#{el}:#{ec}"
+			when 'offset'
+				if (so == eo)
+					return "#{so}"
+				else
+					return "#{so}-#{eo}"
+			else
+				if (so == eo)
+					return "#{sl}:#{sc}:#{so}"
+				else
+					return "#{sl}:#{sc}:#{so}-#{el}:#{ec}:#{eo}"
 
 # ---------------------------------------------------------------------------
 
-export class DefaultTracer extends NullTracer
+export class RawTracer extends NullTracer
+
+	trace: (hInfo) ->
+
+		console.log JSON.stringify(hInfo, null, 3)
+
+# ---------------------------------------------------------------------------
+
+export class DebugTracer extends NullTracer
+
+	constructor: () ->
+
+		super()
+		@tt = new TextTable('l l l l l')
+		@tt.fullsep()
+		@tt.labels words('type rule result details position')
+		@tt.sep()
+
+	trace: (hInfo) ->
+
+		{type, rule, result, details, location} = hInfo
+		@tt.data [
+			type,
+			rule,
+			JSON.stringify(result),
+			details,
+			@posStr(location)
+			]
+		return
+
+	destroy: () ->
+
+		console.log @tt.asString()
+
+# ---------------------------------------------------------------------------
+
+export class AdvancedTracer extends NullTracer
 
 	constructor: (hOptions={}) ->
 
 		super()
-		hOptions = getOptions hOptions, {
+		{ignore, posType} = getOptions hOptions, {
 			ignore: ['_']
+			posType: 'offset'
 			}
-		@lIgnore = hOptions.ignore
+		@lIgnore = ignore
+		@posType = posType
 		@level = 0
-
-	# ..........................................................
-
-	prefix: (type) ->
-		if (type == 'rule.enter') || (type == 'match.string')
-			return "│  ".repeat(@level)
-		else if (type == 'fail.string')
-			return "│  ".repeat(@level-1) + "x  "
-		else
-			count = if (@level==0) then 0 else @level-1
-			return "│  ".repeat(count) + "└─>"
 
 	# ..........................................................
 
 	traceStr: (hInfo) ->
 
-		{type, rule, location, result} = hInfo
-		if defined(location)
-			{line: s_line, column: s_col, offset: s_offset} = location.start
-			{line: e_line, column: e_col, offset: e_offset} = location.end
-			locStr = "#{s_line}:#{s_col}:#{s_offset}"
-			endPos = e_offset
-		else
-			locStr = '?'
-			endPos = undef
-		pre = @prefix(type)
+		{type, rule, location, result, details} = hInfo
+		locStr = @posStr(location)
+		startPos = location?.start?.offset
+		endPos = location?.end?.offset
+		[obj, action] = type.split('.')
 
-		switch type
+		switch action
 
-			when 'rule.enter'
+			when 'enter'
+
+				assert (obj == 'rule'), "obj=#{obj}, act=#{action}"
+				pre = "│  ".repeat(@level)
 				return "#{pre}? #{rule}"
 
-			when 'rule.fail'
-				if defined(location)
-					return "#{pre} NO (at #{locStr})"
-				else
-					return "#{pre} NO"
+			when 'match'
 
-			when 'fail.string'
-				if defined(location)
-					return "#{pre} NO #{rule} (at #{locStr})"
+				if (obj == 'rule')
+					count = if (@level==0) then 0 else @level-1
+					pre = "│  ".repeat(count) + "└─>"
 				else
-					return "#{pre} NO #{rule}"
+					pre = "│  ".repeat(@level)
 
-			when 'rule.match', 'match.string'
 				if defined(result)
 					if defined(endPos)
 						return "#{pre} #{OL(result)} (pos -> #{endPos})"
@@ -80,6 +140,21 @@ export class DefaultTracer extends NullTracer
 					else
 						return "#{pre} YES"
 
+			when 'fail'
+
+				pre = "│  ".repeat(@level-1) + "x  "
+				if (obj == 'rule')
+					if defined(location)
+						return "#{pre} (at #{locStr})"
+					else
+						return "#{pre}".trim()
+				else
+					if defined(location)
+						return "#{pre} #{obj} #{OL(details)} (at #{locStr})"
+					else
+						return "#{pre} #{obj}"
+
+
 			else
 				return "UNKNOWN type: #{type}"
 		return
@@ -90,7 +165,7 @@ export class DefaultTracer extends NullTracer
 
 		# --- DEBUG console.dir hInfo
 
-		# --- ignore whitespace rule
+		# --- ignore some rules
 		if @lIgnore.includes(hInfo.rule)
 			return
 
@@ -110,11 +185,15 @@ export class DefaultTracer extends NullTracer
 
 # ---------------------------------------------------------------------------
 
-export class DetailedTracer extends DefaultTracer
+export class DetailedTracer extends AdvancedTracer
 
-	constructor: (@input, @hVars={}) ->
+	constructor: (@input, hOptions={}) ->
 
-		super()
+		super(hOptions)
+		{hVars} = getOptions hOptions, {
+			hVars: {}
+			}
+		@hVars = hOptions.hVars
 
 	# ..........................................................
 
@@ -156,32 +235,39 @@ export class DetailedTracer extends DefaultTracer
 # ---------------------------------------------------------------------------
 # --- tracer can be:
 #        - undef
-#        - a string: 'peggy','default','detailed'
+#        - a string: 'none', 'debug', 'peggy','advanced','detailed'
 #        - an object with a function property named 'trace'
 #        - a function
 
-export getTracer = (tracer='default', input, hVars={}) =>
+export getTracer = (tracer='advanced', input, hVars={}) =>
 
-	if isEmpty(tracer) || (tracer == 'none') || (tracer == 'null')
-		return new NullTracer()
 	switch (typeof tracer)
 		when 'undefined'
 			return new NullTracer()
 		when 'object'
 			if hasKey(tracer, trace)
 				return tracer
+			else if (tracer == null)
+				return new NullTracer()
 			else
 				croak "Invalid tracer object, no 'trace' method"
 		when 'function'
 			return {trace: tracer}
 		when 'string'
+			[tracer, option] = tracer.split('/')
+			hOptions = {hVars}
+			if option
+				hOptions.posType = option
 			switch tracer
-				when 'default'
-					return new DefaultTracer()
-				when 'detailed','advanced'
-					return new DetailedTracer(input, hVars)
+				when 'raw'
+					return new RawTracer(hOptions)
+				when 'debug'
+					return new DebugTracer(hOptions)
+				when 'advanced'
+					return new AdvancedTracer(hOptions)
+				when 'detailed'
+					return new DetailedTracer(input, hOptions)
 				when 'peggy'
 					return undef
 				else
 					return new NullTracer()
-

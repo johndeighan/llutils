@@ -22,6 +22,8 @@ import {brew} from '@jdeighan/llutils/llcoffee'
 import {PLLFetcher} from '@jdeighan/llutils/fetcher'
 import {SectionMap} from '@jdeighan/llutils/section-map'
 import {getTracer} from '@jdeighan/llutils/tracer'
+import {OpDumper} from '@jdeighan/llutils/op-dumper'
+import {ByteCodeWriter} from '@jdeighan/llutils/bytecode-writer'
 
 assert isFunction(brew), "brew is not a function: #{OL(brew)}"
 
@@ -55,13 +57,17 @@ export peggify = (code, hMetaData={}, filePath=undef) =>
 	assert isString(code), "code not a string: #{typeof code}"
 
 	# --- type determines which preprocessor to use, if any
-	{type, debug, trace, allowedStartRules, include} \
-		= getOptions hMetaData, {
+	{type, debug, trace, allowedStartRules, include,
+		opDumper, byteCodeWriter, dumpAST,
+		} = getOptions hMetaData, {
 		type: undef    # --- no preprocessing
 		debug: false
 		trace: true
 		allowedStartRules: ['*']
 		include: undef
+		opDumper: undef
+		byteCodeWriter: undef
+		dumpAST: undef
 		}
 
 	# --- debug can be set to 'preprocess' or 'allcode'
@@ -117,13 +123,22 @@ export peggify = (code, hMetaData={}, filePath=undef) =>
 		format: 'es'
 		trace
 		}
-
+	if opDumper
+		opDumper = hOptions.opDumper = new OpDumper()
+	if byteCodeWriter
+		byteCodeWriter = hOptions.byteCodeWriter = new ByteCodeWriter()
+	if dumpAST
+		hOptions.dumpAST = withExt(filePath, '.ast.txt')
 	try
 		if defined(filePath)
 			hOptions.grammarSource = filePath
 			hOptions.output = 'source-and-map'
 
 			sourceNode = peggy.generate(input, hOptions)
+			if opDumper
+				opDumper.writeTo(withExt(filePath, '.ops.txt'))
+			if byteCodeWriter
+				byteCodeWriter.writeTo(withExt(filePath, '.bytecodes.txt'))
 			{code, map} = sourceNode.toStringWithSourceMap()
 			assert isString(code), "code = #{OL(code)}"
 			sourceMap = map.toString()
@@ -163,8 +178,6 @@ export peggifyFile = (filePath, hOptions={}) =>
 
 	if debug
 		console.log "   hMetaData = #{OL(hMetaData)}"
-
-	Object.assign hMetaData, hOptions
 
 	code = gen2block(reader)
 
@@ -263,7 +276,7 @@ export PreProcessPeggy = (code, hMetaData) =>
 		assert (level == 0), "Next level not 0"
 		if debug
 			console.log "RULE: #{name}"
-		assert name.match(/^[A-Za-z][A-Za-z0-9_-]*$/),
+		assert name.match(/^[A-Za-z_][A-Za-z0-9_-]*$/),
 				"Bad name: #{OL(name)}"
 		assert !hasKey(hRules, name), "duplicate rule #{name}"
 

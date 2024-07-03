@@ -898,4 +898,31 @@ equal(cmdArgStr(["some thing"]), '"some thing"');
 
 equal(cmdArgStr(["-cmd=doit", "-cmd=echo <file>", "something", "some thing"]), `-cmd=doit -cmd="echo <file>" something "some thing"`);
 
+// ---------------------------------------------------------------------------
+//symbol rpad(str, len, ch)
+equal(rpad('abc', 5), 'abc  ');
+
+// ---------------------------------------------------------------------------
+//symbol lpad(str, len, ch)
+equal(lpad('abc', 5), '  abc');
+
+// ---------------------------------------------------------------------------
+//symbol zpad(str, len, ch)
+equal(zpad(3, 5), '00003');
+
+// ---------------------------------------------------------------------------
+//symbol new Block()
+(() => {
+  var block;
+  block = new Block();
+  block.add('abc');
+  block.add('defg');
+  block.prepend('xyz');
+  equal(block.maxLen, 4);
+  equal(block.lLines, ['xyz', 'abc', 'defg']);
+  return equal(block.getBlock(), `xyz
+abc
+defg`);
+})();
+
 //# sourceMappingURL=llutils.test.js.map

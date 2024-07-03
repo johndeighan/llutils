@@ -352,10 +352,13 @@ export var hEscNoNL = {
 };
 
 export var escapeStr = (str, hReplace = hEsc, hOptions = {}) => {
-  var ch, i, lParts, offset, result;
+  var ch, i, lParts, offset, poschar, result;
   // --- hReplace can also be a string:
   //        'esc'     - escape space, newline, tab
   //        'escNoNL' - escape space, tab
+  //     Valid options:
+  //        offset    - indicate position of offset
+  //        poschar   - char to use to indicate position
   assert(isString(str), `not a string: ${typeof str}`);
   if (isString(hReplace)) {
     switch (hReplace) {
@@ -370,17 +373,16 @@ export var escapeStr = (str, hReplace = hEsc, hOptions = {}) => {
     }
   }
   assert(isHash(hReplace), "not a hash");
-  ({offset} = getOptions(hOptions, {
-    offset: undef
+  ({offset, poschar} = getOptions(hOptions, {
+    offset: undef,
+    poschar: '┊'
   }));
   lParts = [];
   i = 0;
   for (ch of str) {
     if (defined(offset)) {
       if (i === offset) {
-        lParts.push(':');
-      } else {
-        lParts.push(' ');
+        lParts.push(poschar);
       }
     }
     result = hReplace[ch];
@@ -392,7 +394,7 @@ export var escapeStr = (str, hReplace = hEsc, hOptions = {}) => {
     i += 1;
   }
   if (offset === str.length) {
-    lParts.push(':');
+    lParts.push(poschar);
   }
   return lParts.join('');
 };
@@ -1076,6 +1078,104 @@ export var cmdArgStr = (lArgs = undef) => {
       return str;
     }
   }).join(' ');
+};
+
+// ---------------------------------------------------------------------------
+export var rpad = (str, len, ch = ' ') => {
+  var extra;
+  assert(ch.length === 1, "Not a char");
+  if (notdefined(str)) {
+    return ch.repeat(len);
+  }
+  if (!isString(str)) {
+    str = str.toString();
+  }
+  extra = len - str.length;
+  if (extra < 0) {
+    extra = 0;
+  }
+  return str + ch.repeat(extra);
+};
+
+// ---------------------------------------------------------------------------
+export var lpad = (str, len, ch = ' ') => {
+  var extra;
+  assert(ch.length === 1, "Not a char");
+  if (notdefined(str)) {
+    return ch.repeat(len);
+  }
+  if (!isString(str)) {
+    str = str.toString();
+  }
+  extra = len - str.length;
+  if (extra < 0) {
+    extra = 0;
+  }
+  return ch.repeat(extra) + str;
+};
+
+// ---------------------------------------------------------------------------
+export var padString = function(str, width, align) {
+  switch (align) {
+    case 'left':
+      return rpad(str, width);
+    case 'center':
+      return centered(str, width);
+    case 'right':
+      return lpad(str, width);
+  }
+};
+
+// ---------------------------------------------------------------------------
+export var zpad = (n, len) => {
+  var nStr;
+  nStr = n.toString();
+  return lpad(nStr, len, '0');
+};
+
+// ---------------------------------------------------------------------------
+export var Block = class Block {
+  constructor() {
+    this.lLines = [];
+    this.maxLen = 0;
+  }
+
+  getLines() {
+    return this.lLines;
+  }
+
+  getBlock() {
+    return toBlock(this.lLines);
+  }
+
+  add(block) {
+    var j, len1, ref, results, str;
+    ref = toArray(block);
+    results = [];
+    for (j = 0, len1 = ref.length; j < len1; j++) {
+      str = ref[j];
+      if (str.length > this.maxLen) {
+        this.maxLen = str.length;
+      }
+      results.push(this.lLines.push(str));
+    }
+    return results;
+  }
+
+  prepend(block) {
+    var j, len1, ref, results, str;
+    ref = toArray(block).reverse();
+    results = [];
+    for (j = 0, len1 = ref.length; j < len1; j++) {
+      str = ref[j];
+      if (str.length > this.maxLen) {
+        this.maxLen = str.length;
+      }
+      results.push(this.lLines.unshift(str));
+    }
+    return results;
+  }
+
 };
 
 //# sourceMappingURL=llutils.js.map
