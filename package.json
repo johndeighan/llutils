@@ -1,6 +1,6 @@
 {
 	"name": "@jdeighan/llutils",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"type": "module",
 	"description": "compile coffee and peggy files",
 	"exports": {
