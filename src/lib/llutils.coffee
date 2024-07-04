@@ -1062,7 +1062,7 @@ export matchPos = (str, pos=0) =>
 	return pos
 
 # ---------------------------------------------------------------------------
-# --- func will receive (pos, str)
+# --- func will receive (str)
 #     should return [extractedStr, newpos]
 #        newpos must be > pos
 #        extractedStr may be undef

@@ -79,7 +79,7 @@
 	};
 
 
-	var ExtractError, assert, context, croak, mergeKeys, parse__data__1, parse__desc__1, parse__desc__2, parse__expr__1, parse__ident__1, parse__string__1;
+	var ExtractError, assert, context, croak, getObj, mergeKeys, parse__data__1, parse__desc__1, parse__desc__2, parse__expr__1, parse__ident__1, parse__string__1;
 
 	import {
 	  undef,
@@ -115,6 +115,24 @@
 	    this.name = "ExtractError";
 	  }
 
+	};
+
+	getObj = (lSelectors, optional) => {
+	  var i, ident, len, obj;
+	  obj = context.current();
+	// --- there's at least 1 selector
+	  for (i = 0, len = lSelectors.length; i < len; i++) {
+	    ident = lSelectors[i];
+	    obj = obj[ident];
+	    if (notdefined(obj)) {
+	      if (optional) {
+	        return undef;
+	      } else {
+	        croak(`Missing key ${OL(ident)}`);
+	      }
+	    }
+	  }
+	  return obj;
 	};
 
 	croak = (errmsg) => {
@@ -177,60 +195,32 @@
 
 	// --------------------------------------------------------------
 	parse__expr__1 = (lParen, optional, lSelectors, expect, as, rParen) => {
-	  var i, id, lastId, len, name, nostore, obj;
+	  var name, obj, store;
 	  assert(!(expect && as), "Can't use 'as' with expected value");
 	  if (context.isUndef()) {
 	    return [{}, undef];
 	  }
+	  name = as || lSelectors.at(-1);
 	  if (defined(lParen, rParen)) {
-	    nostore = true;
+	    store = false;
 	  } else {
 	    assert(notdefined(lParen, rParen), 'Mismatched parens');
-	    nostore = false;
+	    store = notdefined(expect);
 	  }
-	  lastId = undef;
-	  obj = context.current();
-	// --- there's at least 1
-	  for (i = 0, len = lSelectors.length; i < len; i++) {
-	    id = lSelectors[i];
-	    lastId = id; // --- key to store value under, unless 'as'
-	    obj = obj[id];
-	    if (notdefined(obj)) {
-	      if (optional) {
-	        return [undef, undef];
-	      } else {
-	        croak(`Missing key ${OL(id)}`);
-	      }
-	    }
+	  obj = getObj(lSelectors, optional);
+	  if (notdefined(obj)) {
+	    return [undef, undef];
 	  }
-	  name = as || lastId; // --- lastId will always be set
 	  if (defined(expect)) {
 	    assert(obj === expect, `Expected ${OL(expect)}, found ${OL(obj)}`);
 	    return [{}, undef];
 	  }
-	  if (isHash(obj)) {
-	    if (nostore) {
-	      return [{}, obj];
-	    } else {
-	      return [
-	        {
-	          [name]: obj
-	        },
-	        obj
-	      ];
-	    }
-	  } else {
-	    if (nostore) {
-	      return [{}, undef];
-	    } else {
-	      return [
-	        {
-	          [name]: obj
-	        },
-	        undef
-	      ];
-	    }
-	  }
+	  return [
+	    store ? {
+	      [name]: obj
+	    } : {},
+	    isHash(obj) ? obj : undef
+	  ];
 	};
 
 	// --------------------------------------------------------------
@@ -517,11 +507,11 @@ function peg$parse(input, options) {
   var peg$e16 = peg$literalExpectation("\t", false);
 
   var peg$f0 = function(lDesc) { return parse__data__1(lDesc); };
-  var peg$f1 = function(result) {context.add(result[1]);return true;};
-  var peg$f2 = function(result, h) {context.pop();return true;};
+  var peg$f1 = function(result) { context.add(result[1]) ;return true;};
+  var peg$f2 = function(result, h) { context.pop() ;return true;};
   var peg$f3 = function(result, h) { return parse__desc__1(result, h); };
-  var peg$f4 = function(result) {context.add(result[1]);return true;};
-  var peg$f5 = function(result, h) {context.pop();return true;};
+  var peg$f4 = function(result) { context.add(result[1]) ;return true;};
+  var peg$f5 = function(result, h) { context.pop() ;return true;};
   var peg$f6 = function(result, h) { return parse__desc__2(result, h); };
   var peg$f7 = function(lParen, optional, lSelectors, expect, as, rParen) { return parse__expr__1(lParen, optional, lSelectors, expect, as, rParen); };
   var peg$f8 = function(str) { return parse__ident__1(str); };

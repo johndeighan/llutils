@@ -24,6 +24,21 @@ GLOBAL
 			@name = "ExtractError"
 
 	# -----------------------------------------------------------------------
+	# --- Apply selectors to context() to get an object
+
+	getObj = (lSelectors, optional) =>
+
+		obj = context.current()
+		for ident in lSelectors  # --- there's at least 1 selector
+			obj = obj[ident]
+			if notdefined(obj)
+				if optional
+					return undef
+				else
+					croak "Missing key #{OL(ident)}"
+		return obj
+
+	# -----------------------------------------------------------------------
 
 	croak = (errmsg) =>
 
@@ -77,16 +92,16 @@ data
 desc
 
 	result: expr
-			DO {context.add(result[1])}
+			DO { context.add(result[1]) }
 			h: ( INDENT @data UNDENT) ?
-			DO {context.pop()}
+			DO { context.pop() }
 
 		return mergeKeys result[0] || {}, h
 
 	'[' _ result: expr _ ']'
-			DO {context.add(result[1])}
+			DO { context.add(result[1]) }
 			h: ( INDENT @data UNDENT) ?
-			DO {context.pop()}
+			DO { context.pop() }
 
 		return mergeKeys result[0], h
 
@@ -112,25 +127,18 @@ expr
 		if context.isUndef()
 			return [{}, undef]
 
-		# --- set nostore - if true, don't store
+		name = as || lSelectors.at(-1)
+
+		# --- set store - if false, don't store
 		if defined(lParen, rParen)
-			nostore = true
+			store = false
 		else
 			assert notdefined(lParen, rParen), 'Mismatched parens'
-			nostore = false
+			store = notdefined(expect)
 
-		# --- Apply selectors to context() to get an object
-		lastId = undef
-		obj = context.current()
-		for id in lSelectors  # --- there's at least 1
-			lastId = id        # --- key to store value under, unless 'as'
-			obj = obj[id]
-			if notdefined(obj)
-				if optional
-					return [undef, undef]
-				else
-					croak "Missing key #{OL(id)}"
-		name = as || lastId    # --- lastId will always be set
+		obj = getObj(lSelectors, optional)
+		if notdefined(obj)
+			return [undef, undef]
 
 		# --- We now have a name, obj pair
 
@@ -141,16 +149,10 @@ expr
 			assert (obj == expect), "Expected #{OL(expect)}, found #{OL(obj)}"
 			return [{}, undef]
 
-		if isHash(obj)
-			if nostore
-				return [{}, obj]
-			else
-				return [{[name]: obj}, obj]
-		else
-			if nostore
-				return [{}, undef]
-			else
-				return [{[name]: obj}, undef]
+		return [
+			if store then {[name]: obj} else {},
+			if isHash(obj) then obj else undef
+			]
 
 ident
 
