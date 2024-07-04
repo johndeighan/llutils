@@ -727,6 +727,53 @@ equal lpad('abc', 5), '  abc'
 equal zpad(3, 5), '00003'
 
 # ---------------------------------------------------------------------------
+#symbol findOneOf(str, lChars, pos)
+
+equal findOneOf('abcde', ['b','d']), 1
+equal findOneOf('abcde', ['b','e']), 1
+equal findOneOf('ace', ['b','e']), 2
+equal findOneOf('acd', ['b','e']), -1
+
+equal findOneOf('some thing DO {xxx} CHECK {xxx} yyy', ['CHECK']), 20
+equal findOneOf('some thing DO {xxx} CHECK {xxx} yyy', ['DO']), 11
+equal findOneOf('some thing DO {xxx} CHECK {xxx} yyy', ['CHECK','DO']), 11
+equal findOneOf('some thing DO {xxx} CHECK {xxx} yyy', ['DO','CHECK']), 11
+
+# ---------------------------------------------------------------------------
+#symbol matchPos(str, pos)
+
+equal matchPos("(where f() = '23')"), 17
+equal matchPos("{return addContext(result[1])}"), 29
+equal matchPos("{return popContext()}"), 20
+equal matchPos("some text {return addContext(result[1])}", 10), 39
+equal matchPos("some text {return popContext()}", 10), 30
+
+fails () => matchPos("(missing", 0)
+fails () => matchPos("(miss()ing", 0)
+equal matchPos("(miss()ing", 5), 6
+
+# ---------------------------------------------------------------------------
+#symbol splitString(str, func) - func is (pos, str) => [extract, newpos]
+
+(() =>
+	splitter = (str) =>
+		i = str.indexOf('DO')
+		if (i == -1)
+			return [str.trim() || undef, str.length]
+		else if (i == 0)
+			return ['DO', 2]
+		else
+			return [str.substring(0, i).trim() || undef, i]
+
+	equal splitStr('abc', splitter), ['abc']
+	equal splitStr('abcDOxyz', splitter), ['abc','DO','xyz']
+	equal splitStr('abc DO xyz', splitter), ['abc','DO','xyz']
+	equal splitStr('DO   ', splitter), ['DO']
+	equal splitStr('   DO', splitter), ['DO']
+	equal splitStr('   DO   ', splitter), ['DO']
+	)()
+
+# ---------------------------------------------------------------------------
 #symbol new Block()
 
 (() =>

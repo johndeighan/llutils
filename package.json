@@ -24,6 +24,7 @@
 		"./to-nice": "./src/lib/to-nice.js",
 		"./dump": "./src/lib/dump.js",
 		"./data-extractor": "./src/lib/data-extractor.js",
+		"./context": "./src/lib/context.js",
 		"./source-map": "./src/lib/source-map.js",
 		"./v8-stack": "./src/lib/v8-stack.js",
 		"./tracer": "./src/lib/tracer.js",

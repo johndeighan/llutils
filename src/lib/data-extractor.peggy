@@ -5,27 +5,15 @@ include: src/lib/PLL.peggy
 GLOBAL
 
 	import {
-		undef, defined, anyDefined, notdefined,
+		undef, defined, notdefined,
 		getOptions, OL, hasKey, keys,
 		isEmpty, isString, isHash, isFunction,
 		} from '@jdeighan/llutils'
 	import {DUMP} from '@jdeighan/llutils/dump'
 	import {getTracer} from '@jdeighan/llutils/tracer'
+	import {Context} from '@jdeighan/llutils/context'
 
-	# --- Context manipulation
-
-	lContext = undef
-
-	context = () =>
-		return lContext.at(-1)    # may be undef
-
-	addContext = (h) =>
-		assert notdefined(h) || isHash(h), "context not a hash: #{OL(h)}"
-		lContext.push h
-		return true
-
-	popContext = () =>
-		lContext.pop(); return true
+	context = undef
 
 	# -----------------------------------------------------------------------
 
@@ -75,7 +63,7 @@ GLOBAL
 			}
 		assert isHash(obj), "Not a hash: #{OL(obj)}"
 		assert isString(desc), "Not a string: #{OL(desc)}"
-		lContext = [obj]
+		context = new Context(obj)
 		return peg$parse(desc, {tracer: getTracer(tracer, desc)})
 
 # ===========================================================================
@@ -89,16 +77,16 @@ data
 desc
 
 	result: expr
-			& {return addContext(result[1])}
+			DO {context.add(result[1])}
 			h: ( INDENT @data UNDENT) ?
-			& {return popContext()}
+			DO {context.pop()}
 
 		return mergeKeys result[0] || {}, h
 
 	'[' _ result: expr _ ']'
-			& {return addContext(result[1])}
+			DO {context.add(result[1])}
 			h: ( INDENT @data UNDENT) ?
-			& {return popContext()}
+			DO {context.pop()}
 
 		return mergeKeys result[0], h
 
@@ -121,8 +109,7 @@ expr
 
 		assert ! (expect && as), "Can't use 'as' with expected value"
 
-		obj = context()
-		if notdefined(obj)
+		if context.isUndef()
 			return [{}, undef]
 
 		# --- set nostore - if true, don't store
@@ -134,6 +121,7 @@ expr
 
 		# --- Apply selectors to context() to get an object
 		lastId = undef
+		obj = context.current()
 		for id in lSelectors  # --- there's at least 1
 			lastId = id        # --- key to store value under, unless 'as'
 			obj = obj[id]
@@ -143,6 +131,7 @@ expr
 				else
 					croak "Missing key #{OL(id)}"
 		name = as || lastId    # --- lastId will always be set
+
 		# --- We now have a name, obj pair
 
 		# --- If there's an expected value (always a string),

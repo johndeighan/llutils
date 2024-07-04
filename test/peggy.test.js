@@ -2,7 +2,8 @@
 var exprPath, parseExpr;
 
 import {
-  undef
+  undef,
+  splitStr
 } from '@jdeighan/llutils';
 
 import * as lib from '@jdeighan/llutils/peggy';
@@ -16,6 +17,15 @@ Object.assign(global, lib2);
 exprPath = './test/peggy/expr.peggy';
 
 parseExpr = (await getParser(exprPath));
+
+// ---------------------------------------------------------------------------
+//symbol matchExprSplitter(str)    # --- returns [str, skipLen]
+(() => {
+  var expect, str;
+  str = "result: expr DO {add(result)} lChars: [A-Z]+";
+  expect = "result: expr & {add(result);return true;} lChars: [A-Z]+";
+  return equal(splitStr(str, meSplitter).join(' '), expect);
+})();
 
 // ---------------------------------------------------------------------------
 //symbol "peggify(code, hMeta, hOptions)"    # --- compile peggy code

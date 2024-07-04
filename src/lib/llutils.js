@@ -1134,6 +1134,78 @@ export var zpad = (n, len) => {
 };
 
 // ---------------------------------------------------------------------------
+export var findOneOf = (str, lSubStrings, pos = 0) => {
+  var i, j, len1, loc, substr;
+  assert(isString(str), `not a string: ${OL(str)}`);
+  assert(isArray(lSubStrings), `Not an array: ${OL(lSubStrings)}`);
+  assert(lSubStrings.length > 0, "lSubStrings is empty array");
+  loc = -1;
+  for (j = 0, len1 = lSubStrings.length; j < len1; j++) {
+    substr = lSubStrings[j];
+    i = str.indexOf(substr, pos);
+    if (i >= 0) {
+      // --- found
+      if ((loc === -1) || (i < loc)) {
+        loc = i;
+      }
+    }
+  }
+  return loc;
+};
+
+// ---------------------------------------------------------------------------
+export var matchPos = (str, pos = 0) => {
+  var count, endCh, loc, startCh;
+  startCh = str[pos];
+  endCh = (function() {
+    switch (startCh) {
+      case '(':
+        return ')';
+      case '[':
+        return ']';
+      case '{':
+        return '}';
+      default:
+        return croak(`Invalid startCh: ${OL(startCh)}`);
+    }
+  })();
+  count = 1;
+  pos += 1;
+  loc = findOneOf(str, [startCh, endCh], pos);
+  while ((loc !== -1) && (count > 0)) {
+    if (str[loc] === startCh) {
+      count += 1;
+    } else if (str[loc] === endCh) {
+      count -= 1;
+    }
+    pos = loc;
+    loc = findOneOf(str, [startCh, endCh], pos + 1);
+  }
+  assert((pos >= 0) && (pos < str.length) && (str[pos] === endCh) && (count === 0), `No matching ${endCh} found`);
+  return pos;
+};
+
+// ---------------------------------------------------------------------------
+// --- func will receive (pos, str)
+//     should return [extractedStr, newpos]
+//        newpos must be > pos
+//        extractedStr may be undef
+export var splitStr = (str, splitFunc) => {
+  var extractedStr, inc, lParts, pos;
+  lParts = [];
+  pos = 0;
+  while (pos < str.length) {
+    [extractedStr, inc] = splitFunc(str.substring(pos));
+    assert(inc > 0, `inc = ${inc}`);
+    pos += inc;
+    if (defined(extractedStr)) {
+      lParts.push(extractedStr);
+    }
+  }
+  return lParts;
+};
+
+// ---------------------------------------------------------------------------
 export var Block = class Block {
   constructor() {
     this.lLines = [];

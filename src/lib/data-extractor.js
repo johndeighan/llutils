@@ -79,12 +79,11 @@
 	};
 
 
-	var ExtractError, addContext, assert, context, croak, lContext, mergeKeys, parse__data__1, parse__desc__1, parse__desc__2, parse__expr__1, parse__ident__1, parse__string__1, popContext;
+	var ExtractError, assert, context, croak, mergeKeys, parse__data__1, parse__desc__1, parse__desc__2, parse__expr__1, parse__ident__1, parse__string__1;
 
 	import {
 	  undef,
 	  defined,
-	  anyDefined,
 	  notdefined,
 	  getOptions,
 	  OL,
@@ -104,22 +103,11 @@
 	  getTracer
 	} from '@jdeighan/llutils/tracer';
 
-	lContext = undef;
+	import {
+	  Context
+	} from '@jdeighan/llutils/context';
 
-	context = () => {
-	  return lContext.at(-1); // may be undef
-	};
-
-	addContext = (h) => {
-	  assert(notdefined(h) || isHash(h), `context not a hash: ${OL(h)}`);
-	  lContext.push(h);
-	  return true;
-	};
-
-	popContext = () => {
-	  lContext.pop();
-	  return true;
-	};
+	context = undef;
 
 	ExtractError = class ExtractError extends Error {
 	  constructor(message) {
@@ -166,7 +154,7 @@
 	  }));
 	  assert(isHash(obj), `Not a hash: ${OL(obj)}`);
 	  assert(isString(desc), `Not a string: ${OL(desc)}`);
-	  lContext = [obj];
+	  context = new Context(obj);
 	  return peg$parse(desc, {
 	    tracer: getTracer(tracer, desc)
 	  });
@@ -191,8 +179,7 @@
 	parse__expr__1 = (lParen, optional, lSelectors, expect, as, rParen) => {
 	  var i, id, lastId, len, name, nostore, obj;
 	  assert(!(expect && as), "Can't use 'as' with expected value");
-	  obj = context();
-	  if (notdefined(obj)) {
+	  if (context.isUndef()) {
 	    return [{}, undef];
 	  }
 	  if (defined(lParen, rParen)) {
@@ -202,6 +189,7 @@
 	    nostore = false;
 	  }
 	  lastId = undef;
+	  obj = context.current();
 	// --- there's at least 1
 	  for (i = 0, len = lSelectors.length; i < len; i++) {
 	    id = lSelectors[i];
@@ -529,11 +517,11 @@ function peg$parse(input, options) {
   var peg$e16 = peg$literalExpectation("\t", false);
 
   var peg$f0 = function(lDesc) { return parse__data__1(lDesc); };
-  var peg$f1 = function(result) {return addContext(result[1])};
-  var peg$f2 = function(result, h) {return popContext()};
+  var peg$f1 = function(result) {context.add(result[1]);return true;};
+  var peg$f2 = function(result, h) {context.pop();return true;};
   var peg$f3 = function(result, h) { return parse__desc__1(result, h); };
-  var peg$f4 = function(result) {return addContext(result[1])};
-  var peg$f5 = function(result, h) {return popContext()};
+  var peg$f4 = function(result) {context.add(result[1]);return true;};
+  var peg$f5 = function(result, h) {context.pop();return true;};
   var peg$f6 = function(result, h) { return parse__desc__2(result, h); };
   var peg$f7 = function(lParen, optional, lSelectors, expect, as, rParen) { return parse__expr__1(lParen, optional, lSelectors, expect, as, rParen); };
   var peg$f8 = function(str) { return parse__ident__1(str); };

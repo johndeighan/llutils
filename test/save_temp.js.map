@@ -6,8 +6,8 @@
     "test\\save_temp.coffee"
   ],
   "names": [],
-  "mappings": "AAAkB;AAAA,IAAA,QAAA,EAAA;;AAElB,OAAA;EAAQ,KAAR;CAAA,MAAA;;AACA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB,EAJkB;;;AAQlB,MAAA,GAAS,OAAA,CAAQ,aAAR,EAAuB,KAAvB,EAA8B,cAA9B;;AACT,OAAO,CAAC,GAAR,CAAY,MAAZ;;AAGA,QAAA,GAAW;EACV,CAAA,EAAG,IADO;EAEV,CAAA,EAAG,IAFO;EAGV,EAAA,EAAI;AAHM",
+  "mappings": "AAAkB;AAAA,IAAA;;AAElB,OAAA;EAAQ,KAAR;CAAA,MAAA;;AACA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB,EAJkB;;;AAQlB,KAAA,GAAQ;EACP,KAAA,EAAO,MADA;EAEP,KAAA,EAAO,SAFA;EAGP,OAAA,EAAS;IACR,MAAA,EAAQ,2BADA;IAER,IAAA,EAAM,YAFE;IAGR,KAAA,EAAO,UAHC;IAIR,GAAA,EAAK;EAJG;AAHF;;AAWR,OAAO,CAAC,GAAR,CAAY,OAAA,CAAQ,KAAR,EAAe,CAAA;;MAAA,CAAf,CAAZ",
   "sourcesContent": [
-    "# save_temp.coffee\r\n\r\nimport {undef} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/cmd-args'\r\nObject.assign(global, lib)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nresult = getArgs('-ab -cd=why', undef, 'tracer=debug')\r\nconsole.log result\r\n\r\n\r\nexpected = {\r\n\ta: true\r\n\tb: true\r\n\tcd: 'why'\r\n\t}\r\n"
+    "# save_temp.coffee\r\n\r\nimport {undef} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/data-extractor'\r\nObject.assign(global, lib)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nhData = {\r\n\tfName: 'John'\r\n\tlName: 'Deighan'\r\n\taddress: {\r\n\t\tstreet: '1749 Creasy Reynolds Lane'\r\n\t\tcity: 'Blacksburg'\r\n\t\tstate: 'Virginia'\r\n\t\tzip: 24060\r\n\t\t}\r\n\t}\r\n\r\nconsole.dir extract hData, \"\"\"\r\n\tfName\r\n\t(address)\r\n\t\tstate\r\n\t\"\"\"\r\n\r\n"
   ]
 }

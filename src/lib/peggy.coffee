@@ -9,6 +9,7 @@ import {
 	isString, isHash, isArray, isFunction, isInteger,
 	blockToArray, arrayToBlock, escapeStr, getOptions,
 	assert, croak, OL, js2uri, ML, keys, pass, eq,
+	matchPos, splitStr,
 	} from '@jdeighan/llutils'
 import {DUMP} from '@jdeighan/llutils/dump'
 import {
@@ -198,6 +199,44 @@ export peggifyFile = (filePath, hOptions={}) =>
 
 # ---------------------------------------------------------------------------
 
+export meSplitter = (str) =>
+
+	lMatches = str.match(///^
+			(.*?)       # everything before 'DO'
+			\b DO \b
+			(\s*)
+			(.*)        # everything after 'DO' + ws (must start w/ '{')
+			$///)
+
+	# --- if no 'DO' in string, return entire string trimmed
+	if notdefined(lMatches)
+		return [str.trim(), str.length]
+
+	# --- if pre isn't all whitespace, return pre trimmed
+	[_, pre, ws, post] = lMatches
+	prelen = pre.length
+	pre = pre.trim()
+	if (pre.length > 0)
+		return [pre, prelen]
+
+	# --- Now we know - str contains 'DO'
+
+	# --- Find '{' in post, which must be the 1st char in post
+	#     There must be only whitespace between 'DO' and '{'
+	blockStart = prelen + 2 + ws.length
+	blockEnd = matchPos(str, blockStart)
+	assert (str[blockStart] == '{'),
+			"Bad blockStart = #{blockStart} in #{OL(str)}"
+	assert (str[blockEnd]   == '}'),
+			"Bad blockEnd = #{blockEnd} in #{OL(str)}"
+	inside = str.substring(blockStart+1, blockEnd)
+	if inside.endsWith(';')
+		return ["& {#{inside}return true;}", blockEnd+1]
+	else
+		return ["& {#{inside};return true;}", blockEnd+1]
+
+# ---------------------------------------------------------------------------
+
 export PreProcessPeggy = (code, hMetaData) =>
 
 	assert isString(code), "not a string: #{typeof code}"
@@ -269,6 +308,25 @@ export PreProcessPeggy = (code, hMetaData) =>
 
 	hRules = {}     # { <ruleName>: <numMatchExpr>, ... }
 
+	# --- Define utility functions
+
+	getMatchExpr = () =>
+
+		# --- Get match expression
+		[level, matchExpr] = src.fetch()
+		assert (level == 1), "BAD - level not 1"
+
+		# --- Extract names of new variables
+		lVars = []
+		re = /([A-Za-z_][A-Za-z0-9_-]*)\:/g
+		for match from matchExpr.matchAll(re)
+			lVars.push match[1]
+
+		return [
+			splitStr(matchExpr, meSplitter).join(' ')
+			lVars
+			]
+
 	while src.moreLines()
 
 		# --- Get rule name - must be left aligned, no whitespace
@@ -286,17 +344,7 @@ export PreProcessPeggy = (code, hMetaData) =>
 
 		while (src.peekLevel() == 1)
 
-			# --- Get match expression
-			[level, matchExpr] = src.fetch()
-			assert (level == 1), "BAD - level not 1"
-
-			# --- Extract names of new variables
-			lVars = []
-			hJoin = {}
-			re = /([A-Za-z_][A-Za-z0-9_-]*)\:/g
-			for match from matchExpr.matchAll(re)
-				lVars.push match[1]
-
+			[matchExpr, lVars] = getMatchExpr()
 			argStr = lVars.join(', ')
 
 			# --- output the match expression

@@ -1,6 +1,6 @@
 # peggy.test.coffee
 
-import {undef} from '@jdeighan/llutils'
+import {undef, splitStr} from '@jdeighan/llutils'
 import * as lib from '@jdeighan/llutils/peggy'
 Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'
@@ -8,6 +8,16 @@ Object.assign(global, lib2)
 
 exprPath = './test/peggy/expr.peggy'
 parseExpr = await getParser(exprPath)
+
+# ---------------------------------------------------------------------------
+#symbol matchExprSplitter(str)    # --- returns [str, skipLen]
+
+(() =>
+	str = "result: expr DO {add(result)} lChars: [A-Z]+"
+	expect = "result: expr & {add(result);return true;} lChars: [A-Z]+"
+
+	equal splitStr(str, meSplitter).join(' '), expect
+	)()
 
 # ---------------------------------------------------------------------------
 #symbol "peggify(code, hMeta, hOptions)"    # --- compile peggy code

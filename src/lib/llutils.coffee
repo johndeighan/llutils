@@ -1020,6 +1020,67 @@ export zpad = (n, len) =>
 
 # ---------------------------------------------------------------------------
 
+export findOneOf = (str, lSubStrings, pos=0) =>
+
+	assert isString(str), "not a string: #{OL(str)}"
+	assert isArray(lSubStrings), "Not an array: #{OL(lSubStrings)}"
+	assert (lSubStrings.length > 0), "lSubStrings is empty array"
+	loc = -1
+	for substr in lSubStrings
+		i = str.indexOf(substr, pos)
+		if (i >= 0)
+			# --- found
+			if (loc == -1) || (i < loc)
+				loc = i
+	return loc
+
+# ---------------------------------------------------------------------------
+
+export matchPos = (str, pos=0) =>
+
+	startCh = str[pos]
+	endCh = switch startCh
+		when '(' then ')'
+		when '[' then ']'
+		when '{' then '}'
+		else croak "Invalid startCh: #{OL(startCh)}"
+	count = 1
+	pos += 1
+	loc = findOneOf(str, [startCh, endCh], pos)
+	while (loc != -1) && (count > 0)
+		if (str[loc] == startCh)
+			count += 1
+		else if (str[loc] == endCh)
+			count -= 1
+		pos = loc
+		loc = findOneOf(str, [startCh, endCh], pos+1)
+	assert (pos >= 0) \
+			&& (pos < str.length) \
+			&& (str[pos] == endCh) \
+			&& (count == 0),
+			"No matching #{endCh} found"
+	return pos
+
+# ---------------------------------------------------------------------------
+# --- func will receive (pos, str)
+#     should return [extractedStr, newpos]
+#        newpos must be > pos
+#        extractedStr may be undef
+
+export splitStr = (str, splitFunc) =>
+
+	lParts = []
+	pos = 0
+	while (pos < str.length)
+		[extractedStr, inc] = splitFunc(str.substring(pos))
+		assert (inc > 0), "inc = #{inc}"
+		pos += inc
+		if defined(extractedStr)
+			lParts.push extractedStr
+	return lParts
+
+# ---------------------------------------------------------------------------
+
 export class Block
 
 	constructor: () ->

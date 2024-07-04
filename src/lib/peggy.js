@@ -33,7 +33,9 @@ import {
   ML,
   keys,
   pass,
-  eq
+  eq,
+  matchPos,
+  splitStr
 } from '@jdeighan/llutils';
 
 import {
@@ -264,8 +266,40 @@ export var peggifyFile = (filePath, hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
+export var meSplitter = (str) => {
+  var _, blockEnd, blockStart, inside, lMatches, post, pre, prelen, ws;
+  lMatches = str.match(/^(.*?)\bDO\b(\s*)(.*)$/); // everything before 'DO'
+  // everything after 'DO' + ws (must start w/ '{')
+  // --- if no 'DO' in string, return entire string trimmed
+  if (notdefined(lMatches)) {
+    return [str.trim(), str.length];
+  }
+  // --- if pre isn't all whitespace, return pre trimmed
+  [_, pre, ws, post] = lMatches;
+  prelen = pre.length;
+  pre = pre.trim();
+  if (pre.length > 0) {
+    return [pre, prelen];
+  }
+  // --- Now we know - str contains 'DO'
+
+  // --- Find '{' in post, which must be the 1st char in post
+  //     There must be only whitespace between 'DO' and '{'
+  blockStart = prelen + 2 + ws.length;
+  blockEnd = matchPos(str, blockStart);
+  assert(str[blockStart] === '{', `Bad blockStart = ${blockStart} in ${OL(str)}`);
+  assert(str[blockEnd] === '}', `Bad blockEnd = ${blockEnd} in ${OL(str)}`);
+  inside = str.substring(blockStart + 1, blockEnd);
+  if (inside.endsWith(';')) {
+    return [`& {${inside}return true;}`, blockEnd + 1];
+  } else {
+    return [`& {${inside};return true;}`, blockEnd + 1];
+  }
+};
+
+// ---------------------------------------------------------------------------
 export var PreProcessPeggy = (code, hMetaData) => {
-  var argStr, ch, coffeeCode, debug, funcName, hJoin, hRules, headerSection, initSection, lVars, level, line, match, matchExpr, name, peggyCode, re, ref, rulesSection, sm, src, type;
+  var argStr, ch, coffeeCode, debug, funcName, getMatchExpr, hRules, headerSection, initSection, lVars, level, line, matchExpr, name, peggyCode, rulesSection, sm, src, type;
   assert(isString(code), `not a string: ${typeof code}`);
   ({type, debug} = getOptions(hMetaData, {
     type: 'coffee',
@@ -331,6 +365,22 @@ ${block}
     }
   }
   hRules = {}; // { <ruleName>: <numMatchExpr>, ... }
+  
+  // --- Define utility functions
+  getMatchExpr = () => {
+    var lVars, level, match, matchExpr, re, ref;
+    // --- Get match expression
+    [level, matchExpr] = src.fetch();
+    assert(level === 1, "BAD - level not 1");
+    // --- Extract names of new variables
+    lVars = [];
+    re = /([A-Za-z_][A-Za-z0-9_-]*)\:/g;
+    ref = matchExpr.matchAll(re);
+    for (match of ref) {
+      lVars.push(match[1]);
+    }
+    return [splitStr(matchExpr, meSplitter).join(' '), lVars];
+  };
   while (src.moreLines()) {
     // --- Get rule name - must be left aligned, no whitespace
     [level, name] = src.fetch();
@@ -344,17 +394,7 @@ ${block}
     rulesSection.add(name);
     hRules[name] = 0; // number of options
     while (src.peekLevel() === 1) {
-      // --- Get match expression
-      [level, matchExpr] = src.fetch();
-      assert(level === 1, "BAD - level not 1");
-      // --- Extract names of new variables
-      lVars = [];
-      hJoin = {};
-      re = /([A-Za-z_][A-Za-z0-9_-]*)\:/g;
-      ref = matchExpr.matchAll(re);
-      for (match of ref) {
-        lVars.push(match[1]);
-      }
+      [matchExpr, lVars] = getMatchExpr();
       argStr = lVars.join(', ');
       // --- output the match expression
       ch = (hRules[name] === 0) ? '=' : '/';

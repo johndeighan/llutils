@@ -1,23 +1,28 @@
 // save_temp.coffee
-var expected, result;
+var hData;
 
 import {
   undef
 } from '@jdeighan/llutils';
 
-import * as lib from '@jdeighan/llutils/cmd-args';
+import * as lib from '@jdeighan/llutils/data-extractor';
 
 Object.assign(global, lib);
 
 // ---------------------------------------------------------------------------
-result = getArgs('-ab -cd=why', undef, 'tracer=debug');
-
-console.log(result);
-
-expected = {
-  a: true,
-  b: true,
-  cd: 'why'
+hData = {
+  fName: 'John',
+  lName: 'Deighan',
+  address: {
+    street: '1749 Creasy Reynolds Lane',
+    city: 'Blacksburg',
+    state: 'Virginia',
+    zip: 24060
+  }
 };
+
+console.dir(extract(hData, `fName
+(address)
+	state`));
 
 //# sourceMappingURL=save_temp.js.map

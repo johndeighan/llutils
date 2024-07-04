@@ -1,10 +1,9 @@
 {{
-	var ExtractError, addContext, assert, context, croak, lContext, mergeKeys, parse__data__1, parse__desc__1, parse__desc__2, parse__expr__1, parse__ident__1, parse__string__1, popContext;
+	var ExtractError, assert, context, croak, mergeKeys, parse__data__1, parse__desc__1, parse__desc__2, parse__expr__1, parse__ident__1, parse__string__1;
 
 	import {
 	  undef,
 	  defined,
-	  anyDefined,
 	  notdefined,
 	  getOptions,
 	  OL,
@@ -24,22 +23,11 @@
 	  getTracer
 	} from '@jdeighan/llutils/tracer';
 
-	lContext = undef;
+	import {
+	  Context
+	} from '@jdeighan/llutils/context';
 
-	context = () => {
-	  return lContext.at(-1); // may be undef
-	};
-
-	addContext = (h) => {
-	  assert(notdefined(h) || isHash(h), `context not a hash: ${OL(h)}`);
-	  lContext.push(h);
-	  return true;
-	};
-
-	popContext = () => {
-	  lContext.pop();
-	  return true;
-	};
+	context = undef;
 
 	ExtractError = class ExtractError extends Error {
 	  constructor(message) {
@@ -86,7 +74,7 @@
 	  }));
 	  assert(isHash(obj), `Not a hash: ${OL(obj)}`);
 	  assert(isString(desc), `Not a string: ${OL(desc)}`);
-	  lContext = [obj];
+	  context = new Context(obj);
 	  return peg$parse(desc, {
 	    tracer: getTracer(tracer, desc)
 	  });
@@ -111,8 +99,7 @@
 	parse__expr__1 = (lParen, optional, lSelectors, expect, as, rParen) => {
 	  var i, id, lastId, len, name, nostore, obj;
 	  assert(!(expect && as), "Can't use 'as' with expected value");
-	  obj = context();
-	  if (notdefined(obj)) {
+	  if (context.isUndef()) {
 	    return [{}, undef];
 	  }
 	  if (defined(lParen, rParen)) {
@@ -122,6 +109,7 @@
 	    nostore = false;
 	  }
 	  lastId = undef;
+	  obj = context.current();
 	// --- there's at least 1
 	  for (i = 0, len = lSelectors.length; i < len; i++) {
 	    id = lSelectors[i];
@@ -183,10 +171,10 @@ data
 
 desc
 
-	= result: expr & {return addContext(result[1])} h: ( INDENT @data UNDENT) ? & {return popContext()}
+	= result: expr & {context.add(result[1]);return true;} h: ( INDENT @data UNDENT) ? & {context.pop();return true;}
 		{ return parse__desc__1(result, h); }
 
-	/ '[' _ result: expr _ ']' & {return addContext(result[1])} h: ( INDENT @data UNDENT) ? & {return popContext()}
+	/ '[' _ result: expr _ ']' & {context.add(result[1]);return true;} h: ( INDENT @data UNDENT) ? & {context.pop();return true;}
 		{ return parse__desc__2(result, h); }
 
 expr
