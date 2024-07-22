@@ -1,7 +1,7 @@
 // brew.coffee
 
 // --- designed to be a TextPad tool
-var code, filepath, js, option, orgCode, preprocCode;
+var blocks, contents, filePath, hMetaData, js, orgCode, preprocCode;
 
 import {
   defined,
@@ -9,11 +9,12 @@ import {
 } from '@jdeighan/llutils';
 
 import {
-  DUMP
-} from '@jdeighan/llutils/dump';
+  TextBlockList
+} from '@jdeighan/llutils/text-block';
 
 import {
-  slurp
+  readTextFile,
+  relpath
 } from '@jdeighan/llutils/fs';
 
 import {
@@ -21,28 +22,30 @@ import {
 } from '@jdeighan/llutils/coffee';
 
 // ---------------------------------------------------------------------------
-filepath = process.argv[2];
+// Usage:   node src/bin/brew.js  *.coffee
+filePath = process.argv[2];
 
-option = process.argv[3];
+// --- hMetaData will include key 'filePath'
+({hMetaData, contents} = readTextFile(filePath, 'eager'));
 
-code = slurp(filepath);
-
-DUMP(code, filepath);
-
-if (defined(option) && (option === 'debug')) {
-  ({orgCode, preprocCode, js} = brew(code, {}, {
-    debug: true
-  }));
-} else {
-  ({orgCode, preprocCode, js} = brew(code));
+if (process.argv[3] === 'debug') {
+  hMetaData.debug = true;
 }
 
-assert(orgCode === code, "Bad org code");
+blocks = new TextBlockList();
 
-if (defined(preprocCode)) {
-  DUMP(preprocCode, 'PreProcessed code');
+blocks.addBlock(relpath(filePath), contents);
+
+({orgCode, preprocCode, js} = brew(contents, hMetaData));
+
+assert(orgCode === contents, "Bad org code");
+
+if (defined(preprocCode) && (preprocCode !== orgCode)) {
+  blocks.addBlock('PreProcessed', preprocCode);
 }
 
-DUMP(js, 'JavaScript');
+blocks.addBlock('JavaScript', js);
+
+console.log(blocks.asString());
 
 //# sourceMappingURL=brew.js.map

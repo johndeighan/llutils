@@ -19,50 +19,48 @@ Object.assign(global, lib2)
 		? start
 		"""
 
-	tracer.level = 1
-
 	equal tracer.traceStr({
 		type: 'rule.fail'
-		}), """
-		x
+		}, 1), """
+		└─> FAIL
 		"""
 
 	equal tracer.traceStr({
 		type: 'rule.match'
-		}), """
+		}, 1), """
 		└─> YES
 		"""
 
 	equal tracer.traceStr({
 		type: 'rule.match'
 		result: 'IDENT'
-		}), """
+		}, 1), """
 		└─> "IDENT"
 		"""
 
 	equal tracer.traceStr({
 		type: 'rule.enter'
 		rule: 'start'
-		}), """
+		}, 1), """
 		│  ? start
 		"""
 
 	equal tracer.traceStr({
-		type: 'rule.fail'
-		}), """
-		x
+		type: 'string.fail'
+		}, 1), """
+		x   string
 		"""
 
 	equal tracer.traceStr({
 		type: 'rule.match'
-		}), """
+		}, 1), """
 		└─> YES
 		"""
 
 	equal tracer.traceStr({
 		type: 'rule.match'
 		result: 'IDENT'
-		}), """
+		}, 1), """
 		└─> "IDENT"
 		"""
 

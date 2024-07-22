@@ -28,7 +28,7 @@ import {
 } from '@jdeighan/llutils/fs';
 
 // ---------------------------------------------------------------------------
-export var brew = function(code, hMetaData = {}, hOptions = {}) {
+export var brew = function(code, hMetaData = {}) {
   var debug, filePath, js, preprocCode, preprocess, shebang, v3SourceMap;
   // --- metadata can be used to add a shebang line
   //     if true, use "#!/usr/bin/env node"
@@ -40,7 +40,7 @@ export var brew = function(code, hMetaData = {}, hOptions = {}) {
   //     that converts one block of code to another
   //     block of code
   assert(isString(code), `code: ${OL(code)}`);
-  ({filePath, preprocess, debug} = getOptions(hOptions, {
+  ({filePath, preprocess, debug} = getOptions(hMetaData, {
     filePath: undef,
     preprocess: undef,
     debug: false
@@ -85,15 +85,20 @@ export var brew = function(code, hMetaData = {}, hOptions = {}) {
 };
 
 // ---------------------------------------------------------------------------
-export var brewFile = function(filePath) {
-  var code, hMetaData, js, reader, sourceMap;
+export var brewFile = function(filePath, hOptions = {}) {
+  var contents, debug, h, hMetaData;
+  ({debug} = getOptions(hOptions, {
+    debug: false
+  }));
   assert(isFile(filePath), `No such file: ${filePath}`);
-  ({hMetaData, reader} = readTextFile(filePath));
-  code = gen2block(reader);
-  ({js, sourceMap} = brew(code, hMetaData, {filePath}));
-  barf(js, withExt(filePath, '.js'));
-  barf(sourceMap, withExt(filePath, '.js.map'));
-  return {js, sourceMap};
+  ({hMetaData, contents} = readTextFile(filePath, 'eager'));
+  if (debug) {
+    hMetaData.debug = true;
+  }
+  h = brew(contents, hMetaData);
+  barf(h.js, withExt(filePath, '.js'));
+  barf(h.sourceMap, withExt(filePath, '.js.map'));
+  return h;
 };
 
 // ---------------------------------------------------------------------------

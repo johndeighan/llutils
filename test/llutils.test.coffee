@@ -773,24 +773,3 @@ equal matchPos("(miss()ing", 5), 6
 	equal splitStr('   DO   ', splitter), ['DO']
 	)()
 
-# ---------------------------------------------------------------------------
-#symbol new Block()
-
-(() =>
-	block = new Block()
-	block.add 'abc'
-	block.add 'defg'
-	block.prepend 'xyz'
-
-	equal block.maxLen, 4
-	equal block.lLines, [
-		'xyz'
-		'abc'
-		'defg'
-		]
-	equal block.getBlock(), """
-		xyz
-		abc
-		defg
-		"""
-	)()

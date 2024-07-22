@@ -1,5 +1,5 @@
   // llutils.coffee
-var deepEqual, execAsync, module,
+var deepEqual, execAsync, module, warnOnly,
   hasProp = {}.hasOwnProperty;
 
 import assertLib from 'node:assert';
@@ -78,16 +78,31 @@ export var add_s = (n) => {
 };
 
 // ---------------------------------------------------------------------------
-// low-level version of assert()
+warnOnly = false;
+
+export var warnOnError = (flag = true) => {
+  return warnOnly = flag;
+};
+
+// ---------------------------------------------------------------------------
 export var assert = (cond, msg) => {
-  assertLib.ok(cond, msg);
+  if (warnOnly) {
+    if (!cond) {
+      console.log(`ERROR: ${msg}`);
+    }
+  } else {
+    assertLib.ok(cond, msg);
+  }
   return true;
 };
 
 // ---------------------------------------------------------------------------
-// low-level version of croak()
 export var croak = (msg) => {
-  throw new Error(msg);
+  if (warnOnly) {
+    console.log(`ERROR: ${msg}`);
+  } else {
+    throw new Error(msg);
+  }
   return true;
 };
 
@@ -441,50 +456,55 @@ export var OL = (obj, hOptions = {}) => {
       return 'CLASS INSTANCE';
     }
   }
-  myReplacer = (key, x) => {
+  myReplacer = (key, value) => {
     var tag, type;
-    type = typeof x;
+    if (value === undef) {
+      return '«undef»';
+    }
+    type = typeof value;
     switch (type) {
+      case 'symbol':
+        return '«Symbol»';
       case 'bigint':
-        return `«BigInt ${x.toString()}»`;
+        return `«BigInt ${value.toString()}»`;
       case 'function':
-        if (x.toString().startsWith('class')) {
+        if (value.toString().startsWith('class')) {
           tag = 'Class';
         } else {
           tag = 'Function';
         }
-        if (defined(x.name)) {
-          return `.${tag} ${x.name}.`;
+        if (defined(value.name)) {
+          return `«${tag} ${value.name}»`;
         } else {
-          return `.${tag}.`;
+          return `«${tag}»`;
         }
         break;
       case 'string':
         // --- NOTE: JSON.stringify will add quote chars
         if (esc) {
-          return escapeStr(x);
+          return escapeStr(value);
         } else {
-          return x;
+          return value;
         }
         break;
       case 'object':
-        if (x instanceof RegExp) {
-          return `.RegExp ${x.toString()}.`;
+        if (value instanceof RegExp) {
+          return `«RegExp ${value.toString()}»`;
         }
-        if (defined(x) && (typeof x.then === 'function')) {
-          return ".Promise.";
+        if (defined(value) && (typeof value.then === 'function')) {
+          return "«Promise»";
         } else {
-          return x;
+          return value;
         }
         break;
       default:
-        return x;
+        return value;
     }
   };
   result = JSON.stringify(obj, myReplacer);
   // --- Because JSON.stringify adds quote marks,
   //     we remove them when using .
-  finalResult = result.replaceAll('".', '.').replaceAll('."', '.');
+  finalResult = result.replaceAll('"«', '«').replaceAll('»"', '»');
   return finalResult;
 };
 
@@ -644,7 +664,8 @@ export var keys = Object.keys;
 
 // ---------------------------------------------------------------------------
 export var hasKey = (h, key) => {
-  assert(isHash(h), `h is ${OL(h)}`);
+  assert(isHash(h) || isClassInstance(h), `h is ${h}`);
+  assert(isString(key), `key is ${key}`);
   return h.hasOwnProperty(key);
 };
 
@@ -1203,51 +1224,6 @@ export var splitStr = (str, splitFunc) => {
     }
   }
   return lParts;
-};
-
-// ---------------------------------------------------------------------------
-export var Block = class Block {
-  constructor() {
-    this.lLines = [];
-    this.maxLen = 0;
-  }
-
-  getLines() {
-    return this.lLines;
-  }
-
-  getBlock() {
-    return toBlock(this.lLines);
-  }
-
-  add(block) {
-    var j, len1, ref, results, str;
-    ref = toArray(block);
-    results = [];
-    for (j = 0, len1 = ref.length; j < len1; j++) {
-      str = ref[j];
-      if (str.length > this.maxLen) {
-        this.maxLen = str.length;
-      }
-      results.push(this.lLines.push(str));
-    }
-    return results;
-  }
-
-  prepend(block) {
-    var j, len1, ref, results, str;
-    ref = toArray(block).reverse();
-    results = [];
-    for (j = 0, len1 = ref.length; j < len1; j++) {
-      str = ref[j];
-      if (str.length > this.maxLen) {
-        this.maxLen = str.length;
-      }
-      results.push(this.lLines.unshift(str));
-    }
-    return results;
-  }
-
 };
 
 //# sourceMappingURL=llutils.js.map

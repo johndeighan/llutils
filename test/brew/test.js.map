@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "test.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "test\\brew\\test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAA,IAAA;;AAAA,OAAA;EAAQ,KAAR;CAAA,MAAA;;AAEA,IAAA,GAAO;EACN,IAAA,EAAM,SADA;EAEN,IAAA,EAAM;AAFA;;AAKP,KAAA,CAAM,OAAA,CAAQ,IAAR,EAAc,CAAA,cAAA,CAAd,CAAN,EAEO;EAAC,IAAA,EAAM;AAAP,CAFP",
+  "sourcesContent": [
+    "import {undef} from '@jdeighan/llutils'\r\n\r\nhAST = {\r\n\ttype: 'program'\r\n\tname: 'John'\r\n\t}\r\n\r\nequal extract(hAST, \"\"\"\r\n\ttype=\"program\"\r\n\t\"\"\"), {name: 'John'}\r\n"
+  ]
+}

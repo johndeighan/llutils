@@ -6,17 +6,19 @@ import {
   pass,
   OL,
   escapeStr,
-  keys,
   assert,
+  croak,
   isString,
   isArray,
   isHash,
   isEmpty,
-  getOptions,
   lpad,
   rpad,
   zpad,
-  words
+  words,
+  keys,
+  hasKey,
+  getOptions
 } from '@jdeighan/llutils';
 
 import {
@@ -24,20 +26,87 @@ import {
 } from '@jdeighan/llutils/text-table';
 
 // ---------------------------------------------------------------------------
-export var NullTracer = class NullTracer {
-  constructor(posType1 = 'offset') {
-    this.posType = posType1;
+export var BaseTracer = class BaseTracer {
+  constructor(hOptions = {}) {
+    var h, j, len, ref, rule;
+    h = getOptions(hOptions, {
+      posType: 'linecol',
+      lIgnore: ['_'],
+      lIgnoreSubs: []
+    });
+    this.hOptions = h;
+    this.posType = h.posType;
+    this.lIgnoreSubs = h.lIgnoreSubs;
+    this.lIgnore = h.lIgnore;
+    ref = this.lIgnore;
+    for (j = 0, len = ref.length; j < len; j++) {
+      rule = ref[j];
+      if (!this.lIgnoreSubs.includes(rule)) {
+        this.lIgnoreSubs.push(rule);
+      }
+    }
+    this.lStack = []; // stack of rule names
+  }
+
+  
+    // ..........................................................
+  traceIt(hInfo) {
+    var action, category, i, j, k, len, len1, ref, ref1, rule, type;
+    ({type, rule} = hInfo);
+    [category, action] = type.split('.');
+    // --- NOTE: Any rule name in @lIgnore
+    //           will also be in @lIgnoreSubs
+    if (this.lIgnore.includes(rule)) {
+      if (category === 'rule') {
+        return false;
+      }
+    }
+    if ((category === 'rule') && ((action === 'match') || (action === 'fail'))) {
+      ref = this.lStack;
+      for (i = j = 0, len = ref.length; j < len; i = ++j) {
+        rule = ref[i];
+        if (this.lIgnoreSubs.includes(rule) && (i !== this.lStack.length - 1)) {
+          return false;
+        }
+      }
+    } else {
+      ref1 = this.lStack;
+      for (k = 0, len1 = ref1.length; k < len1; k++) {
+        rule = ref1[k];
+        if (this.lIgnoreSubs.includes(rule)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   // ..........................................................
   destroy() {}
 
   // ..........................................................
+  adjustStack(hInfo) {
+    var rule, type;
+    ({type, rule} = hInfo);
+    switch (type) {
+      case 'rule.enter':
+        this.lStack.push(rule);
+        break;
+      case 'rule.fail':
+      case 'rule.match':
+        this.lStack.pop();
+    }
+  }
+
+  // ..........................................................
   trace(hInfo) {}
 
   // ..........................................................
-  posStr(location) {
+  posStr(location, posType = undef) {
     var e, ec, el, eo, s, sc, sl, so;
+    if (notdefined(posType)) {
+      posType = this.posType;
+    }
     if (notdefined(location) || !isHash(location)) {
       return rpad('unknown', 12);
     }
@@ -51,6 +120,9 @@ export var NullTracer = class NullTracer {
     el = zpad(e.line);
     ec = zpad(e.column);
     eo = zpad(e.offset);
+    if ((sl === 1) && (el === 1)) {
+      return posStr(location, 'offset');
+    }
     switch (this.posType) {
       case 'linecol':
         if (so === eo) {
@@ -78,17 +150,18 @@ export var NullTracer = class NullTracer {
 };
 
 // ---------------------------------------------------------------------------
-export var RawTracer = class RawTracer extends NullTracer {
+export var RawTracer = class RawTracer extends BaseTracer {
   trace(hInfo) {
+    this.adjustStack(hInfo);
     return console.log(JSON.stringify(hInfo, null, 3));
   }
 
 };
 
 // ---------------------------------------------------------------------------
-export var DebugTracer = class DebugTracer extends NullTracer {
-  constructor() {
-    super();
+export var DebugTracer = class DebugTracer extends BaseTracer {
+  constructor(hOptions = {}) {
+    super(hOptions);
     this.tt = new TextTable('l l l l l');
     this.tt.fullsep();
     this.tt.labels(words('type rule result details position'));
@@ -97,6 +170,7 @@ export var DebugTracer = class DebugTracer extends NullTracer {
 
   trace(hInfo) {
     var details, location, result, rule, type;
+    this.adjustStack(hInfo);
     ({type, rule, result, details, location} = hInfo);
     this.tt.data([type, rule, JSON.stringify(result), details, this.posStr(location)]);
   }
@@ -108,22 +182,9 @@ export var DebugTracer = class DebugTracer extends NullTracer {
 };
 
 // ---------------------------------------------------------------------------
-export var AdvancedTracer = class AdvancedTracer extends NullTracer {
-  constructor(hOptions = {}) {
-    var ignore, posType;
-    super();
-    ({ignore, posType} = getOptions(hOptions, {
-      ignore: ['_'],
-      posType: 'offset'
-    }));
-    this.lIgnore = ignore;
-    this.posType = posType;
-    this.level = 0;
-  }
-
-  // ..........................................................
-  traceStr(hInfo) {
-    var action, count, details, endPos, locStr, location, obj, pre, ref, ref1, result, rule, startPos, type;
+export var AdvancedTracer = class AdvancedTracer extends BaseTracer {
+  traceStr(hInfo, level = 0) {
+    var action, details, endPos, locStr, location, obj, pre, ref, ref1, result, rule, startPos, type;
     ({type, rule, location, result, details} = hInfo);
     locStr = this.posStr(location);
     startPos = location != null ? (ref = location.start) != null ? ref.offset : void 0 : void 0;
@@ -132,14 +193,13 @@ export var AdvancedTracer = class AdvancedTracer extends NullTracer {
     switch (action) {
       case 'enter':
         assert(obj === 'rule', `obj=${obj}, act=${action}`);
-        pre = "│  ".repeat(this.level);
+        pre = "│  ".repeat(level);
         return `${pre}? ${rule}`;
       case 'match':
         if (obj === 'rule') {
-          count = (this.level === 0) ? 0 : this.level - 1;
-          pre = "│  ".repeat(count) + "└─>";
+          pre = "│  ".repeat(level - 1) + "└─>";
         } else {
-          pre = "│  ".repeat(this.level);
+          pre = "│  ".repeat(level);
         }
         if (defined(result)) {
           if (defined(endPos)) {
@@ -156,14 +216,15 @@ export var AdvancedTracer = class AdvancedTracer extends NullTracer {
         }
         break;
       case 'fail':
-        pre = "│  ".repeat(this.level - 1) + "x  ";
         if (obj === 'rule') {
+          pre = "│  ".repeat(level - 1) + "└─> FAIL";
           if (defined(location)) {
-            return `${pre} (at ${locStr})`;
+            return ` ${pre} (at ${locStr})`;
           } else {
-            return `${pre}`.trim();
+            return ` ${pre}`.trim();
           }
         } else {
+          pre = "│  ".repeat(level - 1) + "x  ";
           if (defined(location)) {
             return `${pre} ${obj} ${OL(details)} (at ${locStr})`;
           } else {
@@ -178,56 +239,43 @@ export var AdvancedTracer = class AdvancedTracer extends NullTracer {
 
   // ..........................................................
   trace(hInfo) {
-    var i, len, result, str;
-    // --- DEBUG console.dir hInfo
-
-    // --- ignore some rules
-    if (this.lIgnore.includes(hInfo.rule)) {
-      return;
-    }
-    result = this.traceStr(hInfo);
-    if (isString(result)) {
-      console.log(result);
-    } else if (isArray(result)) {
-      for (i = 0, len = result.length; i < len; i++) {
-        str = result[i];
-        console.log(str);
+    debugger;
+    var j, len, result, str;
+    if (this.traceIt(hInfo)) {
+      result = this.traceStr(hInfo, this.lStack.length);
+      if (isString(result)) {
+        console.log(result);
+      } else if (isArray(result)) {
+        for (j = 0, len = result.length; j < len; j++) {
+          str = result[j];
+          console.log(str);
+        }
       }
     }
-    switch (hInfo.type) {
-      case 'rule.enter':
-        this.level += 1;
-        break;
-      case 'rule.fail':
-      case 'rule.match':
-        this.level -= 1;
-    }
+    this.adjustStack(hInfo);
   }
 
 };
 
 // ---------------------------------------------------------------------------
 export var DetailedTracer = class DetailedTracer extends AdvancedTracer {
-  constructor(input1, hOptions = {}) {
-    var hVars;
+  constructor(input, hOptions = {}) {
     super(hOptions);
-    this.input = input1;
-    ({hVars} = getOptions(hOptions, {
-      hVars: {}
-    }));
-    this.hVars = hOptions.hVars;
+    this.input = input;
+    this.input = this.hOptions.input;
+    this.hVars = this.hOptions.hVars;
   }
 
   // ..........................................................
   varStr() {
-    var i, lParts, len, ref, value, varname;
+    var j, lParts, len, ref, value, varname;
     if (isEmpty(this.hVars)) {
       return '';
     }
     lParts = [];
     ref = keys(this.hVars);
-    for (i = 0, len = ref.length; i < len; i++) {
-      varname = ref[i];
+    for (j = 0, len = ref.length; j < len; j++) {
+      varname = ref[j];
       value = this.hVars[varname]();
       lParts.push(`${varname} = ${OL(value)}`);
     }
@@ -239,7 +287,7 @@ export var DetailedTracer = class DetailedTracer extends AdvancedTracer {
   }
 
   // ..........................................................
-  traceStr(hInfo) {
+  traceStr(hInfo, level) {
     var location, offset, result, rule, str, type;
     str = super.traceStr(hInfo);
     if ((hInfo.type !== 'rule.fail') || isEmpty(this.input)) {
@@ -262,18 +310,22 @@ export var DetailedTracer = class DetailedTracer extends AdvancedTracer {
 //        - a string: 'none', 'debug', 'peggy','advanced','detailed'
 //        - an object with a function property named 'trace'
 //        - a function
-export var getTracer = (tracer = 'advanced', input, hVars = {}) => {
-  var hOptions, option;
+export var getTracer = (tracer = 'advanced', hOptions = {}) => {
+  var option;
+  hOptions = getOptions(hOptions, {
+    input: undef,
+    lIgnore: ['_'],
+    lIgnoreSubs: [],
+    hVars: {}
+  });
   switch (typeof tracer) {
     case 'undefined':
-      return new NullTracer();
+      return new BaseTracer(hOptions);
     case 'object':
-      if (hasKey(tracer, trace)) {
+      if (defined(tracer)) {
         return tracer;
-      } else if (tracer === null) {
-        return new NullTracer();
       } else {
-        return croak("Invalid tracer object, no 'trace' method");
+        return new BaseTracer(hOptions);
       }
       break;
     case 'function':
@@ -282,7 +334,6 @@ export var getTracer = (tracer = 'advanced', input, hVars = {}) => {
       };
     case 'string':
       [tracer, option] = tracer.split('/');
-      hOptions = {hVars};
       if (option) {
         hOptions.posType = option;
       }
@@ -294,11 +345,11 @@ export var getTracer = (tracer = 'advanced', input, hVars = {}) => {
         case 'advanced':
           return new AdvancedTracer(hOptions);
         case 'detailed':
-          return new DetailedTracer(input, hOptions);
+          return new DetailedTracer(hOptions);
         case 'peggy':
           return undef;
         default:
-          return new NullTracer();
+          return new BaseTracer(hOptions);
       }
   }
 };

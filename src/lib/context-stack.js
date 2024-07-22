@@ -1,4 +1,4 @@
-  // context.coffee
+  // context-stack.coffee
 import {
   undef,
   defined,
@@ -11,7 +11,7 @@ import {
 } from '@jdeighan/llutils';
 
 // ---------------------------------------------------------------------------
-export var Context = class Context {
+export var ContextStack = class ContextStack {
   constructor(obj) {
     this.lStack = [obj];
   }
@@ -22,18 +22,18 @@ export var Context = class Context {
   }
 
   // ..........................................................
-  isArray() {
-    return isArray(this.current());
-  }
-
-  // ..........................................................
-  isHash() {
-    return isHash(this.current());
-  }
-
-  // ..........................................................
-  isUndef() {
-    return notdefined(this.current());
+  currentType() {
+    var curr;
+    curr = this.current();
+    if (curr === undef) {
+      return 'undef';
+    } else if (isHash(curr)) {
+      return 'hash';
+    } else if (isArray(curr)) {
+      return 'array';
+    } else {
+      return croak(`Bad current context: ${OL(curr)}`);
+    }
   }
 
   // ..........................................................
@@ -51,4 +51,4 @@ export var Context = class Context {
 
 };
 
-//# sourceMappingURL=context.js.map
+//# sourceMappingURL=context-stack.js.map

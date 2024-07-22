@@ -7,9 +7,9 @@ import {globSync as glob} from 'glob'
 import NReadLines from 'n-readlines'
 
 import {
-	undef, defined, notdefined, words, OL, keys,
+	undef, defined, notdefined, words, OL, keys, hasKey,
 	assert, croak, arrayToBlock, getOptions, sliceBlock,
-	isString, isHash,
+	isString, isHash, gen2block,
 	} from '@jdeighan/llutils'
 import {
 	isMetaDataStart, convertMetaData,
@@ -501,8 +501,13 @@ export newerDestFilesExist = (srcPath, lDestPaths...) =>
 
 # ---------------------------------------------------------------------------
 
-export readTextFile = (filePath) =>
+export readTextFile = (filePath, hOptions={}) =>
 	# --- returns {hMetaData, reader, nLines}
+	#        and possibly contents
+
+	{eager} = getOptions hOptions, {
+		eager: false
+		}
 
 	assert isFile(filePath), "No such file: #{filePath}"
 	nReader = new NReadLines(filePath)
@@ -520,7 +525,7 @@ export readTextFile = (filePath) =>
 	firstLine = getLine()
 	if notdefined(firstLine)
 		return {
-			hMetaData: {}
+			hMetaData: {filePath}
 			reader: () -> return undef
 			nLines: 0
 			}
@@ -537,24 +542,38 @@ export readTextFile = (filePath) =>
 		block = arrayToBlock(lMetaLines)
 		hMetaData = convertMetaData(firstLine, block)
 
-	return {
-		hMetaData
+	# --- add filePath to hMetaData if not present
+	if !hasKey(hMetaData, 'filePath')
+		hMetaData.filePath = filePath
 
-		reader: () ->
-			if notdefined(lMetaLines)
-				yield firstLine
+	# --- generator that allows reading contents
+	reader = () ->
+		if notdefined(lMetaLines)
+			yield firstLine
+		line = getLine()
+		while defined(line)
+			yield line
 			line = getLine()
-			while defined(line)
-				yield line
-				line = getLine()
-			return
+		return
 
-		nLines:
-			if defined(lMetaLines)
-				lMetaLines.length + 2
-			else
-				0
-		}
+	# --- number of lines in file
+	nLines = if defined(lMetaLines)
+		lMetaLines.length + 2
+	else
+		0
+
+	if eager
+		return {
+			hMetaData
+			contents: gen2block(reader)
+			nLines
+			}
+	else
+		return {
+			hMetaData
+			reader
+			nLines
+			}
 
 # ---------------------------------------------------------------------------
 #    Get path to parent directory of a directory

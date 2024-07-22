@@ -62,19 +62,29 @@ export add_s = (n) =>
 	return if (n == 1) then '' else 's'
 
 # ---------------------------------------------------------------------------
-# low-level version of assert()
+
+warnOnly = false
+export warnOnError = (flag=true) => warnOnly = flag
+
+# ---------------------------------------------------------------------------
 
 export assert = (cond, msg) =>
 
-	assertLib.ok cond, msg
+	if warnOnly
+		if !cond
+			console.log "ERROR: #{msg}"
+	else
+		assertLib.ok cond, msg
 	return true
 
 # ---------------------------------------------------------------------------
-# low-level version of croak()
 
 export croak = (msg) =>
 
-	throw new Error(msg)
+	if warnOnly
+		console.log "ERROR: #{msg}"
+	else
+		throw new Error(msg)
 	return true
 
 # ---------------------------------------------------------------------------
@@ -379,42 +389,46 @@ export OL = (obj, hOptions={}) =>
 		if isFunction(obj) then return 'FUNCTION'
 		if isClassInstance(obj) then return 'CLASS INSTANCE'
 
-	myReplacer = (key, x) =>
-		type = typeof x
+	myReplacer = (key, value) =>
+		if (value == undef)
+			return '«undef»'
+		type = typeof value
 		switch type
+			when 'symbol'
+				return '«Symbol»'
 			when 'bigint'
-				return "«BigInt #{x.toString()}»"
+				return "«BigInt #{value.toString()}»"
 			when 'function'
-				if x.toString().startsWith('class')
+				if value.toString().startsWith('class')
 					tag = 'Class'
 				else
 					tag = 'Function'
-				if defined(x.name)
-					return ".#{tag} #{x.name}."
+				if defined(value.name)
+					return "«#{tag} #{value.name}»"
 				else
-					return ".#{tag}."
+					return "«#{tag}»"
 			when 'string'
 				# --- NOTE: JSON.stringify will add quote chars
 				if esc
-					return escapeStr(x)
+					return escapeStr(value)
 				else
-					return x
+					return value
 			when 'object'
-				if x instanceof RegExp
-					return ".RegExp #{x.toString()}."
-				if defined(x) && (typeof x.then == 'function')
-					return ".Promise."
+				if value instanceof RegExp
+					return "«RegExp #{value.toString()}»"
+				if defined(value) && (typeof value.then == 'function')
+					return "«Promise»"
 				else
-					return x
+					return value
 			else
-				return x
+				return value
 
 	result = JSON.stringify(obj, myReplacer)
 
 	# --- Because JSON.stringify adds quote marks,
 	#     we remove them when using .
 	finalResult = result \
-		.replaceAll('".','.').replaceAll('."','.')
+		.replaceAll('"«','«').replaceAll('»"','»')
 	return finalResult
 
 # ---------------------------------------------------------------------------
@@ -564,7 +578,8 @@ export keys = Object.keys
 
 export hasKey = (h, key) =>
 
-	assert isHash(h), "h is #{OL(h)}"
+	assert isHash(h) || isClassInstance(h), "h is #{h}"
+	assert isString(key), "key is #{key}"
 	return h.hasOwnProperty(key)
 
 # ---------------------------------------------------------------------------
@@ -1078,30 +1093,3 @@ export splitStr = (str, splitFunc) =>
 		if defined(extractedStr)
 			lParts.push extractedStr
 	return lParts
-
-# ---------------------------------------------------------------------------
-
-export class Block
-
-	constructor: () ->
-
-		@lLines = []
-		@maxLen = 0
-
-	getLines: () -> return @lLines
-	getBlock: () -> return toBlock(@lLines)
-
-	add: (block) ->
-
-		for str in toArray(block)
-			if (str.length > @maxLen)
-				@maxLen = str.length
-			@lLines.push str
-
-	prepend: (block) ->
-
-		for str in toArray(block).reverse()
-			if (str.length > @maxLen)
-				@maxLen = str.length
-			@lLines.unshift str
-

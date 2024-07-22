@@ -9,13 +9,15 @@ import {
 	isProjRoot, fileExt, withExt,
 	allFilesMatching, readTextFile, newerDestFilesExist,
 	} from '@jdeighan/llutils/fs'
-import {brewFile} from '@jdeighan/llutils/coffee'
+import {brewFile} from '@jdeighan/llutils/llcoffee'
 import {peggifyFile} from '@jdeighan/llutils/peggy'
+import {blessFile} from '@jdeighan/llutils/cielo'
 
 debugger
 hFilesProcessed = {
 	coffee: 0
 	peggy: 0
+	cielo: 0
 	}
 
 echo = (npmLogLevel() != 'silent')
@@ -43,7 +45,7 @@ if oneFilePath = process.argv[2]
 	process.exit()
 
 # ---------------------------------------------------------------------------
-# --- A file (either *.coffee or *.peggy) is out of date unless both:
+# --- A file (*.coffee, *.peggy or *.cielo) is out of date unless both:
 #        - a *.js file exists that's newer than the original file
 #        - a *.js.map file exists that's newer than the original file
 # --- But ignore files inside node_modules
@@ -52,8 +54,7 @@ fileFilter = ({filePath}) =>
 	if filePath.match(/node_modules/i)
 		return false
 	jsFile = withExt(filePath, '.js')
-	mapFile = withExt(filePath, '.js.map')
-	return ! newerDestFilesExist(filePath, jsFile, mapFile)
+	return ! newerDestFilesExist(filePath, jsFile)
 
 # ---------------------------------------------------------------------------
 # 2. Search project for *.coffee files and compile them
@@ -72,6 +73,15 @@ for {relPath} from allFilesMatching('**/*.{pegjs,peggy}', {fileFilter})
 	doLog relPath
 	peggifyFile relPath
 	hFilesProcessed.peggy += 1
+
+# ---------------------------------------------------------------------------
+# 4. Search src folder for *.cielo files and compile them
+#    unless newer *.js and *.js.map files exist OR it needs rebuilding
+
+for {relPath} from allFilesMatching('**/*.cielo', {fileFilter})
+	doLog relPath
+	blessFile relPath
+	hFilesProcessed.cielo += 1
 
 # ---------------------------------------------------------------------------
 
@@ -131,3 +141,7 @@ if (nCoffee > 0)
 nPeggy = hFilesProcessed.peggy
 if (nPeggy > 0)
 	doLog "(#{nPeggy} peggy file#{add_s(nPeggy)} compiled)"
+
+nCielo = hFilesProcessed.cielo
+if (nCielo > 0)
+	doLog "(#{nCielo} cielo file#{add_s(nCielo)} compiled)"

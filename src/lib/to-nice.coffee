@@ -2,8 +2,8 @@
 
 import {
 	undef, defined, notdefined, getOptions, OL,
-	assert, croak,
-	isString, isBoolean, isArray, isHash,
+	assert, croak, escapeStr,
+	isString, isBoolean, isArray, isHash, isEmpty,
 	isFunction, isNumber, isInteger,
 	isClassInstance, isClass, className,
 	toBlock,
@@ -35,7 +35,10 @@ export toNICE = (obj, hOptions={}) =>
 			else
 				return '.false.'
 		when 'string'
-			return obj
+			if isEmpty(obj)
+				return escapeStr(obj)
+			else
+				return obj
 		when 'number'
 			if Number.isNaN(obj)
 				return '.NaN.'
@@ -61,6 +64,8 @@ export toNICE = (obj, hOptions={}) =>
 					|| (obj instanceof Number) \
 					|| (obj instanceof RegExp)
 				return obj.toString()
+			else if isArray(obj) && isEmpty(obj)
+				return '.[].'
 			else if isArray(obj)
 				lLines = []
 				for item in obj
@@ -78,6 +83,8 @@ export toNICE = (obj, hOptions={}) =>
 					return ".Function #{obj.name}."
 				else
 					return ".Function."
+			else if isHash(obj) && isEmpty(obj)
+				return '.{}.'
 			else if isHash(obj) || isClassInstance(obj)
 				lLines = []
 				lKeys = Object.keys(obj)

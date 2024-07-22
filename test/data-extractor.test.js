@@ -1,4 +1,6 @@
-  // temp.test.coffee - from data-extractor.test.coffee
+// data-extractor.test.coffee
+var ds;
+
 import {
   undef,
   fromTAML
@@ -43,7 +45,7 @@ right`), {
   });
   // --- enclose in parens to not extract
   equal(extract(h, `type
-(left)
+! left
 right`), {
     type: 'Assignment',
     right: 'Value'
@@ -58,7 +60,7 @@ type`);
   succeeds(() => {
     return extract(h, `type
 left
-(type)`);
+! type`);
   });
   // --- Keys you name must exist
   fails(() => {
@@ -108,10 +110,10 @@ position.start as StartingPos`), {
 
   // --- Extract sub-keys
   return equal(extract(h, `type="Assignment"
-(position)
+! position
 	start
 	end
-	(source)
+	! source
 		file`), {
     start: 1,
     end: 5,
@@ -259,7 +261,7 @@ right.type as rtype`), {
   };
   hResult = extract(h, `type="ExportNamedDeclaration"
 exportKind="value"
-(declaration)
+! declaration
 	type="AssignmentExpression"
 	left.type="Identifier"
 	left.name`);
@@ -286,7 +288,7 @@ exportKind="value"
   };
   result = extract(hAST, `type="program"
 name
-(body)
+! body
 	type as bodyType
 	cond`);
   return equal(result, {
@@ -322,7 +324,7 @@ name
   };
   result = extract(hAST, `type="program"
 name
-(?body)
+! ?body
 	type as bodyType
 	cond`);
   return equal(result, {
@@ -348,7 +350,7 @@ name
   };
   result = extract(hAST, `type="program"
 name
-(?body)
+! ?body
 	type as bodyType
 	cond`);
   return equal(result, {
@@ -357,5 +359,118 @@ name
     cond: 'x==2'
   });
 })();
+
+// ---------------------------------------------------------------------------
+(() => {
+  var hAST, result;
+  hAST = {
+    type: 'program',
+    name: 'John',
+    body: [
+      {
+        type: 'if',
+        cond: 'x==2',
+        body: [
+          {
+            type: 'assign',
+            left: 'x',
+            right: 1
+          }
+        ]
+      },
+      {
+        type: 'then',
+        body: [
+          {
+            type: 'assign',
+            left: 'y',
+            right: 2
+          }
+        ]
+      },
+      {
+        type: 'else',
+        cond: 'x==2',
+        body: [
+          {
+            type: 'assign',
+            left: 'z',
+            right: 3
+          }
+        ]
+      }
+    ]
+  };
+  result = extract(hAST, `type = "program"
+name
+body`);
+  return equal(result, {
+    name: 'John',
+    body: [
+      {
+        type: 'if',
+        cond: 'x==2',
+        body: [
+          {
+            type: 'assign',
+            left: 'x',
+            right: 1
+          }
+        ]
+      },
+      {
+        type: 'then',
+        body: [
+          {
+            type: 'assign',
+            left: 'y',
+            right: 2
+          }
+        ]
+      },
+      {
+        type: 'else',
+        cond: 'x==2',
+        body: [
+          {
+            type: 'assign',
+            left: 'z',
+            right: 3
+          }
+        ]
+      }
+    ]
+  });
+})();
+
+// ---------------------------------------------------------------------------
+ds = fromTAML(`---
+fName: John
+aka:
+	-
+		id: 1
+		alias: JD
+	-
+		id: 2
+		alias: Deighan`);
+
+equal(extract(ds, `fName
+?body
+	type`), {
+  fName: 'John'
+});
+
+equal(extract(ds, `fName
+[! aka]
+	id
+	alias`), fromTAML(`---
+fName: John
+aka:
+	-
+		id: 1
+		alias: JD
+	-
+		id: 2
+		alias: Deighan`));
 
 //# sourceMappingURL=data-extractor.test.js.map

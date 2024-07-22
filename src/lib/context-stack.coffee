@@ -1,4 +1,4 @@
-# context.coffee
+# context-stack.coffee
 
 import {
 	undef, defined, notdefined, OL, isArray, isHash,
@@ -7,7 +7,7 @@ import {
 
 # ---------------------------------------------------------------------------
 
-export class Context
+export class ContextStack
 
 	constructor: (obj) ->
 
@@ -21,21 +21,17 @@ export class Context
 
 	# ..........................................................
 
-	isArray: () ->
+	currentType: () ->
 
-		return isArray(@current())
-
-	# ..........................................................
-
-	isHash: () ->
-
-		return isHash(@current())
-
-	# ..........................................................
-
-	isUndef: () ->
-
-		return notdefined(@current())
+		curr = @current()
+		if (curr == undef)
+			return 'undef'
+		else if isHash(curr)
+			return 'hash'
+		else if isArray(curr)
+			return 'array'
+		else
+			croak "Bad current context: #{OL(curr)}"
 
 	# ..........................................................
 

@@ -20,13 +20,15 @@ import {
   words,
   OL,
   keys,
+  hasKey,
   assert,
   croak,
   arrayToBlock,
   getOptions,
   sliceBlock,
   isString,
-  isHash
+  isHash,
+  gen2block
 } from '@jdeighan/llutils';
 
 import {
@@ -523,9 +525,13 @@ export var newerDestFilesExist = (srcPath, ...lDestPaths) => {
 };
 
 // ---------------------------------------------------------------------------
-export var readTextFile = (filePath) => {
-  var block, firstLine, getLine, hMetaData, lMetaLines, line, nReader;
+export var readTextFile = (filePath, hOptions = {}) => {
+  var block, eager, firstLine, getLine, hMetaData, lMetaLines, line, nLines, nReader, reader;
   // --- returns {hMetaData, reader, nLines}
+  //        and possibly contents
+  ({eager} = getOptions(hOptions, {
+    eager: false
+  }));
   assert(isFile(filePath), `No such file: ${filePath}`);
   nReader = new NReadLines(filePath);
   getLine = () => {
@@ -543,7 +549,7 @@ export var readTextFile = (filePath) => {
   firstLine = getLine();
   if (notdefined(firstLine)) {
     return {
-      hMetaData: {},
+      hMetaData: {filePath},
       reader: function() {
         return undef;
       },
@@ -563,20 +569,31 @@ export var readTextFile = (filePath) => {
     block = arrayToBlock(lMetaLines);
     hMetaData = convertMetaData(firstLine, block);
   }
-  return {
-    hMetaData,
-    reader: function*() {
-      if (notdefined(lMetaLines)) {
-        yield firstLine;
-      }
+  if (!hasKey(hMetaData, 'filePath')) {
+    hMetaData.filePath = filePath;
+  }
+  // --- generator that allows reading contents
+  reader = function*() {
+    if (notdefined(lMetaLines)) {
+      yield firstLine;
+    }
+    line = getLine();
+    while (defined(line)) {
+      yield line;
       line = getLine();
-      while (defined(line)) {
-        yield line;
-        line = getLine();
-      }
-    },
-    nLines: defined(lMetaLines) ? lMetaLines.length + 2 : 0
+    }
   };
+  // --- number of lines in file
+  nLines = defined(lMetaLines) ? lMetaLines.length + 2 : 0;
+  if (eager) {
+    return {
+      hMetaData,
+      contents: gen2block(reader),
+      nLines
+    };
+  } else {
+    return {hMetaData, reader, nLines};
+  }
 };
 
 // ---------------------------------------------------------------------------

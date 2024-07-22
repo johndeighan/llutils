@@ -6,7 +6,7 @@ import {
 
 import {
   getTracer,
-  NullTracer
+  BaseTracer
 } from '@jdeighan/llutils/tracer';
 
 import {
@@ -19,7 +19,7 @@ Object.assign(global, lib2);
 
 u.transformValue = (block) => {
   return parse(block, {
-    tracer: new NullTracer()
+    tracer: new BaseTracer()
   });
 };
 

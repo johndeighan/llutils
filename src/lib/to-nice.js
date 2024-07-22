@@ -9,10 +9,12 @@ import {
   OL,
   assert,
   croak,
+  escapeStr,
   isString,
   isBoolean,
   isArray,
   isHash,
+  isEmpty,
   isFunction,
   isNumber,
   isInteger,
@@ -50,7 +52,12 @@ export var toNICE = (obj, hOptions = {}) => {
       }
       break;
     case 'string':
-      return obj;
+      if (isEmpty(obj)) {
+        return escapeStr(obj);
+      } else {
+        return obj;
+      }
+      break;
     case 'number':
       if (Number.isNaN(obj)) {
         return '.NaN.';
@@ -81,6 +88,8 @@ export var toNICE = (obj, hOptions = {}) => {
       }
       if ((obj instanceof String) || (obj instanceof Number) || (obj instanceof RegExp)) {
         return obj.toString();
+      } else if (isArray(obj) && isEmpty(obj)) {
+        return '.[].';
       } else if (isArray(obj)) {
         lLines = [];
         for (j = 0, len = obj.length; j < len; j++) {
@@ -102,6 +111,8 @@ export var toNICE = (obj, hOptions = {}) => {
         } else {
           return ".Function.";
         }
+      } else if (isHash(obj) && isEmpty(obj)) {
+        return '.{}.';
       } else if (isHash(obj) || isClassInstance(obj)) {
         lLines = [];
         lKeys = Object.keys(obj);

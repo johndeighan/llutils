@@ -19,7 +19,7 @@ import {
 	readTextFile, barf, slurp, fileExt, withExt, isFile,
 	normalize, mkpath, fileDir,
 	} from '@jdeighan/llutils/fs'
-import {brew} from '@jdeighan/llutils/llcoffee'
+import {brew} from '@jdeighan/llutils/coffee'
 import {PLLFetcher} from '@jdeighan/llutils/fetcher'
 import {SectionMap} from '@jdeighan/llutils/section-map'
 import {getTracer} from '@jdeighan/llutils/tracer'
@@ -52,14 +52,16 @@ export getSource = (filePath) =>
 		}
 
 # ---------------------------------------------------------------------------
+# --- Only creates the parser
 
-export peggify = (code, hMetaData={}, filePath=undef) =>
+export peggify = (code, hMetaData={}) =>
 
 	assert isString(code), "code not a string: #{typeof code}"
 
 	# --- type determines which preprocessor to use, if any
+	#        e.g. 'coffee'
 	{type, debug, trace, allowedStartRules, include,
-		opDumper, byteCodeWriter, dumpAST,
+		opDumper, byteCodeWriter, dumpAST, filePath,
 		} = getOptions hMetaData, {
 		type: undef    # --- no preprocessing
 		debug: false
@@ -69,6 +71,7 @@ export peggify = (code, hMetaData={}, filePath=undef) =>
 		opDumper: undef
 		byteCodeWriter: undef
 		dumpAST: undef
+		filePath: undef
 		}
 
 	# --- debug can be set to 'preprocess' or 'allcode'
@@ -124,36 +127,45 @@ export peggify = (code, hMetaData={}, filePath=undef) =>
 		format: 'es'
 		trace
 		}
+
 	if opDumper
 		opDumper = hOptions.opDumper = new OpDumper()
+
 	if byteCodeWriter
 		byteCodeWriter = hOptions.byteCodeWriter = new ByteCodeWriter()
+
 	if dumpAST
 		hOptions.dumpAST = withExt(filePath, '.ast.txt')
+
 	try
 		if defined(filePath)
 			hOptions.grammarSource = filePath
 			hOptions.output = 'source-and-map'
 
 			sourceNode = peggy.generate(input, hOptions)
+
 			if opDumper
 				opDumper.writeTo(withExt(filePath, '.ops.txt'))
+
 			if byteCodeWriter
 				byteCodeWriter.writeTo(withExt(filePath, '.bytecodes.txt'))
-			{code, map} = sourceNode.toStringWithSourceMap()
-			assert isString(code), "code = #{OL(code)}"
+
+			{code: jsCode, map} = sourceNode.toStringWithSourceMap()
+			assert isString(jsCode), "jsCode = #{OL(jsCode)}"
 			sourceMap = map.toString()
 			assert isString(sourceMap), "sourceMap = #{OL(sourceMap)}"
 			return {
-				js: code
+				orgCode: code
+				js: jsCode
 				sourceMap: map.toString()
 				peggyCode
 				}
 		else
 			hOptions.output = 'source'
 			return {
-				js: peggy.generate(input, hOptions)
+				orgCode: code
 				peggyCode
+				js: peggy.generate(input, hOptions)
 				}
 	catch err
 		# --- If file was preprocessed, and text version hasn't

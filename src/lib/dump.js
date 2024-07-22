@@ -1,6 +1,4 @@
-// dump.coffee
-var hbar, ll, lr, ul, ur, vbar;
-
+  // dump.coffee
 import {
   undef,
   defined,
@@ -11,8 +9,8 @@ import {
   centered,
   toTAML,
   isString,
+  isEmpty,
   escapeBlock,
-  Block,
   assert,
   croak,
   stripCR,
@@ -22,26 +20,60 @@ import {
 } from '@jdeighan/llutils';
 
 import {
+  TextBlock,
+  TextBlockList
+} from '@jdeighan/llutils/text-block';
+
+import {
   toNICE
 } from '@jdeighan/llutils/to-nice';
 
+export var defValue = '.undef.';
+
+export var setDefValue = (str) => {
+  defValue = str;
+};
+
+export var defLabel = 'VALUE';
+
+export var setDefLabel = (str) => {
+  defLabel = str;
+};
+
+export var minWidth = undef;
+
+export var setMinWidth = (w) => {
+  return minWidth = w;
+};
+
 // ---------------------------------------------------------------------------
 export var DUMP = (item, label = undef, hOptions = {}) => {
-  var asArray, block, dynamic, echo, esc, format, j, k, len, len1, line, longStr, nocr, oneLine, ref, ref1, sortKeys, str, width;
+  var asArray, blocks, box, debug, echo, esc, format, hOpt, longStr, maxWidth, nocr, oneLine, sortKeys, str;
+  if (isString(item) && isEmpty(item)) {
+    item = defValue;
+  }
+  if (defined(label)) {
+    assert(isString(label), `not a string: ${OL(label)}`);
+    label = label.replaceAll('_', ' ');
+  } else {
+    label = defLabel;
+  }
   hOptions = getOptions(hOptions, {
     esc: false,
-    width: 50,
-    dynamic: true,
     oneLine: true,
+    minWidth: 40,
+    maxWidth: 78,
+    box: false,
     format: undef, // --- can be 'JSON', 'TAML', 'NICE'
-    sortKeys: undef,
+    sortKeys: true,
     echo: true,
     nocr: true,
-    asArray: false
+    asArray: false,
+    debug: false
   });
-  ({esc, width, dynamic, oneLine, format, sortKeys, echo, nocr, asArray} = hOptions);
-  if (defined(label)) {
-    label = label.replaceAll('_', ' ');
+  ({esc, oneLine, minWidth, maxWidth, box, format, sortKeys, echo, nocr, asArray, debug} = hOptions);
+  if (debug) {
+    console.dir({esc, oneLine, minWidth, maxWidth, box, format, sortKeys, echo, nocr, asArray, debug});
   }
   if (oneLine) {
     if (nocr && isString(item)) {
@@ -53,7 +85,7 @@ export var DUMP = (item, label = undef, hOptions = {}) => {
     } else {
       longStr = str;
     }
-    if (longStr.length <= width) {
+    if (longStr.length <= maxWidth) {
       if (echo) {
         console.log(longStr);
       }
@@ -62,124 +94,46 @@ export var DUMP = (item, label = undef, hOptions = {}) => {
       } else {
         return longStr;
       }
+    } else if (debug) {
+      console.log("Doesn't fit on one line");
     }
   }
-  // --- Create a Block object
-  block = new Block();
-  if (defined(format)) {
-    switch (format) {
-      case 'JSON':
-        block.add(JSON.stringify(item, undef, 3));
-        break;
-      case 'TAML':
-        block.add(toTAML(item));
-        break;
-      case 'NICE':
-        block.add(toNICE(item, {sortKeys}));
-        break;
-      default:
-        croak(`Bad format: ${OL(format)}`);
-    }
-  } else {
-    if (isString(item)) {
-      if (esc) {
-        ref = toArray(item);
-        for (j = 0, len = ref.length; j < len; j++) {
-          line = ref[j];
-          block.add(escapeStr(line));
-        }
-      } else {
-        ref1 = toArray(item);
-        for (k = 0, len1 = ref1.length; k < len1; k++) {
-          line = ref1[k];
-          block.add(line);
-        }
-      }
-    } else {
-      block.add(toNICE(item));
-    }
+  switch (format) {
+    case 'JSON':
+      item = JSONstringify(item, undef, 3);
+      break;
+    case 'TAML':
+      item = toTAML(item);
+      break;
+    case 'NICE':
+      item = toNICE(item, {sortKeys});
   }
-  if (dynamic) {
-    width = block.maxLen + 4;
+  if (!isString(item)) {
+    item = toNICE(item, {sortKeys});
   }
-  if (defined(format)) {
-    if (defined(label)) {
-      block.prepend(centered(`${label} (as ${format})`, width, 'char=-'));
-    } else {
-      block.prepend(centered(`(as ${format})`, width, 'char=-'));
-    }
-  } else {
-    if (defined(label)) {
-      block.prepend(centered(label, width, 'char=-'));
-    } else {
-      block.prepend('-'.repeat(width));
-    }
+  // --- Create a TextBlockList object
+  blocks = new TextBlockList({esc});
+  blocks.addBlock(label, item);
+  hOpt = {minWidth};
+  if (box) {
+    hOpt.format = 'box';
   }
-  block.add('-'.repeat(width));
+  if (echo) {
+    console.log(blocks.asString(hOpt));
+  }
   if (asArray) {
-    return block.lLines;
+    return blocks.asArray(hOpt);
   } else {
-    return block.getBlock();
+    return blocks.asString(hOpt);
   }
 };
 
 // ---------------------------------------------------------------------------
-ul = '┌';
-
-ur = '┐';
-
-ll = '└';
-
-lr = '┘';
-
-vbar = '│';
-
-hbar = '─';
-
-// ---------------------------------------------------------------------------
 export var BOX = (item, label = undef, hOptions = {}) => {
-  debugger;
-  var asArray, echo, i, j, lLines, lNewLines, len, line, numLines, width;
   hOptions = getOptions(hOptions, {
-    echo: true,
-    asArray: false,
-    width: 50
+    box: true
   });
-  ({echo, asArray, width} = hOptions);
-  hOptions = Object.assign({}, hOptions, {
-    echo: false,
-    oneLine: false,
-    asArray: true
-  });
-  lLines = DUMP(item, label, hOptions);
-  numLines = lLines.length;
-  lNewLines = (function() {
-    var j, len, results;
-    results = [];
-    for (i = j = 0, len = lLines.length; j < len; i = ++j) {
-      line = lLines[i];
-      if (i === 0) {
-        width = line.length;
-        results.push(ul + line.substring(0, line.length - 2).replaceAll('-', hbar) + ur);
-      } else if (i === numLines - 1) {
-        results.push(ll + line.substring(0, line.length - 2).replaceAll('-', hbar) + lr);
-      } else {
-        results.push(`${vbar} ${rpad(line, width - 4)} ${vbar}`);
-      }
-    }
-    return results;
-  })();
-  if (echo) {
-    for (j = 0, len = lNewLines.length; j < len; j++) {
-      line = lNewLines[j];
-      console.log(line);
-    }
-  }
-  if (asArray) {
-    return lNewLines;
-  } else {
-    return toBlock(lNewLines);
-  }
+  return DUMP(item, label, hOptions);
 };
 
 //# sourceMappingURL=dump.js.map

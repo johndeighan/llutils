@@ -5,15 +5,38 @@ include: src/lib/PLL.peggy
 GLOBAL
 
 	import {
-		undef, defined, notdefined,
-		getOptions, OL, hasKey, keys,
-		isEmpty, isString, isHash, isFunction,
+		undef, defined, notdefined, range,
+		getOptions, OL, hasKey, keys, isClassInstance,
+		isEmpty, isString, isArray, isHash, isFunction,
 		} from '@jdeighan/llutils'
-	import {DUMP} from '@jdeighan/llutils/dump'
 	import {getTracer} from '@jdeighan/llutils/tracer'
-	import {Context} from '@jdeighan/llutils/context'
+	import {ContextStack} from '@jdeighan/llutils/context-stack'
+	import {DUMP, BOX, setMinWidth} from '@jdeighan/llutils/dump'
 
-	context = undef
+	contextStack = undef
+	debug = false
+	warnOnly = false
+	dbg = (str) => if debug then console.log str
+	setMinWidth 40
+
+	# -----------------------------------------------------------------------
+
+	export extract = (obj, desc, hOptions={}) =>
+
+		debugger
+		hOptions = getOptions hOptions, {
+			tracer: 'none'
+			debug: false
+			lIgnoreSubs: []
+			}
+		hOptions.lIgnoreSubs.push 'INDENT','SEP','UNDENT'
+		dbg "DEBUG ON"
+		assert isHash(obj) || isClassInstance(),
+				"Not a hash or class instance: #{OL(obj)}"
+		assert isString(desc), "Not a string: #{OL(desc)}"
+		contextStack = new ContextStack(obj)
+		tracer = getTracer(hOptions.tracer, hOptions)
+		return peg$parse(desc, {tracer})
 
 	# -----------------------------------------------------------------------
 
@@ -26,23 +49,25 @@ GLOBAL
 	# -----------------------------------------------------------------------
 	# --- Apply selectors to context() to get an object
 
-	getObj = (lSelectors, optional) =>
+	getObj = (obj, lSelectors) =>
 
-		obj = context.current()
+		assert isHash(obj), "getObj: Not a hash: #{OL(obj)}"
 		for ident in lSelectors  # --- there's at least 1 selector
 			obj = obj[ident]
 			if notdefined(obj)
-				if optional
-					return undef
-				else
-					croak "Missing key #{OL(ident)}"
+				return undef
+
 		return obj
 
 	# -----------------------------------------------------------------------
 
 	croak = (errmsg) =>
 
-		throw new ExtractError(errmsg)
+		if warnOnly
+			console.log "ERROR: #{errmsg}"
+		else
+			# throw new ExtractError(errmsg)
+			throw new Error(errmsg)
 		return
 
 	# -----------------------------------------------------------------------
@@ -50,7 +75,20 @@ GLOBAL
 	assert = (cond, errmsg) =>
 
 		if ! cond
-			throw new ExtractError(errmsg)
+			if warnOnly
+				console.log "ERROR: #{errmsg}"
+			else
+				throw new ExtractError(errmsg)
+		return
+
+	# -----------------------------------------------------------------------
+
+	check = (obj, expect) =>
+
+		assert defined(obj), "obj is undef"
+		if defined(expect)
+			assert (obj == expect),
+					"Expected #{OL(expect)}, found #{OL(obj)}"
 		return
 
 	# -----------------------------------------------------------------------
@@ -58,30 +96,19 @@ GLOBAL
 
 	mergeKeys = (hObj, ...lMore) =>
 
-		assert isHash(hObj), "hObj not a hash: #{OL(hObj)}"
+		assert isHash(hObj), "merge into non-hash: #{OL(hObj)}"
 		for h in lMore
 			if isEmpty(h)
 				continue
 			assert isHash(h), "Not a hash: #{OL(h)}"
 			for key in keys(h)
-				assert !hasKey(hObj, key), "key #{key} already in hObj"
+				assert isString(key), "Not a string: #{OL(key)}"
+				assert !hasKey(hObj, key), "key #{OL(key)} already in hObj"
 				hObj[key] = h[key]
 		return hObj
 
-	# -----------------------------------------------------------------------
-
-	export extract = (obj, desc, hOptions={}) =>
-
-		debugger
-		{tracer} = getOptions hOptions, {
-			tracer: 'none'
-			}
-		assert isHash(obj), "Not a hash: #{OL(obj)}"
-		assert isString(desc), "Not a string: #{OL(desc)}"
-		context = new Context(obj)
-		return peg$parse(desc, {tracer: getTracer(tracer, desc)})
-
 # ===========================================================================
+# --- Always returns a hash
 
 data
 
@@ -92,67 +119,69 @@ data
 desc
 
 	result: expr
-			DO { context.add(result[1]) }
-			h: ( INDENT @data UNDENT) ?
-			DO { context.pop() }
+			DO { contextStack.add(result[1]) }
+			hData: ( INDENT @data UNDENT) ?
+			DO { contextStack.pop() }
 
-		return mergeKeys result[0] || {}, h
+		return mergeKeys(hData || {}, result[0])
 
-	'[' _ result: expr _ ']'
-			DO { context.add(result[1]) }
-			h: ( INDENT @data UNDENT) ?
-			DO { context.pop() }
+	result: listexpr
+			DO { contextStack.add(result[1]) }
+			hData: ( INDENT @data UNDENT) ?
+			DO { contextStack.pop() }
 
-		return mergeKeys result[0], h
+		return mergeKeys(hData || {}, result[0])
 
 expr
 
-	lParen: "("?
-			optional: ("?" _)?
+	dontSave: "!"?
+			optional: (_ "?")?
 			_ lSelectors: ident|1.., "."|
 			expect: (_ "=" _ @string)?
 			as: (_ "as" _ @ident)?
-			rParen: ")"?
 
 		# --- Returns [ <hash to merge>, <context to set> ]
 
-		# --- Returns [{}, undef] if key not found, but was optional
-		#                            or current context is undef
-		#     Returns [{}, obj]   if obj shouldn't be stored
-		#                            but is context for subexpressions
-		#     Returns [{name: obj}, obj]    if obj should be stored under name
-
 		assert ! (expect && as), "Can't use 'as' with expected value"
 
-		if context.isUndef()
-			return [{}, undef]
-
+		# --- set name
+		#     later, if obj not found, but is optional
+		#        set dontSave to true
 		name = as || lSelectors.at(-1)
 
-		# --- set store - if false, don't store
-		if defined(lParen, rParen)
-			store = false
+		curr = contextStack.current()
+		if (curr == undef)
+			return [{}, undef, name]
+
+		if isArray(curr)
+			lItems = []
+			for item in curr
+				obj = getObj(item, lSelectors)
+				if defined(obj)
+					check obj, expect
+					lItems.push obj
+			return [{[name]: lItems}, lItems, name]
 		else
-			assert notdefined(lParen, rParen), 'Mismatched parens'
-			store = notdefined(expect)
+			obj = getObj(curr, lSelectors)
+			if defined(obj)
+				check obj, expect
+				if expect || dontSave
+					return [{}, obj, name]
+				else
+					return [{[name]: obj}, obj, name]
+			else
+				if optional || dontSave
+					[{}, obj, name]
+				else
+					croak "Non-optional missing key #{OL(name)}"
 
-		obj = getObj(lSelectors, optional)
-		if notdefined(obj)
-			return [undef, undef]
+listexpr
 
-		# --- We now have a name, obj pair
+	'[' result: expr ']'
 
-		# --- If there's an expected value (always a string),
-		#     obj must exist and be that string
-
-		if defined(expect)
-			assert (obj == expect), "Expected #{OL(expect)}, found #{OL(obj)}"
-			return [{}, undef]
-
-		return [
-			if store then {[name]: obj} else {},
-			if isHash(obj) then obj else undef
-			]
+		[hData, lItems, name] = result
+		hData[name] = lItems
+		return [{[name]: lItems}, undef]
 
 ident
 

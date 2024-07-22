@@ -2,13 +2,37 @@
 
 import {
 	undef, defined, notdefined, getOptions, OL,
-	assert, gen2block,
+	assert, gen2block, isString,
 	} from '@jdeighan/llutils'
 import {indented, splitLine} from '@jdeighan/llutils/indent'
-import {barf, isFile, withExt} from '@jdeighan/llutils/fs'
-import {brew} from '@jdeighan/llutils/coffee'
+import {
+	barf, isFile, withExt, readTextFile,
+	} from '@jdeighan/llutils/fs'
+import {brew} from '@jdeighan/llutils/llcoffee'
 import {LineFetcher} from '@jdeighan/llutils/fetcher'
 import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
+
+# ---------------------------------------------------------------------------
+
+export bless = (code, hMetaData={}) ->
+
+	assert isString(code), "code: #{OL(code)}"
+	hMetaData.preprocess = cieloPreProcess
+	return brew code, hMetaData
+
+# ---------------------------------------------------------------------------
+
+export blessFile = (filePath) ->
+
+	assert isFile(filePath), "No such file: #{filePath}"
+	{hMetaData, reader} = readTextFile(filePath)
+	code = gen2block(reader)
+	{js, sourceMap, preprocCode} = bless code, hMetaData, {filePath}
+	if preprocCode
+		barf preprocCode, withExt(filePath, '.coffee.txt')
+	barf js, withExt(filePath, '.js')
+	barf sourceMap, withExt(filePath, '.js.map')
+	return {js, sourceMap}
 
 # ---------------------------------------------------------------------------
 
@@ -31,27 +55,5 @@ export cieloPreProcess = (code, hOptions) =>
 		str = replaceHereDocs(level, str, src)
 		lLines.push indented(str, level)
 	return lLines.join("\n")
-
-# ---------------------------------------------------------------------------
-
-export bless = (code, hMetaData={}, hOptions={}) ->
-
-	assert isString(code), "code: #{OL(code)}"
-	hOptions.preprocess = cieloPreProcess
-	return brew code, hMetaData, hOptions
-
-# ---------------------------------------------------------------------------
-
-export blessFile = (filePath) ->
-
-	assert isFile(filePath), "No such file: #{filePath}"
-	{hMetaData, reader} = readTextFile(filePath)
-	code = gen2block(reader)
-	{js, sourceMap} = bless code, hMetaData, {
-		filePath
-		}
-	barf js, withExt(filePath, '.js')
-	barf sourceMap, withExt(filePath, '.js.map')
-	return {js, sourceMap}
 
 # ---------------------------------------------------------------------------

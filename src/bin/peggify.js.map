@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "peggify.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\bin\\peggify.coffee"
+  ],
+  "names": [],
+  "mappings": "AAEmC;;;AAAA,IAAA,MAAA,EAAA,QAAA,EAAA,QAAA,EAAA,SAAA,EAAA,EAAA,EAAA,OAAA,EAAA;;AAEnC,OAAA;EAAQ,OAAR;EAAiB,MAAjB;CAAA,MAAA;;AACA,OAAA;EAAQ,aAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,YAAR;EAAsB,OAAtB;CAAA,MAAA;;AACA,OAAA;EAAQ,OAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,IAAR;CAAA,MAAA,yBANmC;;;;AAWnC,QAAA,GAAW,OAAO,CAAC,IAAI,CAAC,CAAD;;AAEvB,CAAA,CAAC,SAAD,EAAY,QAAZ,CAAA,GAAwB,YAAA,CAAa,QAAb,EAAuB,OAAvB,CAAxB;;AACA,IAAI,OAAO,CAAC,IAAI,CAAC,CAAD,CAAZ,KAAmB,OAAvB;EACC,SAAS,CAAC,KAAV,GAAkB,KADnB;;;AAGA,MAAA,GAAS,IAAI,aAAJ,CAAA;;AACT,MAAM,CAAC,QAAP,CAAgB,OAAA,CAAQ,QAAR,CAAhB,EAAmC,QAAnC;;AAEA,CAAA,CAAC,OAAD,EAAU,WAAV,EAAuB,EAAvB,CAAA,GAA6B,OAAA,CAAQ,QAAR,EAAkB,SAAlB,CAA7B;;AACA,MAAA,CAAQ,OAAA,KAAW,QAAnB,EAA8B,cAA9B;;AAEA,IAAG,OAAA,CAAQ,WAAR,CAAA,IAAwB,CAAC,WAAA,KAAe,OAAhB,CAA3B;EACC,MAAM,CAAC,QAAP,CAAgB,cAAhB,EAAgC,WAAhC,EADD;;;AAEA,MAAM,CAAC,QAAP,CAAgB,YAAhB,EAA8B,EAA9B;;AACA,OAAO,CAAC,GAAR,CAAY,MAAM,CAAC,QAAP,CAAA,CAAZ",
+  "sourcesContent": [
+    "# peggify.coffee\r\n#\r\n# --- designed to be a TextPad tool\r\n\r\nimport {defined, assert} from '@jdeighan/llutils'\r\nimport {TextBlockList} from '@jdeighan/llutils/text-block'\r\nimport {readTextFile, relpath} from '@jdeighan/llutils/fs'\r\nimport {peggify} from '@jdeighan/llutils/peggy'\r\nimport {DUMP} from '@jdeighan/llutils/dump'\r\n\r\n# ---------------------------------------------------------------------------\r\n# Usage:   node src/bin/peggify.js  *.peggy\r\n\r\nfilePath = process.argv[2]\r\n\r\n{hMetaData, contents} = readTextFile filePath, 'eager'\r\nif (process.argv[3] == 'debug')\r\n\thMetaData.debug = true\r\n\r\nblocks = new TextBlockList()\r\nblocks.addBlock relpath(filePath), contents\r\n\r\n{orgCode, preprocCode, js} = peggify contents, hMetaData\r\nassert (orgCode == contents), \"Bad org code\"\r\n\r\nif defined(preprocCode) && (preprocCode != orgCode)\r\n\tblocks.addBlock 'PreProcessed', preprocCode\r\nblocks.addBlock 'JavaScript', js\r\nconsole.log blocks.asString()\r\n"
+  ]
+}

@@ -97,6 +97,7 @@ like parsePath('./test/fs/file.test.txt'), {
 	equal hMetaData, {
 		fName: 'John'
 		lName: 'Deighan'
+		filePath: './test/fs/meta.txt'
 		}
 	equal typeof reader, 'function'
 	equal nLines, 4

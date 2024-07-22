@@ -62,7 +62,7 @@ import {
 
 import {
   brew
-} from '@jdeighan/llutils/llcoffee';
+} from '@jdeighan/llutils/coffee';
 
 import {
   PLLFetcher
@@ -108,11 +108,13 @@ export var getSource = (filePath) => {
 };
 
 // ---------------------------------------------------------------------------
-export var peggify = (code, hMetaData = {}, filePath = undef) => {
-  var allCode, allowedStartRules, byteCodeWriter, debug, debugAllCode, debugPreProcess, dumpAST, err, hMD, hOptions, i, include, input, j, len, len1, map, opDumper, path, peggyCode, source, sourceMap, sourceNode, text, trace, type;
+// --- Only creates the parser
+export var peggify = (code, hMetaData = {}) => {
+  var allCode, allowedStartRules, byteCodeWriter, debug, debugAllCode, debugPreProcess, dumpAST, err, filePath, hMD, hOptions, i, include, input, j, jsCode, len, len1, map, opDumper, path, peggyCode, source, sourceMap, sourceNode, text, trace, type;
   assert(isString(code), `code not a string: ${typeof code}`);
   // --- type determines which preprocessor to use, if any
-  ({type, debug, trace, allowedStartRules, include, opDumper, byteCodeWriter, dumpAST} = getOptions(hMetaData, {
+  //        e.g. 'coffee'
+  ({type, debug, trace, allowedStartRules, include, opDumper, byteCodeWriter, dumpAST, filePath} = getOptions(hMetaData, {
     type: undef, // --- no preprocessing
     debug: false,
     trace: true,
@@ -120,7 +122,8 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
     include: undef,
     opDumper: undef,
     byteCodeWriter: undef,
-    dumpAST: undef
+    dumpAST: undef,
+    filePath: undef
   }));
   // --- debug can be set to 'preprocess' or 'allcode'
   debugPreProcess = debugAllCode = false;
@@ -208,20 +211,25 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
       if (byteCodeWriter) {
         byteCodeWriter.writeTo(withExt(filePath, '.bytecodes.txt'));
       }
-      ({code, map} = sourceNode.toStringWithSourceMap());
-      assert(isString(code), `code = ${OL(code)}`);
+      ({
+        code: jsCode,
+        map
+      } = sourceNode.toStringWithSourceMap());
+      assert(isString(jsCode), `jsCode = ${OL(jsCode)}`);
       sourceMap = map.toString();
       assert(isString(sourceMap), `sourceMap = ${OL(sourceMap)}`);
       return {
-        js: code,
+        orgCode: code,
+        js: jsCode,
         sourceMap: map.toString(),
         peggyCode
       };
     } else {
       hOptions.output = 'source';
       return {
-        js: peggy.generate(input, hOptions),
-        peggyCode
+        orgCode: code,
+        peggyCode,
+        js: peggy.generate(input, hOptions)
       };
     }
   } catch (error) {

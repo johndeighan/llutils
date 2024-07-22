@@ -1,30 +1,87 @@
 # tracer.coffee
 
 import {
-	undef, defined, notdefined, pass, OL, escapeStr, keys,
-	assert, isString, isArray, isHash, isEmpty, getOptions,
-	lpad, rpad, zpad, words,
+	undef, defined, notdefined, pass, OL, escapeStr,
+	assert, croak, isString, isArray, isHash, isEmpty,
+	lpad, rpad, zpad, words, keys, hasKey, getOptions,
 	} from '@jdeighan/llutils'
 import {TextTable} from '@jdeighan/llutils/text-table'
 
 # ---------------------------------------------------------------------------
 
-export class NullTracer
+export class BaseTracer
 
-	constructor: (@posType='offset') ->
+	constructor: (hOptions={}) ->
+
+		h = getOptions hOptions, {
+			posType: 'linecol'
+			lIgnore: ['_']
+			lIgnoreSubs: []
+			}
+		@hOptions = h
+		@posType = h.posType
+		@lIgnoreSubs = h.lIgnoreSubs
+		@lIgnore = h.lIgnore
+		for rule in @lIgnore
+			if !@lIgnoreSubs.includes(rule)
+				@lIgnoreSubs.push rule
+		@lStack = []     # stack of rule names
+
+	# ..........................................................
+
+	traceIt: (hInfo) ->
+
+		{type, rule} = hInfo
+		[category, action] = type.split('.')
+
+		# --- NOTE: Any rule name in @lIgnore
+		#           will also be in @lIgnoreSubs
+
+		if @lIgnore.includes(rule)
+			if (category == 'rule')
+				return false
+
+		if (category == 'rule') && \
+				((action == 'match') || (action == 'fail'))
+			for rule,i in @lStack
+				if @lIgnoreSubs.includes(rule) && (i != @lStack.length - 1)
+					return false
+		else
+			for rule in @lStack
+				if @lIgnoreSubs.includes(rule)
+					return false
+		return true
 
 	# ..........................................................
 
 	destroy: () ->
 
+		return
+
+	# ..........................................................
+
+	adjustStack: (hInfo) ->
+
+		{type, rule} = hInfo
+		switch type
+			when 'rule.enter'
+				@lStack.push rule
+			when 'rule.fail', 'rule.match'
+				@lStack.pop()
+		return
+
 	# ..........................................................
 
 	trace: (hInfo) ->
 
+		return
+
 	# ..........................................................
 
-	posStr: (location) ->
+	posStr: (location, posType=undef) ->
 
+		if notdefined(posType)
+			posType = @posType
 		if notdefined(location) || !isHash(location)
 			return rpad('unknown', 12)
 		{start: s, end: e} = location
@@ -34,6 +91,8 @@ export class NullTracer
 		el = zpad(e.line)
 		ec = zpad(e.column)
 		eo = zpad(e.offset)
+		if (sl == 1) && (el == 1)
+			return posStr(location, 'offset')
 
 		switch @posType
 			when 'linecol'
@@ -54,19 +113,20 @@ export class NullTracer
 
 # ---------------------------------------------------------------------------
 
-export class RawTracer extends NullTracer
+export class RawTracer extends BaseTracer
 
 	trace: (hInfo) ->
 
+		@adjustStack(hInfo)
 		console.log JSON.stringify(hInfo, null, 3)
 
 # ---------------------------------------------------------------------------
 
-export class DebugTracer extends NullTracer
+export class DebugTracer extends BaseTracer
 
-	constructor: () ->
+	constructor: (hOptions={}) ->
 
-		super()
+		super(hOptions)
 		@tt = new TextTable('l l l l l')
 		@tt.fullsep()
 		@tt.labels words('type rule result details position')
@@ -74,6 +134,7 @@ export class DebugTracer extends NullTracer
 
 	trace: (hInfo) ->
 
+		@adjustStack(hInfo)
 		{type, rule, result, details, location} = hInfo
 		@tt.data [
 			type,
@@ -90,24 +151,12 @@ export class DebugTracer extends NullTracer
 
 # ---------------------------------------------------------------------------
 
-export class AdvancedTracer extends NullTracer
+export class AdvancedTracer extends BaseTracer
 
-	constructor: (hOptions={}) ->
-
-		super()
-		{ignore, posType} = getOptions hOptions, {
-			ignore: ['_']
-			posType: 'offset'
-			}
-		@lIgnore = ignore
-		@posType = posType
-		@level = 0
-
-	# ..........................................................
-
-	traceStr: (hInfo) ->
+	traceStr: (hInfo, level=0) ->
 
 		{type, rule, location, result, details} = hInfo
+
 		locStr = @posStr(location)
 		startPos = location?.start?.offset
 		endPos = location?.end?.offset
@@ -118,16 +167,15 @@ export class AdvancedTracer extends NullTracer
 			when 'enter'
 
 				assert (obj == 'rule'), "obj=#{obj}, act=#{action}"
-				pre = "│  ".repeat(@level)
+				pre = "│  ".repeat(level)
 				return "#{pre}? #{rule}"
 
 			when 'match'
 
 				if (obj == 'rule')
-					count = if (@level==0) then 0 else @level-1
-					pre = "│  ".repeat(count) + "└─>"
+					pre = "│  ".repeat(level-1) + "└─>"
 				else
-					pre = "│  ".repeat(@level)
+					pre = "│  ".repeat(level)
 
 				if defined(result)
 					if defined(endPos)
@@ -142,13 +190,14 @@ export class AdvancedTracer extends NullTracer
 
 			when 'fail'
 
-				pre = "│  ".repeat(@level-1) + "x  "
 				if (obj == 'rule')
+					pre = "│  ".repeat(level-1) + "└─> FAIL"
 					if defined(location)
-						return "#{pre} (at #{locStr})"
+						return " #{pre} (at #{locStr})"
 					else
-						return "#{pre}".trim()
+						return " #{pre}".trim()
 				else
+					pre = "│  ".repeat(level-1) + "x  "
 					if defined(location)
 						return "#{pre} #{obj} #{OL(details)} (at #{locStr})"
 					else
@@ -163,24 +212,16 @@ export class AdvancedTracer extends NullTracer
 
 	trace: (hInfo) ->
 
-		# --- DEBUG console.dir hInfo
+		debugger
+		if @traceIt(hInfo)
+			result = @traceStr(hInfo, @lStack.length)
+			if isString(result)
+				console.log result
+			else if isArray(result)
+				for str in result
+					console.log str
 
-		# --- ignore some rules
-		if @lIgnore.includes(hInfo.rule)
-			return
-
-		result = @traceStr(hInfo)
-		if isString(result)
-			console.log result
-		else if isArray(result)
-			for str in result
-				console.log str
-
-		switch hInfo.type
-			when 'rule.enter'
-				@level += 1
-			when 'rule.fail','rule.match'
-				@level -= 1;
+		@adjustStack(hInfo)
 		return
 
 # ---------------------------------------------------------------------------
@@ -190,10 +231,8 @@ export class DetailedTracer extends AdvancedTracer
 	constructor: (@input, hOptions={}) ->
 
 		super(hOptions)
-		{hVars} = getOptions hOptions, {
-			hVars: {}
-			}
-		@hVars = hOptions.hVars
+		@input = @hOptions.input
+		@hVars = @hOptions.hVars
 
 	# ..........................................................
 
@@ -213,7 +252,7 @@ export class DetailedTracer extends AdvancedTracer
 
 	# ..........................................................
 
-	traceStr: (hInfo) ->
+	traceStr: (hInfo, level) ->
 
 		str = super hInfo
 		if (hInfo.type != 'rule.fail') || isEmpty(@input)
@@ -239,23 +278,27 @@ export class DetailedTracer extends AdvancedTracer
 #        - an object with a function property named 'trace'
 #        - a function
 
-export getTracer = (tracer='advanced', input, hVars={}) =>
+export getTracer = (tracer='advanced', hOptions={}) =>
+
+	hOptions = getOptions hOptions, {
+		input: undef
+		lIgnore: ['_']
+		lIgnoreSubs: []
+		hVars: {}
+		}
 
 	switch (typeof tracer)
 		when 'undefined'
-			return new NullTracer()
+			return new BaseTracer(hOptions)
 		when 'object'
-			if hasKey(tracer, trace)
+			if defined(tracer)
 				return tracer
-			else if (tracer == null)
-				return new NullTracer()
 			else
-				croak "Invalid tracer object, no 'trace' method"
+				return new BaseTracer(hOptions)
 		when 'function'
 			return {trace: tracer}
 		when 'string'
 			[tracer, option] = tracer.split('/')
-			hOptions = {hVars}
 			if option
 				hOptions.posType = option
 			switch tracer
@@ -266,8 +309,8 @@ export getTracer = (tracer='advanced', input, hVars={}) =>
 				when 'advanced'
 					return new AdvancedTracer(hOptions)
 				when 'detailed'
-					return new DetailedTracer(input, hOptions)
+					return new DetailedTracer(hOptions)
 				when 'peggy'
 					return undef
 				else
-					return new NullTracer()
+					return new BaseTracer(hOptions)

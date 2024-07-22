@@ -20,31 +20,30 @@ Object.assign(global, lib2);
     type: 'rule.enter',
     rule: 'start'
   }), `? start`);
-  tracer.level = 1;
   equal(tracer.traceStr({
     type: 'rule.fail'
-  }), `x`);
+  }, 1), `└─> FAIL`);
   equal(tracer.traceStr({
     type: 'rule.match'
-  }), `└─> YES`);
+  }, 1), `└─> YES`);
   equal(tracer.traceStr({
     type: 'rule.match',
     result: 'IDENT'
-  }), `└─> "IDENT"`);
+  }, 1), `└─> "IDENT"`);
   equal(tracer.traceStr({
     type: 'rule.enter',
     rule: 'start'
-  }), `│  ? start`);
+  }, 1), `│  ? start`);
   equal(tracer.traceStr({
-    type: 'rule.fail'
-  }), `x`);
+    type: 'string.fail'
+  }, 1), `x   string`);
   equal(tracer.traceStr({
     type: 'rule.match'
-  }), `└─> YES`);
+  }, 1), `└─> YES`);
   return equal(tracer.traceStr({
     type: 'rule.match',
     result: 'IDENT'
-  }), `└─> "IDENT"`);
+  }, 1), `└─> "IDENT"`);
 })();
 
 //# sourceMappingURL=tracer.test.js.map

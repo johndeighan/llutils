@@ -1,0 +1,39 @@
+{{
+	var parse__data__1, parse__desc__1, parse__ident__1;
+
+	import {
+	  undef
+	} from '@jdeighan/llutils';
+
+	// --------------------------------------------------------------
+	parse__data__1 = (lDesc) => {
+	  var result;
+	  return result = mergeKeys({}, ...lDesc);
+	};
+
+	// --------------------------------------------------------------
+	parse__desc__1 = (lSelectors) => {
+	  var obj;
+	  return obj = getObj({}, lSelectors);
+	};
+
+	// --------------------------------------------------------------
+	parse__ident__1 = (str) => {
+	  return str;
+	};
+}}
+
+data
+
+	= lDesc: desc |1.., ','|
+		{ return parse__data__1(lDesc); }
+
+desc
+
+	= lSelectors: ident |1.., "."|
+		{ return parse__desc__1(lSelectors); }
+
+ident
+
+	= str: $ ([A-Za-z_][A-Za-z0-9_]*)
+		{ return parse__ident__1(str); }

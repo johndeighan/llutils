@@ -6,7 +6,8 @@ import {
   getOptions,
   OL,
   assert,
-  gen2block
+  gen2block,
+  isString
 } from '@jdeighan/llutils';
 
 import {
@@ -17,12 +18,13 @@ import {
 import {
   barf,
   isFile,
-  withExt
+  withExt,
+  readTextFile
 } from '@jdeighan/llutils/fs';
 
 import {
   brew
-} from '@jdeighan/llutils/coffee';
+} from '@jdeighan/llutils/llcoffee';
 
 import {
   LineFetcher
@@ -31,6 +33,28 @@ import {
 import {
   replaceHereDocs
 } from '@jdeighan/llutils/heredoc';
+
+// ---------------------------------------------------------------------------
+export var bless = function(code, hMetaData = {}) {
+  assert(isString(code), `code: ${OL(code)}`);
+  hMetaData.preprocess = cieloPreProcess;
+  return brew(code, hMetaData);
+};
+
+// ---------------------------------------------------------------------------
+export var blessFile = function(filePath) {
+  var code, hMetaData, js, preprocCode, reader, sourceMap;
+  assert(isFile(filePath), `No such file: ${filePath}`);
+  ({hMetaData, reader} = readTextFile(filePath));
+  code = gen2block(reader);
+  ({js, sourceMap, preprocCode} = bless(code, hMetaData, {filePath}));
+  if (preprocCode) {
+    barf(preprocCode, withExt(filePath, '.coffee.txt'));
+  }
+  barf(js, withExt(filePath, '.js'));
+  barf(sourceMap, withExt(filePath, '.js.map'));
+  return {js, sourceMap};
+};
 
 // ---------------------------------------------------------------------------
 export var cieloPreProcess = (code, hOptions) => {
@@ -55,25 +79,6 @@ export var cieloPreProcess = (code, hOptions) => {
     lLines.push(indented(str, level));
   }
   return lLines.join("\n");
-};
-
-// ---------------------------------------------------------------------------
-export var bless = function(code, hMetaData = {}, hOptions = {}) {
-  assert(isString(code), `code: ${OL(code)}`);
-  hOptions.preprocess = cieloPreProcess;
-  return brew(code, hMetaData, hOptions);
-};
-
-// ---------------------------------------------------------------------------
-export var blessFile = function(filePath) {
-  var code, hMetaData, js, reader, sourceMap;
-  assert(isFile(filePath), `No such file: ${filePath}`);
-  ({hMetaData, reader} = readTextFile(filePath));
-  code = gen2block(reader);
-  ({js, sourceMap} = bless(code, hMetaData, {filePath}));
-  barf(js, withExt(filePath, '.js'));
-  barf(sourceMap, withExt(filePath, '.js.map'));
-  return {js, sourceMap};
 };
 
 // ---------------------------------------------------------------------------

@@ -146,7 +146,7 @@ export var ASTWalker = class ASTWalker extends NodeWalker {
     switch (type) {
       case 'ImportDeclaration':
         ({src, specifiers} = extract(hNode, `importKind="value"
-(source)
+!source
 	type="StringLiteral"
 	value as src
 specifiers`));

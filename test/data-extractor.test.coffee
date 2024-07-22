@@ -1,4 +1,4 @@
-# temp.test.coffee - from data-extractor.test.coffee
+# data-extractor.test.coffee
 
 import {
 	undef, fromTAML,
@@ -50,7 +50,7 @@ Object.assign(global, lib2)
 	# --- enclose in parens to not extract
 	equal extract(h, """
 		type
-		(left)
+		! left
 		right
 		"""),
 		{
@@ -69,7 +69,7 @@ Object.assign(global, lib2)
 	succeeds () => extract(h, """
 		type
 		left
-		(type)
+		! type
 		""")
 
 	# --- Keys you name must exist
@@ -136,10 +136,10 @@ Object.assign(global, lib2)
 	# --- Extract sub-keys
 	equal extract(h, """
 		type="Assignment"
-		(position)
+		! position
 			start
 			end
-			(source)
+			! source
 				file
 		"""),
 		{
@@ -290,7 +290,7 @@ Object.assign(global, lib2)
 	hResult = extract(h, """
 		type="ExportNamedDeclaration"
 		exportKind="value"
-		(declaration)
+		! declaration
 			type="AssignmentExpression"
 			left.type="Identifier"
 			left.name
@@ -318,7 +318,7 @@ Object.assign(global, lib2)
 	result = extract(hAST, """
 		type="program"
 		name
-		(body)
+		! body
 			type as bodyType
 			cond
 		""")
@@ -362,7 +362,7 @@ Object.assign(global, lib2)
 	result = extract(hAST, """
 		type="program"
 		name
-		(?body)
+		! ?body
 			type as bodyType
 			cond
 		""")
@@ -392,7 +392,7 @@ Object.assign(global, lib2)
 	result = extract(hAST, """
 		type="program"
 		name
-		(?body)
+		! ?body
 			type as bodyType
 			cond
 		""")
@@ -403,3 +403,91 @@ Object.assign(global, lib2)
 		cond: 'x==2'
 		}
 	)()
+
+# ---------------------------------------------------------------------------
+
+(() =>
+	hAST = {
+		type: 'program'
+		name: 'John'
+		body: [
+			{
+				type: 'if'
+				cond: 'x==2'
+				body: [{type: 'assign', left: 'x', right: 1}]
+				}
+			{
+				type: 'then'
+				body: [{type: 'assign', left: 'y', right: 2}]
+				}
+			{
+				type: 'else'
+				cond: 'x==2'
+				body: [{type: 'assign', left: 'z', right: 3}]
+				}
+			]
+		}
+
+	result = extract(hAST, """
+		type = "program"
+		name
+		body
+		""")
+
+	equal result, {
+		name: 'John'
+		body: [
+			{
+				type: 'if'
+				cond: 'x==2'
+				body: [{type: 'assign', left: 'x', right: 1}]
+				}
+			{
+				type: 'then'
+				body: [{type: 'assign', left: 'y', right: 2}]
+				}
+			{
+				type: 'else'
+				cond: 'x==2'
+				body: [{type: 'assign', left: 'z', right: 3}]
+				}
+			]
+		}
+	)()
+
+# ---------------------------------------------------------------------------
+
+ds = fromTAML("""
+	---
+	fName: John
+	aka:
+		-
+			id: 1
+			alias: JD
+		-
+			id: 2
+			alias: Deighan
+	""")
+
+equal extract(ds, """
+	fName
+	?body
+		type
+	"""), {fName: 'John'}
+
+equal extract(ds, """
+	fName
+	[! aka]
+		id
+		alias
+	"""), fromTAML("""
+	---
+	fName: John
+	aka:
+		-
+			id: 1
+			alias: JD
+		-
+			id: 2
+			alias: Deighan
+	""")

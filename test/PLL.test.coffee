@@ -1,13 +1,13 @@
 # PLL.test.coffee
 
 import {undef, fromTAML} from '@jdeighan/llutils'
-import {getTracer, NullTracer} from '@jdeighan/llutils/tracer'
+import {getTracer, BaseTracer} from '@jdeighan/llutils/tracer'
 import {parse} from './PLL/tree.js'
 import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 u.transformValue = (block) =>
-	return parse block, {tracer: new NullTracer()}
+	return parse block, {tracer: new BaseTracer()}
 
 u.transformExpected = (block) =>
 	return fromTAML block

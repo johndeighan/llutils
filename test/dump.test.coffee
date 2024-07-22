@@ -1,6 +1,6 @@
 # dump.test.coffee
 
-import {undef} from '@jdeighan/llutils'
+import {undef, tabify} from '@jdeighan/llutils'
 import * as lib from '@jdeighan/llutils/dump'
 Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'
@@ -15,15 +15,62 @@ Object.assign(global, lib2)
 		b: 'def'
 		c: undef
 		d: (x) => return 42
-		}, 'STR', 'width=11 !echo'
+		}, 'STR', '!echo'
+
+	equal str, 'STR = {"a":1,"b":"def","c":«undef»,"d":«Function d»}'
+	)()
+
+(() =>
+	str = DUMP {
+		a: 1
+		b: 'def'
+		c: undef
+		d: (x) => return 42
+		}, 'STR', '!oneLine !echo'
 
 	equal str, """
-		------  STR  ------
+		----------------  STR  -----------------
 		a: 1
 		b: def
 		c: .undef.
 		d: .Function d.
-		-------------------
+		----------------------------------------
+		"""
+	)()
+
+(() =>
+	str = DUMP {
+		a: 1
+		b: 'def'
+		c: undef
+		d: (x) => return 42
+		}, 'STR', '!oneLine !echo'
+
+	equal str, """
+		----------------  STR  -----------------
+		a: 1
+		b: def
+		c: .undef.
+		d: .Function d.
+		----------------------------------------
+		"""
+	)()
+
+(() =>
+	str = DUMP {
+		a: 1
+		b: 'def'
+		c: undef
+		d: (x) => return 42
+		}, 'STR', '!oneLine !echo'
+
+	equal str, """
+		----------------  STR  -----------------
+		a: 1
+		b: def
+		c: .undef.
+		d: .Function d.
+		----------------------------------------
 		"""
 	)()
 
@@ -43,10 +90,10 @@ Object.assign(global, lib2)
 			d: undef
 			}
 		d: (x) => return 42
-		}, 'STR', '!echo'
+		}, 'STR', '!oneLine !echo !untabify'
 
-	equal str, """
-		------  STR  ------
+	equal tabify(str), """
+		----------------  STR  -----------------
 		a: 1
 		b:
 			- def
@@ -59,7 +106,7 @@ Object.assign(global, lib2)
 			c: abc
 			d: .undef.
 		d: .Function d.
-		-------------------
+		----------------------------------------
 		"""
 	)()
 
@@ -69,15 +116,14 @@ Object.assign(global, lib2)
 		b: 'def'
 		c: undef
 		d: (x) => return 42
-		}, 'STR', 'width=11 !echo'
+		}, 'STR', '!oneLine !echo'
 
 	equal str, """
-		┌──────  STR  ────┐
-		│ a: 1            │
-		│ b: def          │
-		│ c: .undef.      │
-		│ d: .Function d. │
-		└─────────────────┘
+		┌─────────────────  STR  ──────────────────┐
+		│ a: 1                                     │
+		│ b: def                                   │
+		│ c: .undef.                               │
+		│ d: .Function d.                          │
+		└──────────────────────────────────────────┘
 		"""
 	)()
-

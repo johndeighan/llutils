@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "context-stack.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\lib\\context-stack.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAsB;AAEtB,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;EAC6B,EAD7B;EACiC,OADjC;EAC0C,MAD1C;EAEC,MAFD;EAES,KAFT;CAAA,MAAA,oBAFsB;;;AAStB,OAAA,IAAa,eAAN,MAAA,aAAA;EAEN,WAAa,CAAC,GAAD,CAAA;IAEZ,IAAC,CAAA,MAAD,GAAU,CAAC,GAAD;EAFE,CAAd;;;EAMC,OAAS,CAAA,CAAA;AAER,WAAO,IAAC,CAAA,MAAM,CAAC,EAAR,CAAW,CAAC,CAAZ;EAFC,CANV;;;EAYC,WAAa,CAAA,CAAA;AAEd,QAAA;IAAE,IAAA,GAAO,IAAC,CAAA,OAAD,CAAA;IACP,IAAI,IAAA,KAAQ,KAAZ;AACC,aAAO,QADR;KAAA,MAEK,IAAG,MAAA,CAAO,IAAP,CAAH;AACJ,aAAO,OADH;KAAA,MAEA,IAAG,OAAA,CAAQ,IAAR,CAAH;AACJ,aAAO,QADH;KAAA,MAAA;aAGJ,KAAA,CAAM,CAAA,qBAAA,CAAA,CAAwB,EAAA,CAAG,IAAH,CAAxB,CAAA,CAAN,EAHI;;EAPO,CAZd;;;EA0BC,GAAK,CAAC,GAAD,CAAA;IAEJ,IAAC,CAAA,MAAM,CAAC,IAAR,CAAa,GAAb;EAFI,CA1BN;;;EAiCC,GAAK,CAAA,CAAA;AAEN,QAAA;IAAE,MAAA,GAAS,IAAC,CAAA,MAAM,CAAC,GAAR,CAAA;IACT,MAAA,CAAQ,IAAC,CAAA,MAAM,CAAC,MAAR,IAAkB,CAA1B,EAA8B,qBAA9B;AACA,WAAO;EAJH;;AAnCC",
+  "sourcesContent": [
+    "# context-stack.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined, OL, isArray, isHash,\r\n\tassert, croak,\r\n\t} from '@jdeighan/llutils'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport class ContextStack\r\n\r\n\tconstructor: (obj) ->\r\n\r\n\t\t@lStack = [obj]\r\n\r\n\t# ..........................................................\r\n\r\n\tcurrent: () ->\r\n\r\n\t\treturn @lStack.at(-1)\r\n\r\n\t# ..........................................................\r\n\r\n\tcurrentType: () ->\r\n\r\n\t\tcurr = @current()\r\n\t\tif (curr == undef)\r\n\t\t\treturn 'undef'\r\n\t\telse if isHash(curr)\r\n\t\t\treturn 'hash'\r\n\t\telse if isArray(curr)\r\n\t\t\treturn 'array'\r\n\t\telse\r\n\t\t\tcroak \"Bad current context: #{OL(curr)}\"\r\n\r\n\t# ..........................................................\r\n\r\n\tadd: (obj) ->\r\n\r\n\t\t@lStack.push obj\r\n\t\treturn\r\n\r\n\t# ..........................................................\r\n\r\n\tpop: () ->\r\n\r\n\t\tresult = @lStack.pop()\r\n\t\tassert (@lStack.length >= 1), \"Empty context stack\"\r\n\t\treturn result\r\n"
+  ]
+}

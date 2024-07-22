@@ -96,7 +96,8 @@ like(parsePath('./test/fs/file.test.txt'), {
   iter = reader();
   equal(hMetaData, {
     fName: 'John',
-    lName: 'Deighan'
+    lName: 'Deighan',
+    filePath: './test/fs/meta.txt'
   });
   equal(typeof reader, 'function');
   equal(nLines, 4);

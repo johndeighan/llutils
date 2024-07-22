@@ -136,7 +136,7 @@ export class ASTWalker extends NodeWalker
 			when 'ImportDeclaration'
 				{src, specifiers} = extract(hNode, """
 					importKind="value"
-					(source)
+					!source
 						type="StringLiteral"
 						value as src
 					specifiers

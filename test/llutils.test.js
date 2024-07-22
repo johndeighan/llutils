@@ -972,19 +972,4 @@ equal(matchPos("(miss()ing", 5), 6);
   return equal(splitStr('   DO   ', splitter), ['DO']);
 })();
 
-// ---------------------------------------------------------------------------
-//symbol new Block()
-(() => {
-  var block;
-  block = new Block();
-  block.add('abc');
-  block.add('defg');
-  block.prepend('xyz');
-  equal(block.maxLen, 4);
-  equal(block.lLines, ['xyz', 'abc', 'defg']);
-  return equal(block.getBlock(), `xyz
-abc
-defg`);
-})();
-
 //# sourceMappingURL=llutils.test.js.map

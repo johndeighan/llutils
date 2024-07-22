@@ -1,13 +1,13 @@
 {
   "version": 3,
-  "file": "test1.js",
-  "sourceRoot": "..\\..\\",
+  "file": "",
+  "sourceRoot": "",
   "sources": [
-    "test\\coffee\\test1.coffee"
+    "./test/coffee/test1.coffee"
   ],
   "names": [],
   "mappings": "AAAA,IAAA;;AAAA,CAAA,GAAI",
   "sourcesContent": [
-    "v = 5\r\n"
+    "v = 5"
   ]
 }

@@ -2,33 +2,58 @@
 
 import {
 	undef, defined, notdefined, getOptions, OL, log,
-	centered, toTAML, isString, escapeBlock, Block,
+	centered, toTAML, isString, isEmpty, escapeBlock,
 	assert, croak, stripCR, toArray, toBlock, rpad,
 	} from '@jdeighan/llutils'
+import {
+	TextBlock, TextBlockList,
+	} from '@jdeighan/llutils/text-block'
 import {toNICE} from '@jdeighan/llutils/to-nice'
+
+export defValue = '.undef.'
+export setDefValue = (str) => defValue = str; return
+
+export defLabel = 'VALUE'
+export setDefLabel = (str) => defLabel = str; return
+
+export minWidth = undef
+export setMinWidth = (w) => minWidth = w
 
 # ---------------------------------------------------------------------------
 
 export DUMP = (item, label=undef, hOptions={}) =>
 
+	if isString(item) && isEmpty(item)
+		item = defValue
+
+	if defined(label)
+		assert isString(label), "not a string: #{OL(label)}"
+		label = label.replaceAll('_',' ')
+	else
+		label = defLabel
+
 	hOptions = getOptions hOptions, {
 		esc: false
-		width: 50
-		dynamic: true
 		oneLine: true
+		minWidth: 40
+		maxWidth: 78
+		box: false
 		format: undef    # --- can be 'JSON', 'TAML', 'NICE'
-		sortKeys: undef
+		sortKeys: true
 		echo: true
 		nocr: true
 		asArray: false
+		debug: false
 		}
 
-	{esc, width, dynamic, oneLine, format,
-		sortKeys, echo, nocr, asArray
+	{esc, oneLine, minWidth, maxWidth, box, format,
+		sortKeys, echo, nocr, asArray, debug,
 		} = hOptions
 
-	if defined(label)
-		label = label.replaceAll('_',' ')
+	if debug
+		console.dir {esc, oneLine, minWidth, maxWidth,
+				box, format,
+				sortKeys, echo, nocr, asArray, debug}
 
 	if oneLine
 		if nocr && isString(item)
@@ -38,101 +63,47 @@ export DUMP = (item, label=undef, hOptions={}) =>
 			longStr = "#{label} = #{str}"
 		else
 			longStr = str
-		if (longStr.length <= width)
+		if (longStr.length <= maxWidth)
 			if echo
 				console.log longStr
 			if asArray
 				return [longStr]
 			else
 				return longStr
+		else if debug
+			console.log "Doesn't fit on one line"
 
-	# --- Create a Block object
-	block = new Block()
+	switch format
+		when 'JSON'
+			item = JSONstringify(item, undef, 3)
+		when 'TAML'
+			item = toTAML(item)
+		when 'NICE'
+			item = toNICE(item, {sortKeys})
 
-	if defined(format)
-		switch format
-			when 'JSON'
-				block.add JSON.stringify(item, undef, 3)
-			when 'TAML'
-				block.add toTAML(item)
-			when 'NICE'
-				block.add toNICE(item, {sortKeys})
-			else
-				croak "Bad format: #{OL(format)}"
-	else
-		if isString(item)
-			if esc
-				for line in toArray(item)
-					block.add escapeStr(line)
-			else
-				for line in toArray(item)
-					block.add line
-		else
-			block.add toNICE(item)
+	# --- If still not a string, convert to NICE format
+	if !isString(item)
+		item = toNICE(item, {sortKeys})
 
-	if dynamic
-		width = block.maxLen + 4
+	# --- Create a TextBlockList object
+	blocks = new TextBlockList({esc})
+	blocks.addBlock(label, item)
 
-	if defined(format)
-		if defined(label)
-			block.prepend centered("#{label} (as #{format})", width, 'char=-')
-		else
-			block.prepend centered("(as #{format})", width, 'char=-')
-	else
-		if defined(label)
-			block.prepend centered(label, width, 'char=-')
-		else
-			block.prepend '-'.repeat(width)
+	hOpt = {minWidth}
+	if box
+		hOpt.format = 'box'
 
-	block.add '-'.repeat(width)
+	if echo
+		console.log blocks.asString(hOpt)
 
 	if asArray
-		return block.lLines
+		return blocks.asArray(hOpt)
 	else
-		return block.getBlock()
-
-# ---------------------------------------------------------------------------
-
-ul = '┌'
-ur = '┐'
-ll = '└'
-lr = '┘'
-vbar = '│'
-hbar = '─'
+		return blocks.asString(hOpt)
 
 # ---------------------------------------------------------------------------
 
 export BOX = (item, label=undef, hOptions={}) =>
 
-	debugger
-	hOptions = getOptions hOptions, {
-		echo: true
-		asArray: false
-		width: 50
-		}
-
-	{echo, asArray, width} = hOptions
-
-	hOptions = Object.assign({}, hOptions, {
-		echo: false
-		oneLine: false
-		asArray: true
-		})
-
-	lLines = DUMP item, label, hOptions
-	numLines = lLines.length
-	lNewLines = for line,i in lLines
-		if (i == 0)
-			width = line.length
-			ul + line.substring(0, line.length-2).replaceAll('-',hbar) + ur
-		else if (i == numLines-1)
-			ll + line.substring(0, line.length-2).replaceAll('-',hbar) + lr
-		else
-			"#{vbar} #{rpad(line, width-4)} #{vbar}"
-	if echo
-		for line in lNewLines
-			console.log line
-	if asArray
-		return lNewLines
-	else
-		return toBlock(lNewLines)
+	hOptions = getOptions hOptions, {box: true}
+	return DUMP(item, label, hOptions)

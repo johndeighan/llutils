@@ -1,7 +1,7 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var doLog, echo, fileFilter, hBin, hFilesProcessed, hJson, hMetaData, jsPath, key, nCoffee, nPeggy, oneFilePath, ref, ref1, ref2, relPath, short_name, stub, tla, value, x, y, z;
+var doLog, echo, fileFilter, hBin, hFilesProcessed, hJson, hMetaData, jsPath, key, nCielo, nCoffee, nPeggy, oneFilePath, ref, ref1, ref2, ref3, relPath, short_name, stub, tla, value, x, x1, y, z;
 
 import {
   assert,
@@ -21,17 +21,22 @@ import {
 
 import {
   brewFile
-} from '@jdeighan/llutils/coffee';
+} from '@jdeighan/llutils/llcoffee';
 
 import {
   peggifyFile
 } from '@jdeighan/llutils/peggy';
 
+import {
+  blessFile
+} from '@jdeighan/llutils/cielo';
+
 debugger;
 
 hFilesProcessed = {
   coffee: 0,
-  peggy: 0
+  peggy: 0,
+  cielo: 0
 };
 
 echo = npmLogLevel() !== 'silent';
@@ -62,18 +67,17 @@ if (oneFilePath = process.argv[2]) {
 }
 
 // ---------------------------------------------------------------------------
-// --- A file (either *.coffee or *.peggy) is out of date unless both:
+// --- A file (*.coffee, *.peggy or *.cielo) is out of date unless both:
 //        - a *.js file exists that's newer than the original file
 //        - a *.js.map file exists that's newer than the original file
 // --- But ignore files inside node_modules
 fileFilter = ({filePath}) => {
-  var jsFile, mapFile;
+  var jsFile;
   if (filePath.match(/node_modules/i)) {
     return false;
   }
   jsFile = withExt(filePath, '.js');
-  mapFile = withExt(filePath, '.js.map');
-  return !newerDestFilesExist(filePath, jsFile, mapFile);
+  return !newerDestFilesExist(filePath, jsFile);
 };
 
 ref = allFilesMatching('**/*.coffee', {fileFilter});
@@ -98,6 +102,17 @@ for (y of ref1) {
   hFilesProcessed.peggy += 1;
 }
 
+ref2 = allFilesMatching('**/*.cielo', {fileFilter});
+// ---------------------------------------------------------------------------
+// 4. Search src folder for *.cielo files and compile them
+//    unless newer *.js and *.js.map files exist OR it needs rebuilding
+for (z of ref2) {
+  ({relPath} = z);
+  doLog(relPath);
+  blessFile(relPath);
+  hFilesProcessed.cielo += 1;
+}
+
 // ---------------------------------------------------------------------------
 hBin = {}; // --- keys to add in package.json / bin
 
@@ -114,14 +129,14 @@ tla = (stub) => {
   }
 };
 
-ref2 = allFilesMatching('./src/bin/**/*.coffee');
+ref3 = allFilesMatching('./src/bin/**/*.coffee');
 // ---------------------------------------------------------------------------
 // 4. For every *.coffee file in the 'src/bin' directory that
 //       has key "shebang" set:
 //       - save <stub>: <jsPath> in hBin
 //       - if has a tla, save <tla>: <jsPath> in hBin
-for (z of ref2) {
-  ({relPath, stub} = z);
+for (x1 of ref3) {
+  ({relPath, stub} = x1);
   ({hMetaData} = readTextFile(relPath));
   if (hMetaData != null ? hMetaData.shebang : void 0) {
     jsPath = withExt(relPath, '.js');
@@ -162,6 +177,12 @@ nPeggy = hFilesProcessed.peggy;
 
 if (nPeggy > 0) {
   doLog(`(${nPeggy} peggy file${add_s(nPeggy)} compiled)`);
+}
+
+nCielo = hFilesProcessed.cielo;
+
+if (nCielo > 0) {
+  doLog(`(${nCielo} cielo file${add_s(nCielo)} compiled)`);
 }
 
 //# sourceMappingURL=low-level-build.js.map
