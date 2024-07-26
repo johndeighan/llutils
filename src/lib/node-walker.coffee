@@ -1,10 +1,10 @@
 # node-walker.coffee
 
 import {
-	undef, defined, notdefined, OL, getOptions, LOG,
+	undef, defined, notdefined, OL, getOptions,
 	assert, croak, dclone, range, rev_range, centered, leftAligned,
 	isString, isArray, isHash, isEmpty,
-	hasKey, keys,
+	hasKey, keys, untabify,
 	} from '@jdeighan/llutils'
 import {DUMP} from '@jdeighan/llutils/dump'
 import {indented, undented} from '@jdeighan/llutils/indent'
@@ -13,7 +13,6 @@ import {indented, undented} from '@jdeighan/llutils/indent'
 
 export stackMatches = (lStack, str) =>
 
-	debugger
 	lPath = parsePath(str)
 	if (lStack.length < lPath.length)
 		return false
@@ -54,17 +53,31 @@ export itemMatches = (hStackItem, [key, type]) ->
 
 export class NodeWalker
 
-	constructor: (hOptions={}) ->
+	walk: (hAST, hOptions={}) ->
 
-		{debug, hDumpNode} = getOptions hOptions, {
-			debug: false
-			hDumpNode: {}
-			}
-		@debug = debug
-		@hDumpNode = hDumpNode
+		assert @isNode(hAST), "Not a node: #{OL(hAST)}"
+		@hAST = hAST
 
-		# --- Array of {key, hNode}
-		@lStack = []
+		{
+			trace: @trace,
+			debug: @debug,
+			hDumpNode: @hDumpNode,
+			} = getOptions hOptions, {
+				trace: false
+				debug: false
+				hDumpNode: {}
+				}
+		if @debug
+			@trace = true    # always trace when debugging
+
+		@init()   # --- init() can modify the AST
+
+		@lStack = []   # --- Array of {key, hNode}
+		@lTrace = []
+		@visit @hAST
+		@visitChildren @hAST
+		@end @hAST
+		return this    # allow chaining
 
 	# ..........................................................
 
@@ -75,7 +88,6 @@ export class NodeWalker
 		for i from range(pos)
 			pos -= 1
 			item = @lStack[pos]
-			# console.log "#{item.key}: #{item.hNode.type}"
 			console.log "{key: #{leftAligned(item.key, 12)}, hNode: {type: #{item.hNode.type}}}"
 		console.log '-'.repeat(40)
 		return
@@ -85,12 +97,6 @@ export class NodeWalker
 	stackMatches: (str) ->
 
 		return stackMatches @lStack, str
-
-	# ..........................................................
-
-	level: () ->
-
-		return @lStack.length
 
 	# ..........................................................
 
@@ -111,39 +117,42 @@ export class NodeWalker
 
 	# ..........................................................
 
-	dbg: (str) ->
+	level: () ->
 
-		if @debug
-			LOG indented(str, @level())
-		return
+		return @lStack.length
 
 	# ..........................................................
 
-	walk: (hAST) ->
+	dbg: (str, addLevel=0) ->
 
-		assert @isNode(hAST), "Not a node: #{OL(hAST)}"
-		@hAST = hAST
-		@init()
-		@visit @hAST.type, @hAST
-		@visitChildren @hAST
-		@end @hAST
-		return this    # allow chaining
+		if @trace
+			level = @level() + addLevel
+			str = '  '.repeat(level) + str
+			console.log str
+		return
+
+	# ..........................................................
+	# --- By default, children are visited in normal order
+	#     to change, override this
+
+	getChildKeys: (hNode) ->
+
+		return keys(hNode)
 
 	# ..........................................................
 
 	visitChildren: (hNode) ->
 
-		lKeys = keys(hNode)
-		for key in lKeys
+		for key in @getChildKeys(hNode)
 			value = hNode[key]
 			@lStack.push {key, hNode}
 			if @isNode(value)
-				@visit value.type, value
+				@visit value
 				@visitChildren value
 				@end value
 			else if @isArrayOfNodes(value)
 				for h in value
-					@visit h.type, h
+					@visit h
 					@visitChildren h
 					@end h
 			@lStack.pop()
@@ -152,21 +161,34 @@ export class NodeWalker
 	# ..........................................................
 	# --- Override these
 
-	init: () ->
-		# --- ADVICE: if you modify @hAST, clone it first
+	init: (hAST=undef) ->
+		# --- ADVICE: if you modify the AST,
+		#             pass in a cloned version
 
-		@lLines = []
+		if defined(hAST)
+			@hAST = hAST
 		return
 
 	# ..........................................................
+	# --- override to add details to a traced node
 
-	visit: (type, hNode) ->
+	traceDetail: (hNode) ->
 
-		@dbg indented("VISIT #{type}")
+		return undef
+
+	# ..........................................................
+
+	visit: (hNode) ->
+
+		{type} = hNode
+		if details = @traceDetail(hNode)
+			@dbg "VISIT #{@stringifyNode(hNode)} #{details}"
+		else
+			@dbg "VISIT #{@stringifyNode(hNode)}"
 		if @hDumpNode[type]
 			DUMP hNode, type
 		str = @stringifyNode(hNode)
-		@lLines.push indented(str, @level())
+		@lTrace.push indented(str, @level())
 		return
 
 	# ..........................................................
@@ -190,4 +212,4 @@ export class NodeWalker
 
 	getTrace: () ->
 
-		return @lLines.join("\n")
+		return @lTrace.join("\n")

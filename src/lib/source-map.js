@@ -6,23 +6,30 @@ import {
 } from 'node:fs';
 
 import {
+  SourceMapGenerator,
   SourceMapConsumer
 } from 'source-map';
 
 import {
   undef,
   defined,
+  notdefined,
   getOptions,
+  OL,
   isInteger,
   isHash,
-  assert
+  isArray,
+  assert,
+  croak
 } from '@jdeighan/llutils';
 
 import {
   isFile,
   mkpath,
   parsePath,
-  fileExt
+  fileExt,
+  slurp,
+  barf
 } from '@jdeighan/llutils/fs';
 
 // --- cache to hold previously fetched file contents
@@ -140,6 +147,66 @@ export var mapSourcePos = (jsPath, line, column, hOptions = {}) => {
   ({source, line, column, name} = hMapped);
   assert(isInteger(line), `originalPositionFor(${line},${column}) returned line = ${line}`);
   return hMapped;
+};
+
+// ---------------------------------------------------------------------------
+export var SourceMap = class SourceMap extends SourceMapGenerator {
+  constructor(inFilePath, outFilePath) {
+    super({
+      file: outFilePath
+    });
+    this.inFilePath = inFilePath;
+    this.outFilePath = outFilePath;
+  }
+
+  // ..........................................................
+  setSource(inputFilePath) {
+    this.inFilePath = inFilePath;
+  }
+
+  // ..........................................................
+  getPos(desc) {
+    assert(isArray(desc) || isInteger(desc), `Bad desc: ${OL(desc)}`);
+    if (isArray(desc)) {
+      assert(desc.length === 2, `Bad desc: ${OL(desc)}`);
+      return {
+        line: desc[0],
+        column: desc[1]
+      };
+    } else {
+      return {
+        line: 1,
+        column: desc
+      };
+    }
+  }
+
+  // ..........................................................
+  add(srcPos, destPos, name = undef) {
+    this.addMapping({
+      source: this.inFilePath,
+      original: this.getPos(srcPos),
+      generated: this.getPos(destPos),
+      name
+    });
+  }
+
+  // ..........................................................
+  barf() {
+    var text;
+    text = this.toString();
+    return barf(this.toString, this.outFilePath + '.map');
+  }
+
+  // ..........................................................
+  // --- useful for testing
+  async mapPos(pos) {
+    var consumer, hMap;
+    hMap = JSON.parse(this.toString());
+    consumer = (await new SourceMapConsumer(hMap));
+    return consumer.originalPositionFor(this.getPos(pos));
+  }
+
 };
 
 //# sourceMappingURL=source-map.js.map

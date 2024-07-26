@@ -38,7 +38,7 @@ export DUMP = (item, label=undef, hOptions={}) =>
 		minWidth: 40
 		maxWidth: 78
 		box: false
-		format: undef    # --- can be 'JSON', 'TAML', 'NICE'
+		format: 'NICE'  # --- can be 'JSON', 'TAML', 'NICE'
 		sortKeys: true
 		echo: true
 		nocr: true
@@ -105,5 +105,8 @@ export DUMP = (item, label=undef, hOptions={}) =>
 
 export BOX = (item, label=undef, hOptions={}) =>
 
-	hOptions = getOptions hOptions, {box: true}
+	hOptions = getOptions hOptions, {
+		box: true
+		oneLine: false    # never oneLine when boxing
+		}
 	return DUMP(item, label, hOptions)

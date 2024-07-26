@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "testFile.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\testFile.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAiB;AAAA,IAAA,QAAA,EAAA,CAAA,EAAA;;AACjB,OAAA;EAAQ,EAAR;EAAY,EAAZ;CAAA,MAAA;;AACA,OAAA;EAAQ,KAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,UAAR;CAAA,MAAA;;AAEA,IAAA,GAAO;;AAEP,QAAA,GAAW,CAAA,YAAA,CAAA,CAAe,IAAf,CAAA,OAAA;;AACX,CAAA,GAAI,UAAA,CAAW,KAAA,CAAM,QAAN,CAAX;;AACJ,OAAO,CAAC,GAAR,CAAY,CAAA,WAAA,CAAA,CAAc,EAAA,CAAG,CAAC,CAAC,QAAL,CAAd,CAAA,CAAZ",
+  "sourcesContent": [
+    "# testFile.coffee\nimport {OL, ML} from '@jdeighan/llutils'\nimport {slurp} from '@jdeighan/llutils/fs'\nimport {coffeeInfo} from '@jdeighan/llutils/coffee'\n\nstub = 'cielo'\n\nfilePath = \"test/coffee/#{stub}.coffee\"\nh = coffeeInfo(slurp(filePath))\nconsole.log \"lMissing = #{ML(h.lMissing)}\"\n"
+  ]
+}

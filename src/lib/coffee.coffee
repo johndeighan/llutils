@@ -7,6 +7,7 @@ import {
 	pass, undef, defined, notdefined, gen2block, words,
 	assert, croak, OL, dclone, getOptions, listdiff,
 	isString, isArray, isHash, isFunction, keys, removeKeys,
+	nonEmpty, cleanHash,
 	} from '@jdeighan/llutils'
 import {DUMP} from '@jdeighan/llutils/dump'
 import {indented, splitLine} from '@jdeighan/llutils/indent'
@@ -52,18 +53,33 @@ export coffeeInfo = (hAST, hOptions={}) =>
 
 	if isString(hAST)
 		hAST = toAST(hAST)
-	walker = new ASTWalker(hOptions).walk(hAST)
-
-	# --- Convert sets to arrays
-	hImports = {}
-	for src in keys(walker.hImports)
-		hImports[src] = Array.from(walker.hImports[src].values())
+	walker = new ASTWalker()
+	walker.walk(hAST, hOptions)
 
 	return {
 		hAST
-		trace: walker.getTrace()
-		hImports
-		lExports: Array.from(walker.setExports.values())
-		lUsed: Array.from(walker.setUsed.values())
-		lMissing: Array.from(walker.getMissing().values())
+		hImports: walker.getSymbols('detailed-imports')
+		lExports: walker.getSymbols('exports')
+		lMissing: walker.getSymbols('missing')
+		lUnused:  walker.getSymbols('unused')
+		lTopLevel: walker.getSymbols('toplevel')
 		}
+
+# ---------------------------------------------------------------------------
+
+export basicInfo = (hAST, hOptions={}) =>
+
+	if isString(hAST)
+		hAST = toAST(hAST)
+	walker = new ASTWalker()
+	walker.walk(hAST, hOptions)
+	lTopLevelSymbols = walker.getTopLevelSymbols()
+
+	hInfo = {
+		hImports:  walker.getSymbols('detailed-imports')
+		lExports:  walker.getSymbols('exports')
+		lMissing:  walker.getSymbols('missing')
+		lUnused:   walker.getSymbols('unused')
+		lTopLevel: walker.getSymbols('toplevel')
+		}
+	return cleanHash(hInfo)

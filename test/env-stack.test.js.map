@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "env-stack.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\env-stack.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAuB;AAEvB,OAAA;EAAQ,KAAR;EAAe,OAAf;CAAA,MAAA;;AACA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EANuB;;;AAUvB,CAAC,CAAA,CAAA,GAAA;AACD,MAAA;EAAC,GAAA,GAAM,IAAI,YAAJ,CAAA;EACN,KAAA,CAAM,GAAG,CAAC,QAAJ,CAAa,MAAb,CAAN;EACA,GAAG,CAAC,GAAJ,CAAQ,MAAR;EACA,MAAA,CAAO,GAAG,CAAC,QAAJ,CAAa,MAAb,CAAP;EAEA,GAAG,CAAC,MAAJ,CAAA;EACA,GAAG,CAAC,GAAJ,CAAQ,OAAR;EACA,MAAA,CAAO,GAAG,CAAC,QAAJ,CAAa,MAAb,CAAP;EACA,MAAA,CAAO,GAAG,CAAC,QAAJ,CAAa,OAAb,CAAP;EAEA,GAAG,CAAC,MAAJ,CAAA;EACA,MAAA,CAAO,GAAG,CAAC,QAAJ,CAAa,MAAb,CAAP;SACA,KAAA,CAAM,GAAG,CAAC,QAAJ,CAAa,OAAb,CAAN;AAbA,CAAD,CAAA,CAAA",
+  "sourcesContent": [
+    "# env-stack.test.coffee\r\n\r\nimport {undef, isEmpty} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/env-stack'\r\nObject.assign(global, lib)\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\n(() =>\r\n\tenv = new EnvNodeStack()\r\n\tfalsy env.inCurEnv('name')\r\n\tenv.add('name')\r\n\ttruthy env.inCurEnv('name')\r\n\r\n\tenv.addEnv()\r\n\tenv.add('other')\r\n\ttruthy env.inCurEnv('name')\r\n\ttruthy env.inCurEnv('other')\r\n\r\n\tenv.endEnv()\r\n\ttruthy env.inCurEnv('name')\r\n\tfalsy env.inCurEnv('other')\r\n\t)()\r\n"
+  ]
+}

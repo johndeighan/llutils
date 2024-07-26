@@ -301,6 +301,16 @@ export isClassInstance = (x, lReqKeys=undef) =>
 	return true
 
 # ---------------------------------------------------------------------------
+
+export cleanHash = (h) =>
+
+	# --- modifies h in place, but also returns h
+	for key in keys(h)
+		if isEmpty(h[key])
+			delete h[key]
+	return h
+
+# ---------------------------------------------------------------------------
 #   escapeStr - escape newlines, carriage return, TAB chars, etc.
 # --- NOTE: We can't use OL() inside here since it uses escapeStr()
 
@@ -1093,3 +1103,12 @@ export splitStr = (str, splitFunc) =>
 		if defined(extractedStr)
 			lParts.push extractedStr
 	return lParts
+
+# ---------------------------------------------------------------------------
+
+export setsAreEqual = (a, b) =>
+
+	assert (a instanceof Set), "a is not a set"
+	assert (b instanceof Set), "b is not a set"
+	return (a.size == b.size) \
+		&& [...a].every((val) => b.has(val))

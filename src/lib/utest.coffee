@@ -5,10 +5,11 @@ import test from 'ava'
 import {
 	undef, defined, notdefined, rtrim, isEmpty, nonEmpty, OL,
 	isString, isNumber, isArray, isClass, isFunction, isRegExp, isInteger,
-	assert, croak, blockToArray,
+	assert, croak, blockToArray, untabify,
 	} from '@jdeighan/llutils'
 import {fileExt} from '@jdeighan/llutils/fs'
 import {getMyOutsideCaller} from '@jdeighan/llutils/v8-stack'
+import {toNICE} from '@jdeighan/llutils/to-nice'
 
 # ---------------------------------------------------------------------------
 # --- Available tests w/num required params
@@ -179,6 +180,16 @@ export class UnitTester
 
 	# ..........................................................
 
+	samelist: (val, expected) ->
+
+		[label, val, expected] = @begin(val, expected, 'samewordlist')
+		test label, (t) =>
+			t.deepEqual(val.sort(), expected.sort())
+		@end()
+		return
+
+	# ..........................................................
+
 	truthy: (bool) ->
 
 		[label] = @begin(undef, undef, 'truthy')
@@ -194,6 +205,21 @@ export class UnitTester
 		[label] = @begin(undef, undef, 'falsy')
 		test label, (t) =>
 			t.falsy(bool)
+		@end()
+		return
+
+	# ..........................................................
+
+	showInConsole: (value, format='nice') ->
+
+		[label] = @begin(undef, undef, 'showInConsole')
+		switch format.toLowerCase()
+			when 'json'
+				console.log JSON.stringify(value, null, 3)
+			else
+				console.log untabify(toNICE(value))
+		test label, (t) =>
+			t.truthy(true)
 		@end()
 		return
 
@@ -293,6 +319,7 @@ export like = (arg1, arg2) => return u.like(arg1, arg2)
 export samelines = (arg1, arg2) => return u.samelines(arg1, arg2)
 export truthy = (arg) => return u.truthy(arg)
 export falsy = (arg) => return u.falsy(arg)
+export showInConsole = (arg, format) => return u.showInConsole(arg, format)
 export includes = (arg1, arg2) => return u.includes(arg1, arg2)
 export matches = (str, regexp) => return u.matches(str, regexp)
 export fails = (func) => return u.fails(func)

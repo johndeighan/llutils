@@ -9,6 +9,7 @@
 		"./PLL": "./src/lib/PLL.js",
 		"./node-walker": "./src/lib/node-walker.js",
 		"./ast-walker": "./src/lib/ast-walker.js",
+		"./env-stack": "./src/lib/env-stack.js",
 		"./fs": "./src/lib/fs.js",
 		"./indent": "./src/lib/indent.js",
 		"./metadata": "./src/lib/metadata.js",

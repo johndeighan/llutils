@@ -20,7 +20,8 @@ import {
   isInteger,
   assert,
   croak,
-  blockToArray
+  blockToArray,
+  untabify
 } from '@jdeighan/llutils';
 
 import {
@@ -30,6 +31,10 @@ import {
 import {
   getMyOutsideCaller
 } from '@jdeighan/llutils/v8-stack';
+
+import {
+  toNICE
+} from '@jdeighan/llutils/to-nice';
 
 // ---------------------------------------------------------------------------
 // --- Available tests w/num required params
@@ -203,6 +208,16 @@ export var UnitTester = class UnitTester {
   }
 
   // ..........................................................
+  samelist(val, expected) {
+    var label;
+    [label, val, expected] = this.begin(val, expected, 'samewordlist');
+    test(label, (t) => {
+      return t.deepEqual(val.sort(), expected.sort());
+    });
+    this.end();
+  }
+
+  // ..........................................................
   truthy(bool) {
     var label;
     [label] = this.begin(undef, undef, 'truthy');
@@ -218,6 +233,23 @@ export var UnitTester = class UnitTester {
     [label] = this.begin(undef, undef, 'falsy');
     test(label, (t) => {
       return t.falsy(bool);
+    });
+    this.end();
+  }
+
+  // ..........................................................
+  showInConsole(value, format = 'nice') {
+    var label;
+    [label] = this.begin(undef, undef, 'showInConsole');
+    switch (format.toLowerCase()) {
+      case 'json':
+        console.log(JSON.stringify(value, null, 3));
+        break;
+      default:
+        console.log(untabify(toNICE(value)));
+    }
+    test(label, (t) => {
+      return t.truthy(true);
     });
     this.end();
   }
@@ -343,6 +375,10 @@ export var truthy = (arg) => {
 
 export var falsy = (arg) => {
   return u.falsy(arg);
+};
+
+export var showInConsole = (arg, format) => {
+  return u.showInConsole(arg, format);
 };
 
 export var includes = (arg1, arg2) => {

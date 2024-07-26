@@ -23,7 +23,9 @@ import {
   isHash,
   isFunction,
   keys,
-  removeKeys
+  removeKeys,
+  nonEmpty,
+  cleanHash
 } from '@jdeighan/llutils';
 
 import {
@@ -92,26 +94,39 @@ export var toASTFile = function(code, filePath, hOptions = {}) {
 //        debug - extensive debugging
 //        hDumpNode - { <nodeType>: true, ... }
 export var coffeeInfo = (hAST, hOptions = {}) => {
-  var hImports, i, len, ref, src, walker;
+  var walker;
   if (isString(hAST)) {
     hAST = toAST(hAST);
   }
-  walker = new ASTWalker(hOptions).walk(hAST);
-  // --- Convert sets to arrays
-  hImports = {};
-  ref = keys(walker.hImports);
-  for (i = 0, len = ref.length; i < len; i++) {
-    src = ref[i];
-    hImports[src] = Array.from(walker.hImports[src].values());
-  }
+  walker = new ASTWalker();
+  walker.walk(hAST, hOptions);
   return {
     hAST,
-    trace: walker.getTrace(),
-    hImports,
-    lExports: Array.from(walker.setExports.values()),
-    lUsed: Array.from(walker.setUsed.values()),
-    lMissing: Array.from(walker.getMissing().values())
+    hImports: walker.getSymbols('detailed-imports'),
+    lExports: walker.getSymbols('exports'),
+    lMissing: walker.getSymbols('missing'),
+    lUnused: walker.getSymbols('unused'),
+    lTopLevel: walker.getSymbols('toplevel')
   };
+};
+
+// ---------------------------------------------------------------------------
+export var basicInfo = (hAST, hOptions = {}) => {
+  var hInfo, lTopLevelSymbols, walker;
+  if (isString(hAST)) {
+    hAST = toAST(hAST);
+  }
+  walker = new ASTWalker();
+  walker.walk(hAST, hOptions);
+  lTopLevelSymbols = walker.getTopLevelSymbols();
+  hInfo = {
+    hImports: walker.getSymbols('detailed-imports'),
+    lExports: walker.getSymbols('exports'),
+    lMissing: walker.getSymbols('missing'),
+    lUnused: walker.getSymbols('unused'),
+    lTopLevel: walker.getSymbols('toplevel')
+  };
+  return cleanHash(hInfo);
 };
 
 //# sourceMappingURL=coffee.js.map

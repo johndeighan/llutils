@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "source-map.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\source-map.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAwB;AAExB,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EALwB;;;AASxB,CAAC,KAAA,CAAA,CAAA,GAAA;AACD,MAAA,GAAA,EAAA,GAAA,EAAA;EAAC,GAAA,GAAM;EACN,GAAA,GAAM;EAEN,GAAA,GAAM,IAAI,SAAJ,CAAc,SAAd;EACN,GAAG,CAAC,GAAJ,CAAS,CAAT,EAAY,EAAZ,EAAgB,MAAhB;EACA,GAAG,CAAC,GAAJ,CAAS,CAAT,EAAY,EAAZ;EACA,GAAG,CAAC,GAAJ,CAAS,CAAT,EAAY,EAAZ,EAAgB,GAAhB;EACA,GAAG,CAAC,GAAJ,CAAQ,EAAR,EAAY,EAAZ,EAAgB,KAAhB;EACA,GAAG,CAAC,GAAJ,CAAQ,EAAR,EAAY,EAAZ;EACA,GAAG,CAAC,GAAJ,CAAQ,EAAR,EAAY,EAAZ;EACA,GAAG,CAAC,GAAJ,CAAQ,EAAR,EAAY,EAAZ;EAEA,KAAA,CAAM,CAAA,MAAM,GAAG,CAAC,MAAJ,CAAW,EAAX,CAAN,CAAN,EAA4B;IAC3B,MAAA,EAAQ,SADmB;IAE3B,IAAA,EAAM,CAFqB;IAG3B,MAAA,EAAQ,CAHmB;IAI3B,IAAA,EAAM;EAJqB,CAA5B;EAOA,KAAA,CAAM,CAAA,MAAM,GAAG,CAAC,MAAJ,CAAW,EAAX,CAAN,CAAN,EAA4B;IAC3B,MAAA,EAAQ,SADmB;IAE3B,IAAA,EAAM,CAFqB;IAG3B,MAAA,EAAQ,CAHmB;IAI3B,IAAA,EAAM;EAJqB,CAA5B;EAOA,KAAA,CAAM,CAAA,MAAM,GAAG,CAAC,MAAJ,CAAW,EAAX,CAAN,CAAN,EAA4B;IAC3B,MAAA,EAAQ,SADmB;IAE3B,IAAA,EAAM,CAFqB;IAG3B,MAAA,EAAQ,CAHmB;IAI3B,IAAA,EAAM;EAJqB,CAA5B;SAOA,KAAA,CAAM,CAAA,MAAM,GAAG,CAAC,MAAJ,CAAW,EAAX,CAAN,CAAN,EAA4B;IAC3B,MAAA,EAAQ,SADmB;IAE3B,IAAA,EAAM,CAFqB;IAG3B,MAAA,EAAQ,EAHmB;IAI3B,IAAA,EAAM;EAJqB,CAA5B;AAlCA,CAAD,CAAA,CAAA",
+  "sourcesContent": [
+    "# source-map.test.coffee\n\nimport * as lib from '@jdeighan/llutils/source-map'\nObject.assign(global, lib)\nimport * as lib2 from '@jdeighan/llutils/utest'\nObject.assign(global, lib2)\n\n# ---------------------------------------------------------------------------\n\n(() =>\n\torg = 'func = (x) -> log \"Hello, #{x}\"'\n\tout = 'export function func(x) { console.log(`Hello, ${x}`); }'\n\n\tmap = new SourceMap('temp.js')\n\tmap.add  0, 16, 'func'\n\tmap.add  7, 20\n\tmap.add  8, 21, 'x'\n\tmap.add 14, 26, 'log'\n\tmap.add 18, 38\n\tmap.add 19, 39\n\tmap.add 30, 50\n\n\tequal await map.mapPos(16), {\n\t\tsource: 'temp.js'\n\t\tline: 1\n\t\tcolumn: 0\n\t\tname: 'func'\n\t\t}\n\n\tequal await map.mapPos(20), {\n\t\tsource: 'temp.js'\n\t\tline: 1\n\t\tcolumn: 7\n\t\tname: null\n\t\t}\n\n\tequal await map.mapPos(21), {\n\t\tsource: 'temp.js'\n\t\tline: 1\n\t\tcolumn: 8\n\t\tname: 'x'\n\t\t}\n\n\tequal await map.mapPos(26), {\n\t\tsource: 'temp.js'\n\t\tline: 1\n\t\tcolumn: 14\n\t\tname: 'log'\n\t\t}\n\t)()\n"
+  ]
+}

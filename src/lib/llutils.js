@@ -351,6 +351,20 @@ export var isClassInstance = (x, lReqKeys = undef) => {
 };
 
 // ---------------------------------------------------------------------------
+export var cleanHash = (h) => {
+  var j, key, len1, ref;
+  ref = keys(h);
+  // --- modifies h in place, but also returns h
+  for (j = 0, len1 = ref.length; j < len1; j++) {
+    key = ref[j];
+    if (isEmpty(h[key])) {
+      delete h[key];
+    }
+  }
+  return h;
+};
+
+// ---------------------------------------------------------------------------
 //   escapeStr - escape newlines, carriage return, TAB chars, etc.
 // --- NOTE: We can't use OL() inside here since it uses escapeStr()
 export var hEsc = {
@@ -1224,6 +1238,15 @@ export var splitStr = (str, splitFunc) => {
     }
   }
   return lParts;
+};
+
+// ---------------------------------------------------------------------------
+export var setsAreEqual = (a, b) => {
+  assert(a instanceof Set, "a is not a set");
+  assert(b instanceof Set, "b is not a set");
+  return (a.size === b.size) && [...a].every((val) => {
+    return b.has(val);
+  });
 };
 
 //# sourceMappingURL=llutils.js.map

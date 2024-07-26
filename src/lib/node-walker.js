@@ -5,7 +5,6 @@ import {
   notdefined,
   OL,
   getOptions,
-  LOG,
   assert,
   croak,
   dclone,
@@ -18,7 +17,8 @@ import {
   isHash,
   isEmpty,
   hasKey,
-  keys
+  keys,
+  untabify
 } from '@jdeighan/llutils';
 
 import {
@@ -32,7 +32,6 @@ import {
 
 // ---------------------------------------------------------------------------
 export var stackMatches = (lStack, str) => {
-  debugger;
   var i, item, lPath, pos, ref;
   lPath = parsePath(str);
   if (lStack.length < lPath.length) {
@@ -84,19 +83,32 @@ export var itemMatches = function(hStackItem, [key, type]) {
 // --- anything named 'item'
 //     can always be a node or array of nodes
 export var NodeWalker = class NodeWalker {
-  constructor(hOptions = {}) {
-    var debug, hDumpNode;
-    ({debug, hDumpNode} = getOptions(hOptions, {
+  walk(hAST, hOptions = {}) {
+    assert(this.isNode(hAST), `Not a node: ${OL(hAST)}`);
+    this.hAST = hAST;
+    ({
+      trace: this.trace,
+      debug: this.debug,
+      hDumpNode: this.hDumpNode
+    } = getOptions(hOptions, {
+      trace: false,
       debug: false,
       hDumpNode: {}
     }));
-    this.debug = debug;
-    this.hDumpNode = hDumpNode;
-    // --- Array of {key, hNode}
-    this.lStack = [];
+    if (this.debug) {
+      this.trace = true; // always trace when debugging
+    }
+    this.init(); // --- init() can modify the AST
+    this.lStack = []; // --- Array of {key, hNode}
+    this.lTrace = [];
+    this.visit(this.hAST);
+    this.visitChildren(this.hAST);
+    this.end(this.hAST);
+    return this; // allow chaining
   }
 
-  // ..........................................................
+  
+    // ..........................................................
   dumpStack() {
     var i, item, pos, ref;
     console.log(centered('STACK', 40, 'char=-'));
@@ -105,7 +117,6 @@ export var NodeWalker = class NodeWalker {
     for (i of ref) {
       pos -= 1;
       item = this.lStack[pos];
-      // console.log "#{item.key}: #{item.hNode.type}"
       console.log(`{key: ${leftAligned(item.key, 12)}, hNode: {type: ${item.hNode.type}}}`);
     }
     console.log('-'.repeat(40));
@@ -114,11 +125,6 @@ export var NodeWalker = class NodeWalker {
   // ..........................................................
   stackMatches(str) {
     return stackMatches(this.lStack, str);
-  }
-
-  // ..........................................................
-  level() {
-    return this.lStack.length;
   }
 
   // ..........................................................
@@ -142,40 +148,43 @@ export var NodeWalker = class NodeWalker {
   }
 
   // ..........................................................
-  dbg(str) {
-    if (this.debug) {
-      LOG(indented(str, this.level()));
+  level() {
+    return this.lStack.length;
+  }
+
+  // ..........................................................
+  dbg(str, addLevel = 0) {
+    var level;
+    if (this.trace) {
+      level = this.level() + addLevel;
+      str = '  '.repeat(level) + str;
+      console.log(str);
     }
   }
 
   // ..........................................................
-  walk(hAST) {
-    assert(this.isNode(hAST), `Not a node: ${OL(hAST)}`);
-    this.hAST = hAST;
-    this.init();
-    this.visit(this.hAST.type, this.hAST);
-    this.visitChildren(this.hAST);
-    this.end(this.hAST);
-    return this; // allow chaining
+  // --- By default, children are visited in normal order
+  //     to change, override this
+  getChildKeys(hNode) {
+    return keys(hNode);
   }
 
-  
-    // ..........................................................
+  // ..........................................................
   visitChildren(hNode) {
-    var h, j, k, key, lKeys, len, len1, value;
-    lKeys = keys(hNode);
-    for (j = 0, len = lKeys.length; j < len; j++) {
-      key = lKeys[j];
+    var h, j, k, key, len, len1, ref, value;
+    ref = this.getChildKeys(hNode);
+    for (j = 0, len = ref.length; j < len; j++) {
+      key = ref[j];
       value = hNode[key];
       this.lStack.push({key, hNode});
       if (this.isNode(value)) {
-        this.visit(value.type, value);
+        this.visit(value);
         this.visitChildren(value);
         this.end(value);
       } else if (this.isArrayOfNodes(value)) {
         for (k = 0, len1 = value.length; k < len1; k++) {
           h = value[k];
-          this.visit(h.type, h);
+          this.visit(h);
           this.visitChildren(h);
           this.end(h);
         }
@@ -186,20 +195,34 @@ export var NodeWalker = class NodeWalker {
 
   // ..........................................................
   // --- Override these
-  init() {
-    // --- ADVICE: if you modify @hAST, clone it first
-    this.lLines = [];
+  init(hAST = undef) {
+    // --- ADVICE: if you modify the AST,
+    //             pass in a cloned version
+    if (defined(hAST)) {
+      this.hAST = hAST;
+    }
   }
 
   // ..........................................................
-  visit(type, hNode) {
-    var str;
-    this.dbg(indented(`VISIT ${type}`));
+  // --- override to add details to a traced node
+  traceDetail(hNode) {
+    return undef;
+  }
+
+  // ..........................................................
+  visit(hNode) {
+    var details, str, type;
+    ({type} = hNode);
+    if (details = this.traceDetail(hNode)) {
+      this.dbg(`VISIT ${this.stringifyNode(hNode)} ${details}`);
+    } else {
+      this.dbg(`VISIT ${this.stringifyNode(hNode)}`);
+    }
     if (this.hDumpNode[type]) {
       DUMP(hNode, type);
     }
     str = this.stringifyNode(hNode);
-    this.lLines.push(indented(str, this.level()));
+    this.lTrace.push(indented(str, this.level()));
   }
 
   // ..........................................................
@@ -220,7 +243,7 @@ export var NodeWalker = class NodeWalker {
 
   // ..........................................................
   getTrace() {
-    return this.lLines.join("\n");
+    return this.lTrace.join("\n");
   }
 
 };

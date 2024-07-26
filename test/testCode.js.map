@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "testCode.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\testCode.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAiB;AAAA,IAAA,IAAA,EAAA;;AACjB,OAAA;EAAQ,EAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,UAAR;CAAA,MAAA;;AAEA,IAAA,GAAO,CAAA;OAAA;;AAIP,CAAA,GAAI,UAAA,CAAW,IAAX,EAAiB,OAAjB;;AACJ,OAAO,CAAC,GAAR,CAAY,CAAA,WAAA,CAAA,CAAc,EAAA,CAAG,CAAC,CAAC,QAAL,CAAd,CAAA,CAAZ",
+  "sourcesContent": [
+    "# testCode.coffee\nimport {OL} from '@jdeighan/llutils'\nimport {coffeeInfo} from '@jdeighan/llutils/coffee'\n\ncode = \"\"\"\n\tfunc = () =>\n\t\tf(x,y)\n\t\"\"\"\nh = coffeeInfo(code, 'debug')\nconsole.log \"lMissing = #{OL(h.lMissing)}\"\n"
+  ]
+}

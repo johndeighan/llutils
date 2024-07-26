@@ -1,13 +1,17 @@
 # source-map.coffee
 
 import {readFileSync} from 'node:fs'
-import {SourceMapConsumer} from 'source-map'
+import {
+	SourceMapGenerator, SourceMapConsumer,
+	} from 'source-map'
 
 import {
-	undef, defined, getOptions, isInteger, isHash, assert,
+	undef, defined, notdefined, getOptions, OL,
+	isInteger, isHash, isArray,
+	assert, croak,
 	} from '@jdeighan/llutils'
 import {
-	isFile, mkpath, parsePath, fileExt,
+	isFile, mkpath, parsePath, fileExt, slurp, barf,
 	} from '@jdeighan/llutils/fs'
 
 # --- cache to hold previously fetched file contents
@@ -119,3 +123,65 @@ export mapSourcePos = (jsPath, line, column, hOptions={}) =>
 	{source, line, column, name} = hMapped
 	assert isInteger(line), "originalPositionFor(#{line},#{column}) returned line = #{line}"
 	return hMapped
+
+# ---------------------------------------------------------------------------
+
+export class SourceMap extends SourceMapGenerator
+
+	constructor: (inFilePath, outFilePath) ->
+
+		super {file: outFilePath}
+		@inFilePath = inFilePath
+		@outFilePath = outFilePath
+
+	# ..........................................................
+
+	setSource: (inputFilePath) ->
+
+		@inFilePath = inFilePath
+		return
+
+	# ..........................................................
+
+	getPos: (desc) ->
+
+		assert isArray(desc) || isInteger(desc), "Bad desc: #{OL(desc)}"
+		if isArray(desc)
+			assert (desc.length == 2), "Bad desc: #{OL(desc)}"
+			return {
+				line: desc[0]
+				column: desc[1]
+				}
+		else
+			return {
+				line: 1
+				column: desc
+				}
+
+	# ..........................................................
+
+	add: (srcPos, destPos, name=undef) ->
+
+		@addMapping({
+			source: @inFilePath,
+			original: @getPos(srcPos)
+			generated: @getPos(destPos)
+			name
+			})
+		return
+
+	# ..........................................................
+
+	barf: () ->
+
+		text = @toString()
+		barf @toString, @outFilePath + '.map'
+
+	# ..........................................................
+	# --- useful for testing
+
+	mapPos: (pos) ->
+
+		hMap = JSON.parse(@toString())
+		consumer = await new SourceMapConsumer(hMap)
+		return consumer.originalPositionFor(@getPos(pos))

@@ -60,43 +60,39 @@ fails(() => {
 });
 
 // ---------------------------------------------------------------------------
-//symbol "coffeeInfo(astOrCode)"
+//symbol "basicInfo(astOrCode)"
 (() => {
-  var code;
-  code = `import {undef, defined} from '@jdeighan/llutils'`;
-  return like(coffeeInfo(code), {
-    hImports: {
-      '@jdeighan/llutils': ['undef', 'defined']
-    }
-  });
-})();
+  var t;
+  t = new UnitTester();
+  t.transformValue = function(code) {
+    return basicInfo(code).lMissing || [];
+  };
+  t.samelist(`import {undef} from '@jdeighan/llutils'`, []);
+  t.samelist(`import {undef} from '@jdeighan/llutils'
+import {LOG} from '@jdeighan/llutils/log'`, []);
+  t.samelist(`x = a`, ['a']);
+  t.samelist(`import {a} from 'xyz'
+x = a`, []);
+  t.samelist(`import {a} from 'xyz'
+x = a`, []);
+  t.samelist(`n = 23`, []);
+  t.samelist(`n = 23
+x = n`, []);
+  t.samelist(`import {f} from 'xyz'
 
-(() => {
-  var code;
-  code = `import {undef} from '@jdeighan/llutils'
-import {LOG} from '@jdeighan/llutils/log'`;
-  return like(coffeeInfo(code), {
-    hImports: {
-      '@jdeighan/llutils': ['undef'],
-      '@jdeighan/llutils/log': ['LOG']
-    }
-  });
-})();
+func = () =>
+	f(x,y)
 
-(() => {
-  var code;
-  code = `export meaning = 42`;
-  return like(coffeeInfo(code), {
-    lExports: ['meaning']
-  });
-})();
-
-(() => {
-  var code;
-  code = `x = a`;
-  return like(coffeeInfo(code), {
-    lUsed: ['a']
-  });
+f(a,b)`, ['x', 'y', 'a', 'b']);
+  t.samelist(`if (f() == undef)
+	console.log "Not defined"`, ['f', 'undef', 'console']);
+  t.samelist(`x = x + y`, ['x', 'y']);
+  t.samelist(`func = () =>
+	f(x,y)`, ['x', 'y', 'f']);
+  return t.samelist(`func = () =>
+	f(x,y)
+f = (m,n) =>
+	console.log 'OK'`, ['x', 'y', 'console']);
 })();
 
 //# sourceMappingURL=coffee.test.js.map

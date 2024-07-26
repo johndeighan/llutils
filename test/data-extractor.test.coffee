@@ -491,3 +491,25 @@ equal extract(ds, """
 			id: 2
 			alias: Deighan
 	""")
+
+# ---------------------------------------------------------------------------
+
+hNode = {
+	type: 'CallExpression',
+	callee: { type: 'Identifier', name: 'f', declaration: false },
+	arguments: [],
+	optional: false,
+	implicit: false
+	}
+
+equal extract(hNode, """
+	callee
+		type as calleeType
+	[arguments as lArgs]
+		type
+		value
+	"""), {
+	callee: { type: 'Identifier', name: 'f', declaration: false }
+	calleeType: 'Identifier'
+	lArgs: []
+	}

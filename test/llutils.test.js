@@ -972,4 +972,24 @@ equal(matchPos("(miss()ing", 5), 6);
   return equal(splitStr('   DO   ', splitter), ['DO']);
 })();
 
+// ---------------------------------------------------------------------------
+//symbol cleanHash(h) - removes empty values
+equal(cleanHash({
+  a: 1,
+  b: undef,
+  c: [],
+  d: {},
+  e: '   '
+}), {
+  a: 1
+});
+
+// ---------------------------------------------------------------------------
+//symbol setsAreEqual(a, b)
+truthy(setsAreEqual(new Set([1, 2, 3]), new Set([1, 3, 2])));
+
+falsy(setsAreEqual(new Set([1, 2, 3]), new Set([1, 2, 4])));
+
+falsy(setsAreEqual(new Set([1, 2, 3]), new Set([1, 2, 3, 4])));
+
 //# sourceMappingURL=llutils.test.js.map
