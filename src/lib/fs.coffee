@@ -488,7 +488,7 @@ export withExt = (filePath, newExt) =>
 
 # ---------------------------------------------------------------------------
 
-export newerDestFilesExist = (srcPath, lDestPaths...) =>
+export newerDestFileExists = (srcPath, lDestPaths...) =>
 
 	for destPath in lDestPaths
 		if ! fs.existsSync(destPath)

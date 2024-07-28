@@ -17,7 +17,7 @@ import {
 import {
   allFilesMatching,
   withExt,
-  newerDestFilesExist
+  newerDestFileExists
 } from '@jdeighan/llutils/fs';
 
 import {
@@ -36,7 +36,7 @@ fileFilter = ({filePath}) => {
   }
   jsFile = withExt(filePath, '.js');
   mapFile = withExt(filePath, '.js.map');
-  return !newerDestFilesExist(filePath, jsFile, mapFile);
+  return !newerDestFileExists(filePath, jsFile, mapFile);
 };
 
 ref = allFilesMatching('**/*.{pegjs,peggy}', {fileFilter});

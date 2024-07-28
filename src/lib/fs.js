@@ -508,7 +508,7 @@ export var withExt = (filePath, newExt) => {
 };
 
 // ---------------------------------------------------------------------------
-export var newerDestFilesExist = (srcPath, ...lDestPaths) => {
+export var newerDestFileExists = (srcPath, ...lDestPaths) => {
   var destModTime, destPath, i, len, srcModTime;
   for (i = 0, len = lDestPaths.length; i < len; i++) {
     destPath = lDestPaths[i];

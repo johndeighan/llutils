@@ -21,6 +21,7 @@
 		"./section-map": "./src/lib/section-map.js",
 		"./utest": "./src/lib/utest.js",
 		"./peggy": "./src/lib/peggy.js",
+		"./create-elem": "./src/lib/create-elem.js",
 		"./cmd-args": "./src/lib/cmd-args.js",
 		"./heredoc": "./src/lib/heredoc.js",
 		"./to-nice": "./src/lib/to-nice.js",
@@ -43,7 +44,8 @@
 		"make-new-project": "src/bin/make-new-project.js",
 		"mnp": "src/bin/make-new-project.js",
 		"brew": "src/bin/brew.js",
-		"bless": "src/bin/bless.js"
+		"bless": "src/bin/bless.js",
+		"sveltify": "src/bin/sveltify.js"
 	},
 	"scripts": {
 		"clean": "rm -f src/lib/*.js src/bin/*.js test/*.js test/**/*.js **/*.map",
@@ -78,6 +80,7 @@
 		"peggy": "file:../peggy",
 		"source-map": "^0.6.1",
 		"sprintf-js": "^1.1.3",
+		"svelte": "^5.0.0-next.200",
 		"yaml": "^2.4.5"
 	}
 }

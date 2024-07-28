@@ -2,22 +2,26 @@
 #
 # --- Designed to run in ANY project that installs @jdeighan/llutils
 
+import {compile} from 'svelte/compiler'
+
 import {
 	assert, npmLogLevel, nonEmpty, add_s,
 	} from '@jdeighan/llutils'
 import {
 	isProjRoot, fileExt, withExt,
-	allFilesMatching, readTextFile, newerDestFilesExist,
+	allFilesMatching, readTextFile, newerDestFileExists,
 	} from '@jdeighan/llutils/fs'
 import {brewFile} from '@jdeighan/llutils/llcoffee'
 import {peggifyFile} from '@jdeighan/llutils/peggy'
 import {blessFile} from '@jdeighan/llutils/cielo'
+import {createElemFile} from '@jdeighan/llutils/create-elem'
 
 debugger
 hFilesProcessed = {
 	coffee: 0
 	peggy: 0
 	cielo: 0
+	svelte: 0
 	}
 
 echo = (npmLogLevel() != 'silent')
@@ -27,6 +31,9 @@ doLog = (str) =>
 	return
 
 doLog "-- low-level-build --"
+
+# ---------------------------------------------------------------------------
+# Usage:   node src/bin/low-level-build.js
 
 # ---------------------------------------------------------------------------
 # 1. Make sure we're in a project root directory
@@ -45,20 +52,19 @@ if oneFilePath = process.argv[2]
 	process.exit()
 
 # ---------------------------------------------------------------------------
-# --- A file (*.coffee, *.peggy or *.cielo) is out of date unless both:
-#        - a *.js file exists that's newer than the original file
-#        - a *.js.map file exists that's newer than the original file
+# --- A file is out of date unless a *.js file exists
+#        that's newer than the original file
 # --- But ignore files inside node_modules
 
 fileFilter = ({filePath}) =>
 	if filePath.match(/node_modules/i)
 		return false
 	jsFile = withExt(filePath, '.js')
-	return ! newerDestFilesExist(filePath, jsFile)
+	return ! newerDestFileExists(filePath, jsFile)
 
 # ---------------------------------------------------------------------------
 # 2. Search project for *.coffee files and compile them
-#    unless newer *.js and *.js.map files exist
+#    unless newer *.js file exists
 
 for {relPath} from allFilesMatching('**/*.coffee', {fileFilter})
 	doLog relPath
@@ -67,7 +73,7 @@ for {relPath} from allFilesMatching('**/*.coffee', {fileFilter})
 
 # ---------------------------------------------------------------------------
 # 3. Search src folder for *.peggy files and compile them
-#    unless newer *.js and *.js.map files exist OR it needs rebuilding
+#    unless newer *.js file exists
 
 for {relPath} from allFilesMatching('**/*.{pegjs,peggy}', {fileFilter})
 	doLog relPath
@@ -76,12 +82,21 @@ for {relPath} from allFilesMatching('**/*.{pegjs,peggy}', {fileFilter})
 
 # ---------------------------------------------------------------------------
 # 4. Search src folder for *.cielo files and compile them
-#    unless newer *.js and *.js.map files exist OR it needs rebuilding
+#    unless newer *.js file exists
 
 for {relPath} from allFilesMatching('**/*.cielo', {fileFilter})
 	doLog relPath
 	blessFile relPath
 	hFilesProcessed.cielo += 1
+
+# ---------------------------------------------------------------------------
+# 5. Search src folder for *.svelte files and compile them
+#    unless newer *.js file exists
+
+for {relPath} from allFilesMatching('**/*.svelte', {fileFilter})
+	doLog relPath
+	createElemFile relPath
+	hFilesProcessed.svelte += 1
 
 # ---------------------------------------------------------------------------
 

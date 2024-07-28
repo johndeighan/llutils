@@ -1,5 +1,21 @@
 // make-new-project.coffee
-var _, author, bin, bins, clear, dev_installs, dirname, hJson, hSetKeys, i, install, installdev, installs, isType, j, k, l, lNames, lValidTypes, len, len1, len2, len3, len4, len5, lib, libs, llutils_installed, m, n, name, newDir, pkg, pkgJson, prefix, ref, ref1, rootDir, type;
+
+// --- Before running, set these environment variables:
+//        PROJECT_ROOT_DIR - directory where you add projects
+//        PROJECT_PACKAGE_JSON - JSON string or file path
+//           - should have 'author' key
+//        PROJECT_INSTALLS - comma sep list of pkgs to install
+//        PROJECT_DEV_INSTALLS - comma sep list of dev pkgs to install
+//        PROJECT_NAME_PREFIX - e.g. '@jdeighan/' to prepend this to proj name
+
+//     Usage: mnp <dirname>
+//        -c - clear out any existing directory
+//        -type=(website|electron|codemirror|parcel)
+//        -libs=<comma sep stubs>
+//        -bins=<comma sep stubs>
+//        -install=<comma sep pkgs>
+//        -installdev=<comma sep pkgs>
+var _, author, bin, bins, clear, dev_installs, dirname, fixPkgJson, hJson, i, install, installdev, installs, isType, j, k, l, lNames, lValidTypes, len, len1, len2, len3, lib, libs, llutils_installed, name, newDir, pkg, ref, ref1, rootDir, type;
 
 import {
   undef,
@@ -36,7 +52,7 @@ console.log("Starting make-new-project");
 
 type = undef;
 
-lValidTypes = ['electron', 'codemirror'];
+lValidTypes = ['electron', 'codemirror', 'parcel'];
 
 author = 'unknown';
 
@@ -45,10 +61,14 @@ author = 'unknown';
 //     when type is 'codemirror'
 isType = (t) => {
   switch (t) {
+    case 'parcel':
+      return type === 'parcel';
     case 'electron':
       return (type === 'electron') || (type === 'codemirror');
     case 'codemirror':
       return type === 'codemirror';
+    case 'website':
+      return (type === 'parcel') || (type === 'vite');
     default:
       return false;
   }
@@ -100,6 +120,7 @@ if (!isDir(rootDir)) {
   process.exit();
 }
 
+// === Create the new directory and cd to it
 newDir = mkpath(rootDir, dirname);
 
 if (isDir(newDir)) {
@@ -117,10 +138,21 @@ if (isDir(newDir)) {
 
 process.chdir(newDir);
 
+// === Initialize npm, set up package.json file
 console.log("Initializing npm");
 
 execCmd("npm init -y");
 
+// === Fix package.json file
+console.log("Fixing package.json");
+
+hJson = fixPkgJson();
+
+if (hJson.dependencies || hJson.devDependencies) {
+  execCmd("npm install");
+}
+
+// === Install libraries specified on command line
 llutils_installed = false;
 
 if (defined(install)) {
@@ -149,7 +181,7 @@ if (defined(installdev)) {
     if (name === 'llutils') {
       llutils_installed = true;
     }
-    execCmd(`npm install ${name}`);
+    execCmd(`npm install -D ${name}`);
   }
 }
 
@@ -157,12 +189,14 @@ if (!llutils_installed) {
   execCmd("npm install ava");
 }
 
+// === Initialize git
 console.log("Initializing git");
 
 execCmd("git init");
 
 execCmd("git branch -m main");
 
+// === Create standard directories
 console.log("Making directories");
 
 mkDir('./src');
@@ -171,88 +205,9 @@ mkDir('./src/lib');
 
 mkDir('./src/bin');
 
+mkDir('./src/elements');
+
 mkDir('./test');
-
-console.log("Fixing package.json");
-
-hJson = slurpJSON('./package.json');
-
-pkgJson = process.env.PROJECT_PACKAGE_JSON;
-
-if (nonEmpty(pkgJson)) {
-  // --- Can be either a JSON string or a file path
-  if (pkgJson.indexOf('{') === 0) {
-    hSetKeys = JSON.parse(pkgJson);
-  } else {
-    hSetKeys = JSON.parse(slurp(pkgJson));
-  }
-  Object.assign(hJson, hSetKeys);
-  prefix = process.env.PROJECT_NAME_PREFIX;
-  if (nonEmpty(prefix)) {
-    hJson.name = `${prefix}${hJson.name}`;
-  }
-  hJson.description = `A ${type} app`;
-  if (isType('electron')) {
-    hJson.main = "src/main.js";
-    hJson.scripts.start = "npm run build && electron .";
-  }
-  if (defined(libs)) {
-    console.log("Creating libs and 'export' key");
-    if (!hasKey(hJson, 'exports')) {
-      hJson.exports = {};
-    }
-    lNames = libs.split(',').map((str) => {
-      return str.trim();
-    });
-    assert(lNames.length > 0, "No names in 'libs'");
-    if (!hasKey(hJson.exports, ".")) {
-      hJson.exports["."] = `./src/lib/${lNames[0]}.js`;
-    }
-    for (k = 0, len2 = lNames.length; k < len2; k++) {
-      name = lNames[k];
-      createFile(`./src/lib/${name}.coffee`, `# --- ${name}.coffee`);
-      if (llutils_installed) {
-        createFile(`./test/${name}.test.coffee`, `# --- ${name}.test.offee
-
-import * as lib from '${hJson.name}/${name}'
-Object.assign(global, lib)
-import * as lib2 from '@jdeighan/llutils/utest'
-Object.assign(global, lib2)
-
-equal 2+2, 4`);
-      } else {
-        createFile(`./test/${name}.test.coffee`, `# --- ${name}.test.offee
-
-import * as lib from '${hJson.name}/${name}'
-Object.assign(global, lib)
-import test from 'ava'
-
-test "line 7", (t) =>
-	t.is 2+2, 4
-`);
-      }
-      hJson.exports[`./${name}`] = `./src/lib/${name}.js`;
-    }
-    hJson.exports["./package.json"] = "./package.json";
-  }
-  if (defined(bins)) {
-    console.log("Creating bins and 'bin' key");
-    if (!hasKey(hJson, 'bin')) {
-      hJson.bin = {};
-    }
-    lNames = bins.split(',').map((str) => {
-      return str.trim();
-    });
-    assert(lNames.length > 0, "No names in 'bins'");
-    for (l = 0, len3 = lNames.length; l < len3; l++) {
-      name = lNames[l];
-      touch(`./src/bin/${name}.coffee`);
-      hJson.bin[name] = `./src/bin/${name}.js`;
-    }
-  }
-}
-
-barfJSON(hJson, './package.json');
 
 if (hasKey(hJson, 'author')) {
   author = hJson.author;
@@ -262,8 +217,8 @@ installs = process.env.PROJECT_INSTALLS;
 
 if (nonEmpty(installs)) {
   ref = words(installs);
-  for (m = 0, len4 = ref.length; m < len4; m++) {
-    pkg = ref[m];
+  for (k = 0, len2 = ref.length; k < len2; k++) {
+    pkg = ref[k];
     console.log(`Installing ${OL(pkg)}`);
     execCmd(`npm install ${pkg}`);
   }
@@ -273,13 +228,14 @@ dev_installs = process.env.PROJECT_DEV_INSTALLS;
 
 if (nonEmpty(dev_installs)) {
   ref1 = words(dev_installs);
-  for (n = 0, len5 = ref1.length; n < len5; n++) {
-    pkg = ref1[n];
+  for (l = 0, len3 = ref1.length; l < len3; l++) {
+    pkg = ref1[l];
     console.log(`Installing (dev) ${OL(pkg)}`);
     execCmd(`npm install -D ${pkg}`);
   }
 }
 
+// === Create file README.md
 console.log("Creating README.md");
 
 barf(`README.md file
@@ -287,6 +243,7 @@ barf(`README.md file
 
 `, "./README.md");
 
+// === Create file .gitignore
 console.log("Creating .gitignore");
 
 barf(`logs/
@@ -305,6 +262,7 @@ typings/
 test/temp*.*
 /.svelte-kit`, "./.gitignore");
 
+// === Create file .npmrc
 console.log("Creating .npmrc");
 
 barf(`engine-strict=true
@@ -376,5 +334,97 @@ else
 }
 
 console.log("DONE");
+
+// ---------------------------------------------------------------------------
+// --- 1. Read in current package.json
+//     2. get keys from env var PROJECT_PACKAGE_JSON
+//     3. overwrite keys in package.json with #2 keys
+//     4. adjust name if env var PROJECT_NAME_PREFIX is set
+fixPkgJson = () => {
+  var hSetKeys, len4, len5, m, n, pkgJson, prefix;
+  hJson = slurpJSON('./package.json');
+  pkgJson = process.env.PROJECT_PACKAGE_JSON;
+  if (nonEmpty(pkgJson)) {
+    // --- Can be either a JSON string or a file path
+    if (pkgJson.indexOf('{') === 0) {
+      hSetKeys = JSON.parse(pkgJson);
+    } else {
+      hSetKeys = JSON.parse(slurp(pkgJson));
+    }
+    Object.assign(hJson, hSetKeys);
+    prefix = process.env.PROJECT_NAME_PREFIX;
+    if (nonEmpty(prefix)) {
+      hJson.name = `${prefix}${hJson.name}`;
+    }
+    hJson.description = `A ${type} app`;
+    if (isType('electron')) {
+      hJson.main = "src/main.js";
+      hJson.scripts.start = "npm run build && electron .";
+    } else if (isType('website')) {
+      hJson.main = "src/index.html";
+    }
+    if (isType('parcel')) {
+      hJson.source = "src/index.html";
+      hJson.scripts.start = "parcel";
+      hJson.scripts.build = "parcel build";
+    }
+    if (defined(libs)) {
+      console.log("Creating libs and 'export' key");
+      if (!hasKey(hJson, 'exports')) {
+        hJson.exports = {};
+      }
+      lNames = libs.split(',').map((str) => {
+        return str.trim();
+      });
+      assert(lNames.length > 0, "No names in 'libs'");
+      if (!hasKey(hJson.exports, ".")) {
+        hJson.exports["."] = `./src/lib/${lNames[0]}.js`;
+      }
+      for (m = 0, len4 = lNames.length; m < len4; m++) {
+        name = lNames[m];
+        createFile(`./src/lib/${name}.coffee`, `# --- ${name}.coffee`);
+        if (llutils_installed) {
+          createFile(`./test/${name}.test.coffee`, `# --- ${name}.test.offee
+
+import * as lib from '${hJson.name}/${name}'
+Object.assign(global, lib)
+import * as lib2 from '@jdeighan/llutils/utest'
+Object.assign(global, lib2)
+
+equal 2+2, 4`);
+        } else {
+          createFile(`./test/${name}.test.coffee`, `# --- ${name}.test.offee
+
+import * as lib from '${hJson.name}/${name}'
+Object.assign(global, lib)
+import test from 'ava'
+
+test "line 7", (t) =>
+	t.is 2+2, 4
+`);
+        }
+        hJson.exports[`./${name}`] = `./src/lib/${name}.js`;
+      }
+      hJson.exports["./package.json"] = "./package.json";
+    }
+    if (defined(bins)) {
+      console.log("Creating bins and 'bin' key");
+      if (!hasKey(hJson, 'bin')) {
+        hJson.bin = {};
+      }
+      lNames = bins.split(',').map((str) => {
+        return str.trim();
+      });
+      assert(lNames.length > 0, "No names in 'bins'");
+      for (n = 0, len5 = lNames.length; n < len5; n++) {
+        name = lNames[n];
+        touch(`./src/bin/${name}.coffee`);
+        hJson.bin[name] = `./src/bin/${name}.js`;
+      }
+    }
+  }
+  barfJSON(hJson, './package.json');
+  return hJson;
+};
 
 //# sourceMappingURL=make-new-project.js.map

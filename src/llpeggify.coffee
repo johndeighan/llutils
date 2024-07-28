@@ -5,7 +5,7 @@
 import {globSync} from 'glob'
 import {undef, defined, OL, execCmd} from '@jdeighan/llutils'
 import {
-	allFilesMatching, withExt, newerDestFilesExist,
+	allFilesMatching, withExt, newerDestFileExists,
 	} from '@jdeighan/llutils/fs'
 import {peggifyFile} from '@jdeighan/llutils/peggy'
 
@@ -19,7 +19,7 @@ fileFilter = ({filePath}) =>
 		return false
 	jsFile = withExt(filePath, '.js')
 	mapFile = withExt(filePath, '.js.map')
-	return ! newerDestFilesExist(filePath, jsFile, mapFile)
+	return ! newerDestFileExists(filePath, jsFile, mapFile)
 
 for {relPath} from allFilesMatching('**/*.{pegjs,peggy}', {fileFilter})
 	if defined(fileName) && !relPath.endsWith(fileName)

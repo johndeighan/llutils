@@ -1,7 +1,11 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var doLog, echo, fileFilter, hBin, hFilesProcessed, hJson, hMetaData, jsPath, key, nCielo, nCoffee, nPeggy, oneFilePath, ref, ref1, ref2, ref3, relPath, short_name, stub, tla, value, x, x1, y, z;
+var doLog, echo, fileFilter, hBin, hFilesProcessed, hJson, hMetaData, jsPath, key, nCielo, nCoffee, nPeggy, oneFilePath, ref, ref1, ref2, ref3, ref4, relPath, short_name, stub, tla, value, x, x1, y, y1, z;
+
+import {
+  compile
+} from 'svelte/compiler';
 
 import {
   assert,
@@ -16,7 +20,7 @@ import {
   withExt,
   allFilesMatching,
   readTextFile,
-  newerDestFilesExist
+  newerDestFileExists
 } from '@jdeighan/llutils/fs';
 
 import {
@@ -31,12 +35,17 @@ import {
   blessFile
 } from '@jdeighan/llutils/cielo';
 
+import {
+  createElemFile
+} from '@jdeighan/llutils/create-elem';
+
 debugger;
 
 hFilesProcessed = {
   coffee: 0,
   peggy: 0,
-  cielo: 0
+  cielo: 0,
+  svelte: 0
 };
 
 echo = npmLogLevel() !== 'silent';
@@ -48,6 +57,9 @@ doLog = (str) => {
 };
 
 doLog("-- low-level-build --");
+
+// ---------------------------------------------------------------------------
+// Usage:   node src/bin/low-level-build.js
 
 // ---------------------------------------------------------------------------
 // 1. Make sure we're in a project root directory
@@ -67,9 +79,8 @@ if (oneFilePath = process.argv[2]) {
 }
 
 // ---------------------------------------------------------------------------
-// --- A file (*.coffee, *.peggy or *.cielo) is out of date unless both:
-//        - a *.js file exists that's newer than the original file
-//        - a *.js.map file exists that's newer than the original file
+// --- A file is out of date unless a *.js file exists
+//        that's newer than the original file
 // --- But ignore files inside node_modules
 fileFilter = ({filePath}) => {
   var jsFile;
@@ -77,13 +88,13 @@ fileFilter = ({filePath}) => {
     return false;
   }
   jsFile = withExt(filePath, '.js');
-  return !newerDestFilesExist(filePath, jsFile);
+  return !newerDestFileExists(filePath, jsFile);
 };
 
 ref = allFilesMatching('**/*.coffee', {fileFilter});
 // ---------------------------------------------------------------------------
 // 2. Search project for *.coffee files and compile them
-//    unless newer *.js and *.js.map files exist
+//    unless newer *.js file exists
 for (x of ref) {
   ({relPath} = x);
   doLog(relPath);
@@ -94,7 +105,7 @@ for (x of ref) {
 ref1 = allFilesMatching('**/*.{pegjs,peggy}', {fileFilter});
 // ---------------------------------------------------------------------------
 // 3. Search src folder for *.peggy files and compile them
-//    unless newer *.js and *.js.map files exist OR it needs rebuilding
+//    unless newer *.js file exists
 for (y of ref1) {
   ({relPath} = y);
   doLog(relPath);
@@ -105,12 +116,23 @@ for (y of ref1) {
 ref2 = allFilesMatching('**/*.cielo', {fileFilter});
 // ---------------------------------------------------------------------------
 // 4. Search src folder for *.cielo files and compile them
-//    unless newer *.js and *.js.map files exist OR it needs rebuilding
+//    unless newer *.js file exists
 for (z of ref2) {
   ({relPath} = z);
   doLog(relPath);
   blessFile(relPath);
   hFilesProcessed.cielo += 1;
+}
+
+ref3 = allFilesMatching('**/*.svelte', {fileFilter});
+// ---------------------------------------------------------------------------
+// 5. Search src folder for *.svelte files and compile them
+//    unless newer *.js file exists
+for (x1 of ref3) {
+  ({relPath} = x1);
+  doLog(relPath);
+  createElemFile(relPath);
+  hFilesProcessed.svelte += 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -129,14 +151,14 @@ tla = (stub) => {
   }
 };
 
-ref3 = allFilesMatching('./src/bin/**/*.coffee');
+ref4 = allFilesMatching('./src/bin/**/*.coffee');
 // ---------------------------------------------------------------------------
 // 4. For every *.coffee file in the 'src/bin' directory that
 //       has key "shebang" set:
 //       - save <stub>: <jsPath> in hBin
 //       - if has a tla, save <tla>: <jsPath> in hBin
-for (x1 of ref3) {
-  ({relPath, stub} = x1);
+for (y1 of ref4) {
+  ({relPath, stub} = y1);
   ({hMetaData} = readTextFile(relPath));
   if (hMetaData != null ? hMetaData.shebang : void 0) {
     jsPath = withExt(relPath, '.js');
