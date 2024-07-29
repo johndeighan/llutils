@@ -36,6 +36,8 @@
 		"./lang": "./src/lib/lang.js",
 		"./text-table": "./src/lib/text-table.js",
 		"./plugins": "./src/lib/plugins.js",
+		"./install-utils": "./src/lib/install-utils.js",
+		"./pkg-json": "./src/lib/pkg-json.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {

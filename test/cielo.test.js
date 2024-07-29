@@ -1,8 +1,11 @@
 // cielo.test.coffee
-var bsl;
+var bsl, t;
 
 import {
-  undef
+  undef,
+  assert,
+  OL,
+  isString
 } from '@jdeighan/llutils';
 
 import * as lib from '@jdeighan/llutils/cielo';
@@ -13,6 +16,13 @@ import * as lib2 from '@jdeighan/llutils/utest';
 
 Object.assign(global, lib2);
 
+t = new UnitTester();
+
+t.transformValue = (str) => {
+  assert(isString(str), `Not a string: ${OL(str)}`);
+  return cieloPreProcess(str);
+};
+
 // ---------------------------------------------------------------------------
 //    - Handles HEREDOC syntax
 //    - ends file upon seeing '__END__'
@@ -20,7 +30,7 @@ Object.assign(global, lib2);
 //symbol "cieloPreProcess(code)"
 bsl = "\\";
 
-equal(cieloPreProcess(`import {undef} from '@jdeighan/llutils'
+t.equal(`import {undef} from '@jdeighan/llutils'
 
 equal fromTAML(<<<), <<<
 	a: 1
@@ -30,12 +40,12 @@ equal fromTAML(<<<), <<<
 	a: 1
 	b: 2
 
-console.log 'DONE'`), `import {undef} from '@jdeighan/llutils'
+console.log 'DONE'`, `import {undef} from '@jdeighan/llutils'
 
 equal fromTAML("a: 1${bsl}nb: 2"), {"a":1,"b":2}
 console.log 'DONE'`);
 
-equal(cieloPreProcess(`import {undef} from '@jdeighan/llutils'
+t.equal(`import {undef} from '@jdeighan/llutils'
 
 equal fromTAML(<<<), <<<
 	a: 1
@@ -46,7 +56,7 @@ equal fromTAML(<<<), <<<
 	b: 2
 
 __END__
-console.log 'DONE'`), `import {undef} from '@jdeighan/llutils'
+console.log 'DONE'`, `import {undef} from '@jdeighan/llutils'
 
 equal fromTAML("a: 1${bsl}nb: 2"), {"a":1,"b":2}`);
 

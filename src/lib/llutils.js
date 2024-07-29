@@ -678,6 +678,9 @@ export var keys = Object.keys;
 
 // ---------------------------------------------------------------------------
 export var hasKey = (h, key) => {
+  if (notdefined(h)) {
+    return false;
+  }
   assert(isHash(h) || isClassInstance(h), `h is ${h}`);
   assert(isString(key), `key is ${key}`);
   return h.hasOwnProperty(key);

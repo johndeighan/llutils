@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "install-utils.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\lib\\install-utils.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAsB;AAEtB,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;EAC6B,EAD7B;EACiC,OADjC;EAC0C,UAD1C;CAAA,MAAA;;AAGA,OAAA;EAAQ,GAAR;CAAA,MAAA,yBALsB;;;AAStB,OAAA,IAAO,UAAA,GAAa,GATE;;;AAatB,OAAA,IAAO,WAAA,GAAc,CAAC,GAAD,CAAA,GAAA;AAEpB,SAAO,UAAU,CAAC,QAAX,CAAoB,GAApB;AAFa,EAbC;;;AAmBtB,OAAA,IAAO,YAAA,GAAe,CAAC,GAAD,CAAA,GAAA;AAErB,SAAO,CAAE,UAAU,CAAC,QAAX,CAAoB,GAApB;AAFY,EAnBA;;;AAyBtB,OAAA,IAAO,UAAA,GAAa,CAAC,GAAD,EAAM,WAAS,CAAA,CAAf,CAAA,GAAA;AAEpB,MAAA,GAAA,EAAA,GAAA,EAAA,GAAA,EAAA;EAAC,IAAG,WAAA,CAAY,GAAZ,CAAH;IACC,OAAO,CAAC,GAAR,CAAY,CAAA,+BAAA,CAAA,CAAkC,GAAlC,CAAA,CAAA,CAAZ;AACA,WAFD;;EAIA,CAAA,CAAC,GAAD,EAAM,OAAN,CAAA,GAAiB,UAAA,CAAW,QAAX,EAAqB;IACrC,GAAA,EAAK,IADgC;IAErC,OAAA,EAAS;EAF4B,CAArB,CAAjB;EAIA,IAAG,GAAH;IACC,GAAA,GAAM,CAAA,eAAA,CAAA,CAAkB,GAAlB,CAAA,EADP;GAAA,MAAA;IAGC,GAAA,GAAM,CAAA,YAAA,CAAA,CAAe,GAAf,CAAA,EAHP;;EAIA,IAAG,OAAA,CAAQ,OAAR,CAAH;IACC,GAAA,IAAO,EAAA,CAAA,CAAI,OAAJ,CAAA,EADR;;EAEA,OAAO,CAAC,GAAR,CAAY,CAAA,KAAA,CAAA,CAAQ,EAAA,CAAG,GAAH,CAAR,CAAA,CAAZ;AACA;IACC,OAAA,CAAQ,GAAR;IACA,UAAU,CAAC,IAAX,CAAgB,GAAhB,EAFD;GAGA,aAAA;IAAM;IACL,OAAO,CAAC,GAAR,CAAY,CAAA,OAAA,CAAA,CAAU,GAAG,CAAC,OAAd,CAAA,CAAZ;IACA,OAAO,CAAC,GAAR,CAAY,GAAZ,EAFD;;AApBmB",
+  "sourcesContent": [
+    "# install-utils.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined, OL, execCmd, getOptions,\r\n\t} from '@jdeighan/llutils'\r\nimport {BOX} from '@jdeighan/llutils/dump'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport lInstalled = []\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport isInstalled = (pkg) =>\r\n\r\n\treturn lInstalled.includes(pkg)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport notInstalled = (pkg) =>\r\n\r\n\treturn ! lInstalled.includes(pkg)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport installPkg = (pkg, hOptions={}) =>\r\n\r\n\tif isInstalled(pkg)\r\n\t\tconsole.log \"Attempted duplicate install of #{pkg}!\"\r\n\t\treturn\r\n\r\n\t{dev, version} = getOptions hOptions, {\r\n\t\tdev: true\r\n\t\tversion: undef\r\n\t\t}\r\n\tif dev\r\n\t\tcmd = \"npm install -D #{pkg}\"\r\n\telse\r\n\t\tcmd = \"npm install #{pkg}\"\r\n\tif defined(version)\r\n\t\tcmd += \" #{version}\"\r\n\tconsole.log \"CMD: #{OL(cmd)}\"\r\n\ttry\r\n\t\texecCmd cmd\r\n\t\tlInstalled.push pkg\r\n\tcatch err\r\n\t\tconsole.log \"ERROR: #{err.message}\"\r\n\t\tconsole.log err\r\n\treturn\r\n"
+  ]
+}

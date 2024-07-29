@@ -1,10 +1,15 @@
 # cielo.test.coffee
 
-import {undef} from '@jdeighan/llutils'
+import {undef, assert, OL, isString} from '@jdeighan/llutils'
 import * as lib from '@jdeighan/llutils/cielo'
 Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
+
+t = new UnitTester()
+t.transformValue = (str) =>
+	assert isString(str), "Not a string: #{OL(str)}"
+	return cieloPreProcess(str)
 
 # ---------------------------------------------------------------------------
 #    - Handles HEREDOC syntax
@@ -14,7 +19,7 @@ Object.assign(global, lib2)
 
 bsl = "\\"
 
-equal cieloPreProcess("""
+t.equal """
 	import {undef} from '@jdeighan/llutils'
 
 	equal fromTAML(<<<), <<<
@@ -26,14 +31,14 @@ equal cieloPreProcess("""
 		b: 2
 
 	console.log 'DONE'
-	"""), """
+	""", """
 	import {undef} from '@jdeighan/llutils'
 
 	equal fromTAML("a: 1#{bsl}nb: 2"), {"a":1,"b":2}
 	console.log 'DONE'
 	"""
 
-equal cieloPreProcess("""
+t.equal """
 	import {undef} from '@jdeighan/llutils'
 
 	equal fromTAML(<<<), <<<
@@ -46,7 +51,7 @@ equal cieloPreProcess("""
 
 	__END__
 	console.log 'DONE'
-	"""), """
+	""", """
 	import {undef} from '@jdeighan/llutils'
 
 	equal fromTAML("a: 1#{bsl}nb: 2"), {"a":1,"b":2}
