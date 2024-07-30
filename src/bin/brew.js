@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // brew.coffee
 
 // --- designed to be a TextPad tool

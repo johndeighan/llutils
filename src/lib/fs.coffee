@@ -685,3 +685,27 @@ export barfJSON = (hJson, filePath) =>
 	barf(str, filePath)
 	return
 
+# ---------------------------------------------------------------------------
+#   barfPkgJSON - write package.json file
+
+lFields = words('name version type license author description',
+                'exports bin scripts keywords devDependencies dependencies'
+                )
+
+export barfPkgJSON = (hJson, filePath='./package.json') =>
+
+	assert isHash(hJson), "Not a hash: #{OL(hJson)}"
+
+	# --- Create a new hash with keys in a particular order
+	hJson2 = {}
+
+	for key in lFields
+		if hasKey(hJson, key)
+			hJson2[key] = hJson[key]
+
+	for key in keys(hJson)
+		if ! hasKey(hJson2, key)
+			hJson2[key] = hJson[key]
+
+	barfJSON hJson2, filePath
+	return

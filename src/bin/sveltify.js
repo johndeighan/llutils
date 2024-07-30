@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // sveltify.coffee
 var ast, blocks, contents, css, filePath, hMetaData, js, stats, vars, warnings;
 

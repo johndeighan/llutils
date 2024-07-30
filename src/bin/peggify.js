@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // peggify.coffee
 
 // --- designed to be a TextPad tool

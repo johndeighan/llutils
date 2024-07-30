@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // make-new-project.coffee
 
 // --- Before running, set these environment variables:
@@ -15,7 +16,7 @@
 //        -bins=<comma sep stubs>
 //        -install=<comma sep pkgs>
 //        -installdev=<comma sep pkgs>
-var author, isType, lValidTypes, main, type;
+var author, isType, lValidTypes, main, makeDir, type;
 
 import {
   undef,
@@ -46,6 +47,7 @@ import {
   clearDir,
   slurpJSON,
   barfJSON,
+  barfPkgJSON,
   touch,
   createFile
 } from '@jdeighan/llutils/fs';
@@ -78,6 +80,12 @@ isType = (t) => {
     default:
       return false;
   }
+};
+
+// ---------------------------------------------------------------------------
+makeDir = (dir) => {
+  console.log(`   ${dir}`);
+  mkDir(dir);
 };
 
 // ---------------------------------------------------------------------------
@@ -151,7 +159,6 @@ main = () => {
     pj.addScript('start', 'npm run build && electron .');
   } else if (type === 'parcel') {
     pj.addDevDep('parcel');
-    pj.setField('main', 'src/index.html');
     pj.setField('source', 'src/index.html');
     pj.addScript('start', 'parcel');
     pj.addScript('build', 'parcel build');
@@ -246,11 +253,13 @@ test "line 7", (t) =>
   execCmd("git branch -m main");
   // === Create standard directories
   console.log("Making directories");
-  mkDir('./src');
-  mkDir('./src/lib');
-  mkDir('./src/bin');
-  mkDir('./src/elements');
-  mkDir('./test');
+  makeDir('./src');
+  makeDir('./src/lib');
+  makeDir('./src/bin');
+  if (isType('website')) {
+    makeDir('./src/elements');
+  }
+  makeDir('./test');
   // === Create file README.md
   console.log("Creating README.md");
   barf(`README.md file
@@ -357,6 +366,8 @@ else
 	</body>
 </html>`, "./src/index.html");
   }
+  console.log("Writing package.json");
+  pj.write();
   return console.log("DONE");
 };
 

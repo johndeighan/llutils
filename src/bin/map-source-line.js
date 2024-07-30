@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // map-source-line.coffee
 var filePath, hArgs, lineNum;
 

@@ -8,7 +8,7 @@ import {
 	assert, npmLogLevel, nonEmpty, add_s,
 	} from '@jdeighan/llutils'
 import {
-	isProjRoot, fileExt, withExt,
+	isProjRoot, fileExt, withExt, barfJSON, barfPkgJSON,
 	allFilesMatching, readTextFile, newerDestFileExists,
 	} from '@jdeighan/llutils/fs'
 import {brewFile} from '@jdeighan/llutils/llcoffee'

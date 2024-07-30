@@ -2,11 +2,29 @@
 
 import {
 	undef, defined, notdefined, isEmpty, nonEmpty, getOptions, hasKey,
-	assert, croak,
+	assert, croak, OL,
 	} from '@jdeighan/llutils'
 import {
-	slurpJSON, barfJSON, createFile, touch,
+	slurpJSON, barfJSON, barfPkgJSON, createFile, touch,
 	} from '@jdeighan/llutils/fs'
+
+hVersions = {
+	coffeescript: "^2.7.0"
+	ava: "^6.1.3"
+	svelte: "^5.0.0-next.200"
+	gulp: "^5.0.0"
+	parcel: "^2.12.0"
+	'@jdeighan/llutils': "^1.0.8"
+	}
+
+# ---------------------------------------------------------------------------
+
+getVersion = (pkg) =>
+
+	if hasKey(hVersions, pkg)
+		return hVersions[pkg]
+	else
+		return 'latest'
 
 # ---------------------------------------------------------------------------
 # --- 1. Read in current package.json
@@ -16,19 +34,15 @@ import {
 
 export class PkgJson
 
-	constructor: (hOptions={}) ->
-
-		{llutils} = getOptions hOptions, {
-			llutils: true
-			}
+	constructor: () ->
 
 		@hJson = slurpJSON('./package.json')
 		@mergeKeysFromEnv()
 		prefix = process.env.PROJECT_NAME_PREFIX
 		if nonEmpty(prefix)
 			@setField 'name', "#{prefix}#{@hJson.name}"
-		if llutils && !isInstalled('@jdeighan/llutils')
-			addDep '@jdeighan/llutils', 'latest'
+		@setField 'license', 'MIT'
+		@addDep '@jdeighan/llutils'
 
 	# ..........................................................
 
@@ -46,65 +60,78 @@ export class PkgJson
 
 	# ..........................................................
 
-	setField: (name, value) =>
+	setField: (name, value) ->
 
 		@hJson[name] = value
+		console.log "   #{name} = #{OL(value)}"
 		return
 
 	# ..........................................................
 
-	addScript: (name, str) =>
+	addScript: (name, str) ->
 
-		if ! hasKey(hJson, 'scripts')
+		if ! hasKey(@hJson, 'scripts')
 			@hJson.scripts = {}
 		@hJson.scripts[name] = str
+		console.log "   SCRIPT #{name} = #{OL(str)}"
 		return
 
 	# ..........................................................
 
-	addExport: (name, str) =>
+	addExport: (name, str) ->
 
-		if ! hasKey(hJson, 'exports')
+		if ! hasKey(@hJson, 'exports')
 			@hJson.exports = {}
 		@hJson.exports[name] = str
+		console.log "   EXPORT #{name} = #{OL(str)}"
 		return
 
 	# ..........................................................
 
-	addBin: (name, str) =>
+	addBin: (name, str) ->
 
-		if ! hasKey(hJson, 'bin')
+		if ! hasKey(@hJson, 'bin')
 			@hJson.bin = {}
 		@hJson.bin[name] = str
+		console.log "   BIN #{name} = #{OL(str)}"
 		return
 
 	# ..........................................................
 
-	addDep: (pkg, version) =>
+	addDep: (pkg) ->
 
-		if ! hasKey(hJson, 'dependencies')
+		if ! hasKey(@hJson, 'dependencies')
 			@hJson.dependencies = {}
 		if @hJson?.devDependencies.pkg
 			delete @hJson.devDependencies.pkg
+		version = getVersion(pkg)
 		@hJson.dependencies[pkg] = version
+		console.log "   DEP #{pkg} = #{OL(version)}"
 		return
 
 	# ..........................................................
 
-	addDevDep: (pkg, version) =>
+	addDevDep: (pkg) ->
 
-		if ! hasKey(hJson, 'devDependencies')
+		if ! hasKey(@hJson, 'devDependencies')
 			@hJson.devDependencies = {}
 		if @hJson?.dependencies.pkg
 			delete @hJson.dependencies.pkg
+		version = getVersion(pkg)
 		@hJson.devDependencies[pkg] = version
+		console.log "   DEV DEP #{pkg} = #{OL(version)}"
 		return
 
 	# ..........................................................
 
-	isInstalled: (hJson, pkg) =>
+	isInstalled: (pkg) ->
 
-		return hasKey(hJson.dependencies, pkg) \
-				|| hasKey(hJson.devDependencies, pkg)
+		return hasKey(@hJson.dependencies, pkg) \
+				|| hasKey(@hJson.devDependencies, pkg)
 
-# ---------------------------------------------------------------------------
+	# ..........................................................
+
+	write: () ->
+
+		barfPkgJSON @hJson
+		return

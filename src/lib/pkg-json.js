@@ -1,4 +1,6 @@
-  // pkg-json.coffee
+// pkg-json.coffee
+var getVersion, hVersions;
+
 import {
   undef,
   defined,
@@ -8,15 +10,35 @@ import {
   getOptions,
   hasKey,
   assert,
-  croak
+  croak,
+  OL
 } from '@jdeighan/llutils';
 
 import {
   slurpJSON,
   barfJSON,
+  barfPkgJSON,
   createFile,
   touch
 } from '@jdeighan/llutils/fs';
+
+hVersions = {
+  coffeescript: "^2.7.0",
+  ava: "^6.1.3",
+  svelte: "^5.0.0-next.200",
+  gulp: "^5.0.0",
+  parcel: "^2.12.0",
+  '@jdeighan/llutils': "^1.0.8"
+};
+
+// ---------------------------------------------------------------------------
+getVersion = (pkg) => {
+  if (hasKey(hVersions, pkg)) {
+    return hVersions[pkg];
+  } else {
+    return 'latest';
+  }
+};
 
 // ---------------------------------------------------------------------------
 // --- 1. Read in current package.json
@@ -24,34 +46,16 @@ import {
 //     3. overwrite keys in package.json with #2 keys
 //     4. adjust name if env var PROJECT_NAME_PREFIX is set
 export var PkgJson = class PkgJson {
-  constructor(hOptions = {}) {
-    var llutils, prefix;
-    // ..........................................................
-    this.setField = this.setField.bind(this);
-    // ..........................................................
-    this.addScript = this.addScript.bind(this);
-    // ..........................................................
-    this.addExport = this.addExport.bind(this);
-    // ..........................................................
-    this.addBin = this.addBin.bind(this);
-    // ..........................................................
-    this.addDep = this.addDep.bind(this);
-    // ..........................................................
-    this.addDevDep = this.addDevDep.bind(this);
-    // ..........................................................
-    this.isInstalled = this.isInstalled.bind(this);
-    ({llutils} = getOptions(hOptions, {
-      llutils: true
-    }));
+  constructor() {
+    var prefix;
     this.hJson = slurpJSON('./package.json');
     this.mergeKeysFromEnv();
     prefix = process.env.PROJECT_NAME_PREFIX;
     if (nonEmpty(prefix)) {
       this.setField('name', `${prefix}${this.hJson.name}`);
     }
-    if (llutils && !isInstalled('@jdeighan/llutils')) {
-      addDep('@jdeighan/llutils', 'latest');
-    }
+    this.setField('license', 'MIT');
+    this.addDep('@jdeighan/llutils');
   }
 
   // ..........................................................
@@ -69,59 +73,77 @@ export var PkgJson = class PkgJson {
     }
   }
 
+  // ..........................................................
   setField(name, value) {
     this.hJson[name] = value;
+    console.log(`   ${name} = ${OL(value)}`);
   }
 
+  // ..........................................................
   addScript(name, str) {
-    if (!hasKey(hJson, 'scripts')) {
+    if (!hasKey(this.hJson, 'scripts')) {
       this.hJson.scripts = {};
     }
     this.hJson.scripts[name] = str;
+    console.log(`   SCRIPT ${name} = ${OL(str)}`);
   }
 
+  // ..........................................................
   addExport(name, str) {
-    if (!hasKey(hJson, 'exports')) {
+    if (!hasKey(this.hJson, 'exports')) {
       this.hJson.exports = {};
     }
     this.hJson.exports[name] = str;
+    console.log(`   EXPORT ${name} = ${OL(str)}`);
   }
 
+  // ..........................................................
   addBin(name, str) {
-    if (!hasKey(hJson, 'bin')) {
+    if (!hasKey(this.hJson, 'bin')) {
       this.hJson.bin = {};
     }
     this.hJson.bin[name] = str;
+    console.log(`   BIN ${name} = ${OL(str)}`);
   }
 
-  addDep(pkg, version) {
-    var ref;
-    if (!hasKey(hJson, 'dependencies')) {
+  // ..........................................................
+  addDep(pkg) {
+    var ref, version;
+    if (!hasKey(this.hJson, 'dependencies')) {
       this.hJson.dependencies = {};
     }
     if ((ref = this.hJson) != null ? ref.devDependencies.pkg : void 0) {
       delete this.hJson.devDependencies.pkg;
     }
+    version = getVersion(pkg);
     this.hJson.dependencies[pkg] = version;
+    console.log(`   DEP ${pkg} = ${OL(version)}`);
   }
 
-  addDevDep(pkg, version) {
-    var ref;
-    if (!hasKey(hJson, 'devDependencies')) {
+  // ..........................................................
+  addDevDep(pkg) {
+    var ref, version;
+    if (!hasKey(this.hJson, 'devDependencies')) {
       this.hJson.devDependencies = {};
     }
     if ((ref = this.hJson) != null ? ref.dependencies.pkg : void 0) {
       delete this.hJson.dependencies.pkg;
     }
+    version = getVersion(pkg);
     this.hJson.devDependencies[pkg] = version;
+    console.log(`   DEV DEP ${pkg} = ${OL(version)}`);
   }
 
-  isInstalled(hJson, pkg) {
-    return hasKey(hJson.dependencies, pkg) || hasKey(hJson.devDependencies, pkg);
+  // ..........................................................
+  isInstalled(pkg) {
+    return hasKey(this.hJson.dependencies, pkg) || hasKey(this.hJson.devDependencies, pkg);
+  }
+
+  // ..........................................................
+  write() {
+    barfPkgJSON(this.hJson);
   }
 
 };
-
-// ---------------------------------------------------------------------------
 
 //# sourceMappingURL=pkg-json.js.map

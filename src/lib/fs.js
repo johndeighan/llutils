@@ -1,5 +1,5 @@
 // fs.coffee
-var lDirs;
+var lDirs, lFields;
 
 import pathLib from 'node:path';
 
@@ -714,6 +714,31 @@ export var barfJSON = (hJson, filePath) => {
   }
   str = JSON.stringify(hJson, null, "\t");
   barf(str, filePath);
+};
+
+// ---------------------------------------------------------------------------
+//   barfPkgJSON - write package.json file
+lFields = words('name version type license author description', 'exports bin scripts keywords devDependencies dependencies');
+
+export var barfPkgJSON = (hJson, filePath = './package.json') => {
+  var hJson2, i, j, key, len, len1, ref;
+  assert(isHash(hJson), `Not a hash: ${OL(hJson)}`);
+  // --- Create a new hash with keys in a particular order
+  hJson2 = {};
+  for (i = 0, len = lFields.length; i < len; i++) {
+    key = lFields[i];
+    if (hasKey(hJson, key)) {
+      hJson2[key] = hJson[key];
+    }
+  }
+  ref = keys(hJson);
+  for (j = 0, len1 = ref.length; j < len1; j++) {
+    key = ref[j];
+    if (!hasKey(hJson2, key)) {
+      hJson2[key] = hJson[key];
+    }
+  }
+  barfJSON(hJson2, filePath);
 };
 
 //# sourceMappingURL=fs.js.map

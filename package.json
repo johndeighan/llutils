@@ -53,7 +53,7 @@
 		"clean": "rm -f src/lib/*.js src/bin/*.js test/*.js test/**/*.js **/*.map",
 		"build:coffee": "coffee -cmb --no-header .",
 		"build:peggy": "node ./src/llpeggify.js",
-		"build": "clear && npm run build:coffee && npm run build:peggy && node src/bin/low-level-build.js",
+		"build": "clear && npm run build:coffee && npm run build:peggy && node src/bin/low-level-build.js && node src/bin/shebangify.js",
 		"newbuild": "clear && npm run build:coffee && gulp build",
 		"rebuild": "npm run clean && npm run build",
 		"test": "clear && npm run build && npx ava --timeout=1m ./test/*.test.js && git status",

@@ -23,7 +23,7 @@ import {
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
 	mkpath, isDir, mkDir, slurp, barf, clearDir,
-	slurpJSON, barfJSON, touch, createFile,
+	slurpJSON, barfJSON, barfPkgJSON, touch, createFile,
 	} from '@jdeighan/llutils/fs'
 import {
 	PkgJson,
@@ -51,6 +51,14 @@ isType = (t) =>
 			return (type == 'parcel') || (type == 'vite')
 		else
 			return false
+
+# ---------------------------------------------------------------------------
+
+makeDir = (dir) =>
+
+	console.log "   #{dir}"
+	mkDir dir
+	return
 
 # ---------------------------------------------------------------------------
 
@@ -120,7 +128,6 @@ main = () =>
 	else if (type == 'parcel')
 		pj.addDevDep 'parcel'
 
-		pj.setField 'main', 'src/index.html'
 		pj.setField 'source', 'src/index.html'
 
 		pj.addScript 'start', 'parcel'
@@ -203,11 +210,12 @@ main = () =>
 	# === Create standard directories
 
 	console.log "Making directories"
-	mkDir './src'
-	mkDir './src/lib'
-	mkDir './src/bin'
-	mkDir './src/elements'
-	mkDir './test'
+	makeDir './src'
+	makeDir './src/lib'
+	makeDir './src/bin'
+	if isType('website')
+		makeDir './src/elements'
+	makeDir './test'
 
 	# === Create file README.md
 
@@ -345,7 +353,8 @@ main = () =>
 			</html>
 			""", "./src/index.html"
 
-
+	console.log "Writing package.json"
+	pj.write()
 	console.log "DONE"
 
 # ---------------------------------------------------------------------------

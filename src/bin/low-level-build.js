@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
@@ -18,6 +19,8 @@ import {
   isProjRoot,
   fileExt,
   withExt,
+  barfJSON,
+  barfPkgJSON,
   allFilesMatching,
   readTextFile,
   newerDestFileExists

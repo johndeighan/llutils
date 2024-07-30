@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // bless.coffee
 
 // --- designed to be a TextPad tool
