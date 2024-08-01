@@ -89,8 +89,11 @@ assert(isProjRoot('.', 'strict'), "Not in package root dir");
   e: echo,
   f: force,
   w
-} = getArgs(undef, {
-  _: [0, 1],
+} = getArgs({
+  _: {
+    min: 0,
+    max: 1
+  },
   e: 'boolean',
   f: 'boolean',
   w: 'boolean'

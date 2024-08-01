@@ -1,49 +1,36 @@
 # pkg-json.coffee
 
 import {
-	undef, defined, notdefined, isEmpty, nonEmpty, getOptions, hasKey,
-	assert, croak, OL,
+	undef, defined, notdefined, isEmpty, nonEmpty, hasKey,
+	assert, croak, OL, getOptions,
 	} from '@jdeighan/llutils'
 import {
 	slurpPkgJSON, slurpJSON, barfJSON, barfPkgJSON,
 	createFile, touch,
 	} from '@jdeighan/llutils/fs'
 
-hVersions = {
-	coffeescript: "^2.7.0"
-	ava: "^6.1.3"
-	svelte: "^5.0.0-next.200"
-	gulp: "^5.0.0"
-	parcel: "^2.12.0"
-	'@jdeighan/llutils': "^1.0.8"
-	}
-
-# ---------------------------------------------------------------------------
-
-getVersion = (pkg) =>
-
-	if hasKey(hVersions, pkg)
-		return hVersions[pkg]
-	else
-		return 'latest'
-
 # ---------------------------------------------------------------------------
 # --- 1. Read in current package.json
-#     2. get keys from env var PROJECT_PACKAGE_JSON
-#     3. overwrite keys in package.json with #2 keys
-#     4. adjust name if env var PROJECT_NAME_PREFIX is set
+#     2. If option 'fix':
+#        - get keys from env var PROJECT_PACKAGE_JSON
+#        - overwrite keys in package.json
+#        - adjust name if env var PROJECT_NAME_PREFIX is set
 
 export class PkgJson
 
-	constructor: () ->
+	constructor: (hOptions={}) ->
 
+		{fix} = getOptions hOptions, {
+			fix: false
+			}
 		@hJson = slurpPkgJSON()
-		@mergeKeysFromEnv()
-		prefix = process.env.PROJECT_NAME_PREFIX
-		if nonEmpty(prefix)
-			@setField 'name', "#{prefix}#{@hJson.name}"
-		@setField 'license', 'MIT'
-		@addDep '@jdeighan/llutils'
+		if fix
+			@mergeKeysFromEnv()
+			prefix = process.env.PROJECT_NAME_PREFIX
+			if nonEmpty(prefix)
+				@setField 'name', "#{prefix}#{@hJson.name}"
+			@setField 'license', 'MIT'
+			@addDep '@jdeighan/llutils'
 
 	# ..........................................................
 
@@ -142,3 +129,22 @@ export class PkgJson
 
 		barfPkgJSON @hJson
 		return
+
+# ---------------------------------------------------------------------------
+
+getVersion = (pkg) =>
+
+	switch pkg
+		when 'coffeescript'
+			return "^2.7.0"
+		when 'ava'
+			return "^6.1.3"
+		when 'svelte'
+			return "^5.0.0-next.200"
+		when 'gulp'
+			return "^5.0.0"
+		when 'parcel'
+			return "^2.12.0"
+		else
+			return 'latest'
+

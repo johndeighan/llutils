@@ -1,5 +1,6 @@
 # cmd-args.test.coffee
 
+import {undef} from '@jdeighan/llutils'
 import * as lib from '@jdeighan/llutils/cmd-args'
 Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'
@@ -7,50 +8,53 @@ Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
 
-equal getArgs('-ab -cd=why'), {
+equal getArgs(undef, {args: '-ab -cd=why'}), {
 	a: true
 	b: true
 	cd: 'why'
 	_: []
 	}
 
-equal getArgs('-ab -cd=whynot letmein'), {
+equal getArgs(undef, {args: '-ab -cd=whynot letmein'}), {
 	a: true
 	b: true
 	cd: 'whynot'
 	_: ['letmein']
 	}
 
-equal getArgs('-label="some label"'), {
+equal getArgs(undef, {args: '-label="some label"'}), {
 	label: "some label"
 	_: []
 	}
 
-equal getArgs("-label='some label'"), {
+equal getArgs(undef, {args: "-label='some label'"}), {
 	label: "some label"
 	_: []
 	}
 
 hDesc = {
-	_: [1,3]
+	_: {
+		min: 1
+		max: 3
+		}
 	a: 'boolean'
 	b: 'boolean'
 	cd: 'string'
 	}
 
-equal getArgs('-ab -cd=why letmein', hDesc), {
+equal getArgs(hDesc, {args: '-ab -cd=why letmein'}), {
 	_: ['letmein']
 	a: true
 	b: true
 	cd: 'why'
 	}
 
-equal getArgs('-a -cd=why letmein', hDesc), {
+equal getArgs(hDesc, {args: '-a -cd=why letmein'}), {
 	_: ['letmein']
 	a: true
 	cd: 'why'
 	}
 
-fails () => getArgs('-ab -cd=why', hDesc)
+fails () => getArgs(hDesc, {args: '-ab -cd=why'})
 
-fails () => getArgs('-ab -cd=why a b c d', hDesc)
+fails () => getArgs(hDesc, {args: '-ab -cd=why a b c d'})

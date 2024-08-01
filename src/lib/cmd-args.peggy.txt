@@ -33,12 +33,14 @@
 
 	hOptions = {};
 
-	export var getArgs = (argStr = undef, hDesc = undef, hOptions = {}) => {
-	  var err, hResult, tracerStr;
-	  argStr = cmdArgStr(argStr);
-	  hOptions = getOptions(hOptions); // make it a hash
-	  tracerStr = hOptions.tracer || 'none';
-	  hOptions.tracer = getTracer(tracerStr);
+	export var getArgs = (hDesc = undef, hOptions = {}) => {
+	  var argStr, args, err, hResult, tracer;
+	  ({args, tracer} = getOptions(hOptions, {
+	    args: undef,
+	    tracer: 'none'
+	  }));
+	  argStr = cmdArgStr(args);
+	  hOptions.tracer = getTracer(tracer);
 	  try {
 	    hResult = peg$parse(argStr, hOptions);
 	  } catch (error) {
@@ -53,17 +55,11 @@
 	};
 
 	check = (hResult, hDesc) => {
-	  var err, i, key, lLimits, lNonOptions, len, max, min, n, ref, type, value;
-	  lLimits = hDesc._;
-	  if (defined(lLimits)) {
-	    assert(isArray(lLimits), `Not an array: ${OL(lLimits)}`);
-	    [min, max] = lLimits;
-	    if (notdefined(min)) {
-	      min = 0;
-	    }
-	    if (notdefined(max)) {
-	      max = 2e308;
-	    }
+	  var err, h, i, key, lNonOptions, len, max, min, n, ref, type, value;
+	  h = hDesc._;
+	  if (defined(h)) {
+	    min = h.min || h.exactly || 0;
+	    max = h.max || h.exactly || 2e308;
 	    lNonOptions = hResult._;
 	    if (defined(lNonOptions)) {
 	      assert(isArray(lNonOptions), `Not an array: ${OL(lNonOptions)}`);

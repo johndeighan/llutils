@@ -53,8 +53,10 @@ main = async() => {
     _: lNonOptions,
     c: clear,
     type
-  } = getArgs(undef, {
-    _: [1, 1],
+  } = getArgs({
+    _: {
+      exactly: 1
+    },
     c: 'boolean',
     type: 'string'
   }));

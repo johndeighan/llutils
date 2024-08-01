@@ -1,7 +1,7 @@
 # for-each-file.coffee
 
 # --- Using option -debug prevents any execution
-#        therefore option -cmd is not required
+#        In that case, option -cmd is not required
 #        but if provided, allows output of command
 #        that would be executed
 
@@ -17,13 +17,15 @@ import {
 
 # ---------------------------------------------------------------------------
 # --- Usage:
-#    for-each-file <glob>... -cmd="coffee -cm <file>"
+#    for-each-file <glob>... -cmd="coffee -cmb --no-header <file>"
 
-hCmdArgs = getArgs(undef, {
-	_: [1, Number.MAX_VALUE]   # --- file paths or globs
+hCmdArgs = getArgs {
+	_: {
+		min: 1   # --- file paths or globs
+		}
 	cmd: 'string'   # --- internal '<file>' will be replaced with file path
 	d: 'boolean'
-	})
+	}
 
 {_: lGlobs, cmd: cmdStr, d: debug} = hCmdArgs
 

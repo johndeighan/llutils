@@ -19,6 +19,10 @@ GLOBAL
 	hOptions = {}
 
 	# ------------------------------------------------------------------------
+	# --- Valid options:
+	#        tracer - valid string designating a tracer
+	#        args - args to use - a string or array
+	#
 	# --- hDesc is: {
 	#        <tag>: <type>    - <tag>s are allowed names
 	#                         - <type> is 'boolean','string',
@@ -28,12 +32,14 @@ GLOBAL
 	#
 	# --- If hDesc is undef, no checking is done
 
-	export getArgs = (argStr=undef, hDesc=undef, hOptions={}) =>
+	export getArgs = (hDesc=undef, hOptions={}) =>
 
-		argStr = cmdArgStr(argStr)
-		hOptions = getOptions hOptions    # make it a hash
-		tracerStr = hOptions.tracer || 'none'
-		hOptions.tracer = getTracer(tracerStr)
+		{args, tracer} = getOptions hOptions, {
+			args: undef
+			tracer: 'none'
+			}
+		argStr = cmdArgStr(args)
+		hOptions.tracer = getTracer(tracer)
 
 		try
 			hResult = peg$parse argStr, hOptions
@@ -49,14 +55,14 @@ GLOBAL
 	check = (hResult, hDesc) =>
 
 		# --- Check number of non-options
-		lLimits = hDesc._
-		if defined(lLimits)
-			assert isArray(lLimits), "Not an array: #{OL(lLimits)}"
-			[min, max] = lLimits
-			if notdefined(min)
-				min = 0
-			if notdefined(max)
-				max = Infinity
+		#     hDesc._ may have keys:
+		#        min
+		#        max
+		#        exactly
+		h = hDesc._
+		if defined(h)
+			min = h.min || h.exactly || 0
+			max = h.max || h.exactly || Infinity
 
 			# --- How many non-options were provided?
 			lNonOptions = hResult._

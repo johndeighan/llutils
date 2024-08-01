@@ -15,8 +15,10 @@ import {
   getArgs
 } from '@jdeighan/llutils/cmd-args';
 
-hArgs = getArgs(undef, {
-  _: [2, 2]
+hArgs = getArgs({
+  _: {
+    exactly: 2
+  }
 });
 
 [filePath, lineNum] = hArgs._;

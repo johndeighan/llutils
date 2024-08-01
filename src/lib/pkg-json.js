@@ -1,5 +1,5 @@
 // pkg-json.coffee
-var getVersion, hVersions;
+var getVersion;
 
 import {
   undef,
@@ -7,11 +7,11 @@ import {
   notdefined,
   isEmpty,
   nonEmpty,
-  getOptions,
   hasKey,
   assert,
   croak,
-  OL
+  OL,
+  getOptions
 } from '@jdeighan/llutils';
 
 import {
@@ -23,40 +23,28 @@ import {
   touch
 } from '@jdeighan/llutils/fs';
 
-hVersions = {
-  coffeescript: "^2.7.0",
-  ava: "^6.1.3",
-  svelte: "^5.0.0-next.200",
-  gulp: "^5.0.0",
-  parcel: "^2.12.0",
-  '@jdeighan/llutils': "^1.0.8"
-};
-
-// ---------------------------------------------------------------------------
-getVersion = (pkg) => {
-  if (hasKey(hVersions, pkg)) {
-    return hVersions[pkg];
-  } else {
-    return 'latest';
-  }
-};
-
 // ---------------------------------------------------------------------------
 // --- 1. Read in current package.json
-//     2. get keys from env var PROJECT_PACKAGE_JSON
-//     3. overwrite keys in package.json with #2 keys
-//     4. adjust name if env var PROJECT_NAME_PREFIX is set
+//     2. If option 'fix':
+//        - get keys from env var PROJECT_PACKAGE_JSON
+//        - overwrite keys in package.json
+//        - adjust name if env var PROJECT_NAME_PREFIX is set
 export var PkgJson = class PkgJson {
-  constructor() {
-    var prefix;
+  constructor(hOptions = {}) {
+    var fix, prefix;
+    ({fix} = getOptions(hOptions, {
+      fix: false
+    }));
     this.hJson = slurpPkgJSON();
-    this.mergeKeysFromEnv();
-    prefix = process.env.PROJECT_NAME_PREFIX;
-    if (nonEmpty(prefix)) {
-      this.setField('name', `${prefix}${this.hJson.name}`);
+    if (fix) {
+      this.mergeKeysFromEnv();
+      prefix = process.env.PROJECT_NAME_PREFIX;
+      if (nonEmpty(prefix)) {
+        this.setField('name', `${prefix}${this.hJson.name}`);
+      }
+      this.setField('license', 'MIT');
+      this.addDep('@jdeighan/llutils');
     }
-    this.setField('license', 'MIT');
-    this.addDep('@jdeighan/llutils');
   }
 
   // ..........................................................
@@ -150,6 +138,24 @@ export var PkgJson = class PkgJson {
     barfPkgJSON(this.hJson);
   }
 
+};
+
+// ---------------------------------------------------------------------------
+getVersion = (pkg) => {
+  switch (pkg) {
+    case 'coffeescript':
+      return "^2.7.0";
+    case 'ava':
+      return "^6.1.3";
+    case 'svelte':
+      return "^5.0.0-next.200";
+    case 'gulp':
+      return "^5.0.0";
+    case 'parcel':
+      return "^2.12.0";
+    default:
+      return 'latest';
+  }
 };
 
 //# sourceMappingURL=pkg-json.js.map

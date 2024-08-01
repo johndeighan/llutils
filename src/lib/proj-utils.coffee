@@ -200,8 +200,17 @@ export init_npm = () =>
 	execCmd "npm init -y"
 
 	console.log "Creating package.json"
-	pj = new PkgJson()
+	pj = new PkgJson('fix')
 	pj.setField 'description', "A #{type} app"
+	return pj
+
+# ---------------------------------------------------------------------------
+# --- Returns PkgJson object
+
+export read_pkg_json = () =>
+
+	console.log "Reading package.json"
+	pj = new PkgJson()
 	return pj
 
 # ---------------------------------------------------------------------------
