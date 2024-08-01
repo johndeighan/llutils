@@ -27,7 +27,7 @@ export class NodeEnv
 		if fix
 			@mergeKeysFromEnv()
 			prefix = process.env.PROJECT_NAME_PREFIX
-			if nonEmpty(prefix) && ! @name.startsWith(prefix)
+			if nonEmpty(prefix) && ! @hJson.name.startsWith(prefix)
 				@setField 'name', "#{prefix}#{@hJson.name}"
 			@setField 'license', 'MIT'
 			@addDependency '@jdeighan/llutils'
@@ -216,7 +216,7 @@ export class NodeEnv
 
 	# ..........................................................
 
-	addStdFile: (fileName) ->
+	addFile: (fileName) ->
 
 		console.log "Creating standard file #{OL(fileName)}"
 

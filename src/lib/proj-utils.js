@@ -152,13 +152,6 @@ make_dirs = () => {
 };
 
 // ---------------------------------------------------------------------------
-export var init_git = () => {
-  console.log("Initializing git");
-  execCmd("git init");
-  execCmd("git branch -m main");
-};
-
-// ---------------------------------------------------------------------------
 // --- Used in bins addUserBin, addUserLib, addUserElement
 // ---------------------------------------------------------------------------
 export var promptForNames = async(prompt) => {
@@ -179,23 +172,23 @@ export var promptForNames = async(prompt) => {
 };
 
 // ---------------------------------------------------------------------------
-export var typeSpecificSetup = () => {
+export var typeSpecificSetup = (node) => {
   if (isOfType('website')) {
-    setUpWebSite();
+    setUpWebSite(node);
   }
   if (isOfType('parcel')) {
-    setUpParcel();
+    setUpParcel(node);
   }
   if (isOfType('electron')) {
-    setUpElectron();
+    setUpElectron(node);
   }
   if (isOfType('codemirror')) {
-    setUpCodeMirror();
+    setUpCodeMirror(node);
   }
 };
 
 // ---------------------------------------------------------------------------
-export var setUpWebSite = (pj) => {
+export var setUpWebSite = (node) => {
   console.log("Creating src/index.html");
   barf(`<!DOCTYPE html>
 <html lang="en">
@@ -210,19 +203,19 @@ export var setUpWebSite = (pj) => {
 };
 
 // ---------------------------------------------------------------------------
-export var setUpParcel = () => {
-  pj.addDevDep('parcel');
-  pj.setField('source', 'src/index.html');
-  pj.addScript('start', 'parcel');
-  pj.addScript('build', 'parcel build');
+export var setUpParcel = (node) => {
+  node.addDevDependency('parcel');
+  node.setField('source', 'src/index.html');
+  node.addScript('start', 'parcel');
+  node.addScript('build', 'parcel build');
 };
 
 // ---------------------------------------------------------------------------
-export var setUpElectron = () => {
-  pj.setField('main', 'src/main.js');
-  pj.addScript('start', 'npm run build && electron .');
+export var setUpElectron = (node) => {
+  node.setField('main', 'src/main.js');
+  node.addScript('start', 'npm run build && electron .');
   console.log("Installing (dev) \"electron\"");
-  pj.addDevDep('electron');
+  node.addDevDependency('electron');
   console.log("Creating src/main.coffee");
   barf(`import pathLib from 'node:path'
 import {app, BrowserWindow} from 'electron'
@@ -283,6 +276,6 @@ else
 };
 
 // ---------------------------------------------------------------------------
-export var setUpCodeMirror = () => {};
+export var setUpCodeMirror = (node) => {};
 
 //# sourceMappingURL=proj-utils.js.map

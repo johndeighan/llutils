@@ -21,7 +21,8 @@ import {
   OL,
   nonEmpty,
   assert,
-  words
+  words,
+  execCmd
 } from '@jdeighan/llutils';
 
 import {
@@ -32,16 +33,7 @@ import {
   setProjType,
   promptForProjType,
   makeProjDir,
-  init_git,
-  make_dirs,
-  init_npm,
-  addDep,
-  addDevDep,
-  addReadMe,
-  addGitIgnore,
-  addNpmRc,
-  typeSpecificSetup,
-  write_pkg_json
+  typeSpecificSetup
 } from '@jdeighan/llutils/proj-utils';
 
 import {
@@ -71,7 +63,9 @@ main = async() => {
   }
   dirname = lNonOptions[0];
   makeProjDir(dirname, {clear}); // also cd's to proj dir
-  init_git();
+  execCmd("git init");
+  execCmd("git branch -m main");
+  execCmd("npm init -y");
   node = new NodeEnv('fix');
   node.setField('description', `A ${type} app`);
   node.addFile('README.md');
@@ -97,7 +91,9 @@ main = async() => {
   node.addDevDependency('ava');
   typeSpecificSetup(node);
   node.write_pkg_json();
-  return console.log("DONE");
+  return console.log(`Please run:
+   yarn
+   parcel`);
 };
 
 // ---------------------------------------------------------------------------

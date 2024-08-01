@@ -52,6 +52,8 @@
 		"mnp": "src/bin/make-new-project.js",
 
 		"addUserLib": "src/bin/addUserLib.js",
+		"addUserBin": "src/bin/addUserBin.js",
+		"addUserElement": "src/bin/addUserElement.js",
 		"brew": "src/bin/brew.js",
 		"bless": "src/bin/bless.js",
 		"shebangify": "src/bin/shebangify.js",

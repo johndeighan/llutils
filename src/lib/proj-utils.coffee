@@ -142,20 +142,6 @@ make_dirs = () =>
 	return
 
 # ---------------------------------------------------------------------------
-
-export init_git = () =>
-
-	console.log "Initializing git"
-	execCmd "git init"
-	execCmd "git branch -m main"
-	return
-
-
-
-
-
-
-# ---------------------------------------------------------------------------
 # --- Used in bins addUserBin, addUserLib, addUserElement
 # ---------------------------------------------------------------------------
 
@@ -175,21 +161,21 @@ export promptForNames = (prompt) =>
 
 # ---------------------------------------------------------------------------
 
-export typeSpecificSetup = () =>
+export typeSpecificSetup = (node) =>
 
 	if isOfType('website')
-		setUpWebSite()
+		setUpWebSite(node)
 	if isOfType('parcel')
-		setUpParcel()
+		setUpParcel(node)
 	if isOfType('electron')
-		setUpElectron()
+		setUpElectron(node)
 	if isOfType('codemirror')
-		setUpCodeMirror()
+		setUpCodeMirror(node)
 	return
 
 # ---------------------------------------------------------------------------
 
-export setUpWebSite = (pj) =>
+export setUpWebSite = (node) =>
 
 	console.log "Creating src/index.html"
 	barf """
@@ -208,23 +194,23 @@ export setUpWebSite = (pj) =>
 
 # ---------------------------------------------------------------------------
 
-export setUpParcel = () =>
+export setUpParcel = (node) =>
 
-	pj.addDevDep 'parcel'
-	pj.setField 'source', 'src/index.html'
-	pj.addScript 'start', 'parcel'
-	pj.addScript 'build', 'parcel build'
+	node.addDevDependency 'parcel'
+	node.setField 'source', 'src/index.html'
+	node.addScript 'start', 'parcel'
+	node.addScript 'build', 'parcel build'
 	return
 
 # ---------------------------------------------------------------------------
 
-export setUpElectron = () =>
+export setUpElectron = (node) =>
 
-	pj.setField 'main', 'src/main.js'
-	pj.addScript 'start', 'npm run build && electron .'
+	node.setField 'main', 'src/main.js'
+	node.addScript 'start', 'npm run build && electron .'
 
 	console.log "Installing (dev) \"electron\""
-	pj.addDevDep 'electron'
+	node.addDevDependency 'electron'
 
 	console.log "Creating src/main.coffee"
 	barf """
@@ -302,7 +288,7 @@ export setUpElectron = () =>
 
 # ---------------------------------------------------------------------------
 
-export setUpCodeMirror = () =>
+export setUpCodeMirror = (node) =>
 
 	return
 

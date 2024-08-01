@@ -41,7 +41,7 @@ export var NodeEnv = class NodeEnv {
     if (fix) {
       this.mergeKeysFromEnv();
       prefix = process.env.PROJECT_NAME_PREFIX;
-      if (nonEmpty(prefix) && !this.name.startsWith(prefix)) {
+      if (nonEmpty(prefix) && !this.hJson.name.startsWith(prefix)) {
         this.setField('name', `${prefix}${this.hJson.name}`);
       }
       this.setField('license', 'MIT');
@@ -206,7 +206,7 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
   }
 
   // ..........................................................
-  addStdFile(fileName) {
+  addFile(fileName) {
     console.log(`Creating standard file ${OL(fileName)}`);
     switch (fileName) {
       case 'README.md':
