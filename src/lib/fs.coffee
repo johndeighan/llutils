@@ -205,13 +205,6 @@ export touch = (filePath) =>
 
 # ---------------------------------------------------------------------------
 
-export createFile = (filePath, contents) =>
-
-	fs.writeFileSync(filePath, contents)
-	return
-
-# ---------------------------------------------------------------------------
-
 export isFile = (filePath) =>
 
 	if ! fs.existsSync(filePath)
@@ -339,10 +332,10 @@ export slurp = (filePath, hOptions={}) =>
 #   barf - write a string to a file
 #          will ensure that all necessary directories exist
 
-export barf = (text, filePath) =>
+export barf = (contents, filePath) =>
 
 	mkDirsForFile(filePath)
-	fs.writeFileSync(filePath, text)
+	fs.writeFileSync(filePath, contents)
 	return
 
 # ---------------------------------------------------------------------------

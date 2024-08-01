@@ -1,4 +1,4 @@
-// pkg-json.coffee
+// node-env.coffee
 var getVersion;
 
 import {
@@ -11,14 +11,18 @@ import {
   assert,
   croak,
   OL,
-  getOptions
+  getOptions,
+  execCmd
 } from '@jdeighan/llutils';
 
 import {
   slurpPkgJSON,
   slurpJSON,
   barfJSON,
-  barfPkgJSON
+  barfPkgJSON,
+  touch,
+  slurp,
+  barf
 } from '@jdeighan/llutils/fs';
 
 // ---------------------------------------------------------------------------
@@ -27,7 +31,7 @@ import {
 //        - get keys from env var PROJECT_PACKAGE_JSON
 //        - overwrite keys in package.json
 //        - adjust name if env var PROJECT_NAME_PREFIX is set
-export var PkgJson = class PkgJson {
+export var NodeEnv = class NodeEnv {
   constructor(hOptions = {}) {
     var fix, prefix;
     ({fix} = getOptions(hOptions, {
@@ -41,7 +45,7 @@ export var PkgJson = class PkgJson {
         this.setField('name', `${prefix}${this.hJson.name}`);
       }
       this.setField('license', 'MIT');
-      this.addDep('@jdeighan/llutils');
+      this.addDependency('@jdeighan/llutils');
     }
   }
 
@@ -95,37 +99,96 @@ export var PkgJson = class PkgJson {
   }
 
   // ..........................................................
-  addBin(name, str) {
+  addUserBin(name) {
+    barf(`# --- ${name}.coffee
+
+`, `./src/bin/${name}.coffee`);
     if (!hasKey(this.hJson, 'bin')) {
       this.hJson.bin = {};
     }
-    this.hJson.bin[name] = str;
+    this.hJson.bin[name] = `./src/bin/${name}.js`;
     console.log(`   BIN ${name} = ${OL(str)}`);
   }
 
   // ..........................................................
-  addDep(pkg) {
-    var ref, ref1, version;
+  addUserLib(name) {
+    barf(`# --- ${name}.coffee
+
+`, `./src/lib/${name}.coffee`);
+    // --- Add a unit test
+    barf(`# --- ${name}.test.offee
+
+import * as lib from '${pj.name}/${name}'
+Object.assign(global, lib)
+import * as lib2 from '@jdeighan/llutils/utest'
+Object.assign(global, lib2)
+
+equal 2+2, 4`, `./test/${name}.test.coffee`);
+    this.addExport(`./${name}`, `./src/lib/${name}.js`);
+    if (!hasKey(this.hJson, 'bin')) {
+      this.hJson.bin = {};
+    }
+    this.hJson.bin[name] = `./src/bin/${name}.js`;
+    console.log(`   BIN ${name} = ${OL(str)}`);
+  }
+
+  // ..........................................................
+  addUserElement(name) {
+    barf(`# --- ${name}.svelte
+
+<p>A new element</p>
+`, `./src/elements/${name}.svelte`);
+    this.addExport(`./${name}`, `./src/elements/${name}.js`);
+    console.log(`   ELEMENT ${name} = ${OL(str)}`);
+  }
+
+  // ..........................................................
+  hasDep(pkg) {
+    if (hasKey(this.hJson, 'dependencies')) {
+      return hasKey(this.hJson.dependencies, pkg);
+    } else {
+      return false;
+    }
+  }
+
+  // ..........................................................
+  hasDevDep(pkg) {
+    if (hasKey(this.hJson, 'devDependencies')) {
+      return hasKey(this.hJson.devDependencies, pkg);
+    } else {
+      return false;
+    }
+  }
+
+  // ..........................................................
+  removeDep(pkg) {
+    if (this.hasDep(pkg)) {
+      delete this.hJson.dependencies[pkg];
+    }
+    if (this.hasDevDep(pkg)) {
+      delete this.hJson.devDependencies[pkg];
+    }
+  }
+
+  // ..........................................................
+  addDependency(pkg) {
+    var version;
     if (!hasKey(this.hJson, 'dependencies')) {
       this.hJson.dependencies = {};
     }
-    if ((ref = this.hJson) != null ? (ref1 = ref.devDependencies) != null ? ref1.pkg : void 0 : void 0) {
-      delete this.hJson.devDependencies.pkg;
-    }
+    this.removeDep(pkg);
     version = getVersion(pkg);
     this.hJson.dependencies[pkg] = version;
     console.log(`   DEP ${pkg} = ${OL(version)}`);
   }
 
   // ..........................................................
-  addDevDep(pkg) {
-    var ref, version;
+  addDevDependency(pkg) {
+    var version;
     if (!hasKey(this.hJson, 'devDependencies')) {
       this.hJson.devDependencies = {};
     }
-    if ((ref = this.hJson) != null ? ref.dependencies.pkg : void 0) {
-      delete this.hJson.dependencies.pkg;
-    }
+    this.removeDep(pkg);
     version = getVersion(pkg);
     this.hJson.devDependencies[pkg] = version;
     console.log(`   DEV DEP ${pkg} = ${OL(version)}`);
@@ -137,8 +200,46 @@ export var PkgJson = class PkgJson {
   }
 
   // ..........................................................
-  write() {
+  write_pkg_json() {
+    this.addExport("./package.json", "./package.json");
     barfPkgJSON(this.hJson);
+  }
+
+  // ..........................................................
+  addStdFile(fileName) {
+    console.log(`Creating standard file ${OL(fileName)}`);
+    switch (fileName) {
+      case 'README.md':
+        barf(`README.md file
+==============
+
+`, "./README.md");
+        break;
+      case '.gitignore':
+        barf(`logs/
+node_modules/
+typings/
+*.tsbuildinfo
+.npmrc
+/build
+/public
+/dist
+
+# dotenv environment variables file
+.env
+.env.test
+
+test/temp*.*
+/.svelte-kit`, "./.gitignore");
+        break;
+      case '.npmrc':
+        barf(`engine-strict=true
+# --- loglevel can be silent or warn
+loglevel=silent`, "./.npmrc");
+        break;
+      default:
+        croak(`addFile ${OL(fileName)} not implemented`);
+    }
   }
 
 };
@@ -161,4 +262,4 @@ getVersion = (pkg) => {
   }
 };
 
-//# sourceMappingURL=pkg-json.js.map
+//# sourceMappingURL=node-env.js.map

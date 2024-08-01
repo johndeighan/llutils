@@ -1,5 +1,5 @@
 // proj-utils.coffee
-var lDeps, lDevDeps, lValidTypes, pj, type;
+var lValidTypes, make_dirs, type;
 
 import prompts from 'prompts';
 
@@ -28,8 +28,7 @@ import {
   slurpJSON,
   barfJSON,
   barfPkgJSON,
-  touch,
-  createFile
+  touch
 } from '@jdeighan/llutils/fs';
 
 import {
@@ -41,17 +40,6 @@ lValidTypes = words('electron codemirror parcel vite none');
 
 type = undef;
 
-pj = undef; // PkgJson object
-
-lDeps = [];
-
-lDevDeps = [];
-
-// ---------------------------------------------------------------------------
-export var isDep = (pkg) => {
-  return lDeps.includes(pkg) || lDevDeps.includes(pkg);
-};
-
 // ---------------------------------------------------------------------------
 export var setProjType = (t) => {
   if (t === 'vite') {
@@ -61,6 +49,24 @@ export var setProjType = (t) => {
   assert(defined(t), "type is undef");
   type = t;
   assert(lValidTypes.includes(type), `Bad type: ${OL(type)}`);
+};
+
+// ---------------------------------------------------------------------------
+// --- For example, isType('electron') will return true
+//     when type is 'codemirror'
+export var isOfType = (t) => {
+  switch (t) {
+    case 'parcel':
+      return type === 'parcel';
+    case 'electron':
+      return (type === 'electron') || (type === 'codemirror');
+    case 'codemirror':
+      return type === 'codemirror';
+    case 'website':
+      return (type === 'parcel') || (type === 'vite');
+    default:
+      return false;
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -103,58 +109,6 @@ export var promptForProjType = async() => {
 };
 
 // ---------------------------------------------------------------------------
-export var promptForLibs = async() => {
-  var hResponse;
-  while (true) {
-    hResponse = (await prompts({
-      type: 'text',
-      name: 'name',
-      message: 'New library name (Enter to end)'
-    }));
-    if (hResponse.name) {
-      addLib(hResponse.name);
-    } else {
-      return;
-    }
-  }
-};
-
-// ---------------------------------------------------------------------------
-export var promptForBins = async() => {
-  var hResponse;
-  while (true) {
-    hResponse = (await prompts({
-      type: 'text',
-      name: 'name',
-      message: 'New binary name (Enter to end)'
-    }));
-    if (hResponse.name) {
-      addBin(hResponse.name);
-    } else {
-      return;
-    }
-  }
-};
-
-// ---------------------------------------------------------------------------
-// --- For example, isType('electron') will return true
-//     when type is 'codemirror'
-export var isOfType = (t) => {
-  switch (t) {
-    case 'parcel':
-      return type === 'parcel';
-    case 'electron':
-      return (type === 'electron') || (type === 'codemirror');
-    case 'codemirror':
-      return type === 'codemirror';
-    case 'website':
-      return (type === 'parcel') || (type === 'vite');
-    default:
-      return false;
-  }
-};
-
-// ---------------------------------------------------------------------------
 export var makeProjDir = (dirname, hOptions = {}) => {
   var clear, newDir, rootDir;
   ({clear} = getOptions(hOptions, {
@@ -181,17 +135,11 @@ export var makeProjDir = (dirname, hOptions = {}) => {
     mkDir(newDir);
   }
   process.chdir(newDir);
+  make_dirs();
 };
 
 // ---------------------------------------------------------------------------
-export var init_git = () => {
-  console.log("Initializing git");
-  execCmd("git init");
-  execCmd("git branch -m main");
-};
-
-// ---------------------------------------------------------------------------
-export var make_dirs = () => {
+make_dirs = () => {
   console.log("Making directories");
   console.log("   ./src");
   mkDir('./src');
@@ -208,106 +156,46 @@ export var make_dirs = () => {
 };
 
 // ---------------------------------------------------------------------------
-// --- Returns PkgJson object
-export var init_npm = () => {
-  console.log("Initializing npm");
-  execCmd("npm init -y");
-  console.log("Creating package.json");
-  pj = new PkgJson('fix');
-  pj.setField('description', `A ${type} app`);
-  return pj;
+export var init_git = () => {
+  console.log("Initializing git");
+  execCmd("git init");
+  execCmd("git branch -m main");
 };
 
 // ---------------------------------------------------------------------------
-// --- Returns PkgJson object
-export var read_pkg_json = () => {
-  console.log("Reading package.json");
-  pj = new PkgJson();
-  return pj;
-};
-
+// --- Used in bins addUserBin, addUserLib, addUserElement
 // ---------------------------------------------------------------------------
-export var addLib = (name) => {
-  createFile(`./src/lib/${name}.coffee`, `# --- ${name}.coffee`);
-  // --- Add a unit test
-  if (pj.isInstalled('@jdeighan/llutils')) {
-    createFile(`./test/${name}.test.coffee`, `# --- ${name}.test.offee
-
-import * as lib from '${pj.name}/${name}'
-Object.assign(global, lib)
-import * as lib2 from '@jdeighan/llutils/utest'
-Object.assign(global, lib2)
-
-equal 2+2, 4`);
-  } else {
-    createFile(`./test/${name}.test.coffee`, `# --- ${name}.test.offee
-
-import * as lib from '${pj.name}/${name}'
-Object.assign(global, lib)
-import test from 'ava'
-
-test "line 7", (t) =>
-	t.is 2+2, 4
-`);
+export var promptForNames = async(prompt) => {
+  var hResponse, lNames;
+  lNames = [];
+  while (true) {
+    hResponse = (await prompts({
+      type: 'text',
+      name: 'name',
+      message: prompt
+    }));
+    if (hResponse.name) {
+      lNames.push(hResponse.name);
+    } else {
+      return;
+    }
   }
-  pj.addExport(`./${name}`, `./src/lib/${name}.js`);
 };
 
 // ---------------------------------------------------------------------------
-export var addBin = (name) => {
-  createFile(`./src/bin/${name}.coffee`, `# --- ${name}.coffee`);
-  pj.addBin(name, `./src/bin/${name}.js`);
-};
-
-// ---------------------------------------------------------------------------
-export var addDep = (pkg) => {
-  assert(!isDep(pkg), `Package ${pkg} already installed`);
-  pj.addDep(pkg);
-  lDeps.push(pkg);
-};
-
-// ---------------------------------------------------------------------------
-export var addDevDep = (pkg) => {
-  assert(!isDep(pkg), `Package ${pkg} already installed`);
-  pj.addDevDep(pkg);
-  lDevDeps.push(pkg);
-};
-
-// ---------------------------------------------------------------------------
-export var addReadMe = () => {
-  console.log("Creating README.md");
-  barf(`README.md file
-==============
-
-`, "./README.md");
-};
-
-// ---------------------------------------------------------------------------
-export var addGitIgnore = () => {
-  console.log("Creating .gitignore");
-  barf(`logs/
-node_modules/
-typings/
-*.tsbuildinfo
-.npmrc
-/build
-/public
-/dist
-
-# dotenv environment variables file
-.env
-.env.test
-
-test/temp*.*
-/.svelte-kit`, "./.gitignore");
-};
-
-// ---------------------------------------------------------------------------
-export var addNpmRc = () => {
-  console.log("Creating .npmrc");
-  barf(`engine-strict=true
-# --- loglevel can be silent or warn
-loglevel=silent`, "./.npmrc");
+export var typeSpecificSetup = () => {
+  if (isOfType('website')) {
+    setUpWebSite();
+  }
+  if (isOfType('parcel')) {
+    setUpParcel();
+  }
+  if (isOfType('electron')) {
+    setUpElectron();
+  }
+  if (isOfType('codemirror')) {
+    setUpCodeMirror();
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -400,28 +288,5 @@ else
 
 // ---------------------------------------------------------------------------
 export var setUpCodeMirror = () => {};
-
-// ---------------------------------------------------------------------------
-export var typeSpecificSetup = () => {
-  if (isOfType('website')) {
-    setUpWebSite();
-  }
-  if (isOfType('parcel')) {
-    setUpParcel();
-  }
-  if (isOfType('electron')) {
-    setUpElectron();
-  }
-  if (isOfType('codemirror')) {
-    setUpCodeMirror();
-  }
-};
-
-// ---------------------------------------------------------------------------
-export var write_pkg_json = () => {
-  console.log("Writing package.json");
-  pj.addExport("./package.json", "./package.json");
-  pj.write();
-};
 
 //# sourceMappingURL=proj-utils.js.map

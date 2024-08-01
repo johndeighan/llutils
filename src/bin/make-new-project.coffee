@@ -22,6 +22,7 @@ import {
 	addDep, addDevDep, addReadMe, addGitIgnore, addNpmRc,
 	typeSpecificSetup, write_pkg_json,
 	} from '@jdeighan/llutils/proj-utils'
+import {NodeEnv} from '@jdeighan/llutils/node-env'
 
 console.log "Starting make-new-project"
 
@@ -47,29 +48,29 @@ main = () =>
 
 	dirname = lNonOptions[0]
 	makeProjDir dirname, {clear}   # also cd's to proj dir
-	make_dirs()
 	init_git()
-	init_npm()
-	addReadMe()
-	addGitIgnore()
-	addNpmRc()
+	node = new NodeEnv('fix')
+	node.setField 'description', "A #{type} app"
+	node.addFile 'README.md'
+	node.addFile '.gitignore'
+	node.addFile '.npmrc'
 
 	# === Install libraries specified via env vars
 
 	env_installs = process.env.PROJECT_INSTALLS
 	if nonEmpty(env_installs)
 		for pkg in words(env_installs)
-			addDep pkg
+			node.addDependency pkg
 
 	env_dev_installs = process.env.PROJECT_DEV_INSTALLS
 	if nonEmpty(env_dev_installs)
 		for pkg in words(env_dev_installs)
-			addDevDep pkg
+			node.addDevDependency pkg
 
-	addDevDep 'ava'
+	node.addDevDependency 'ava'
 
-	typeSpecificSetup()
-	write_pkg_json()
+	typeSpecificSetup(node)
+	node.write_pkg_json()
 	console.log "DONE"
 
 # ---------------------------------------------------------------------------

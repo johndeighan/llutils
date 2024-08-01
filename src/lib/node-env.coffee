@@ -1,11 +1,12 @@
-# pkg-json.coffee
+# node-env.coffee
 
 import {
 	undef, defined, notdefined, isEmpty, nonEmpty, hasKey,
-	assert, croak, OL, getOptions,
+	assert, croak, OL, getOptions, execCmd,
 	} from '@jdeighan/llutils'
 import {
 	slurpPkgJSON, slurpJSON, barfJSON, barfPkgJSON,
+	touch, slurp, barf,
 	} from '@jdeighan/llutils/fs'
 
 # ---------------------------------------------------------------------------
@@ -15,7 +16,7 @@ import {
 #        - overwrite keys in package.json
 #        - adjust name if env var PROJECT_NAME_PREFIX is set
 
-export class PkgJson
+export class NodeEnv
 
 	constructor: (hOptions={}) ->
 
@@ -29,7 +30,7 @@ export class PkgJson
 			if nonEmpty(prefix) && ! @name.startsWith(prefix)
 				@setField 'name', "#{prefix}#{@hJson.name}"
 			@setField 'license', 'MIT'
-			@addDep '@jdeighan/llutils'
+			@addDependency '@jdeighan/llutils'
 
 	# ..........................................................
 
@@ -87,22 +88,100 @@ export class PkgJson
 
 	# ..........................................................
 
-	addBin: (name, str) ->
+	addUserBin: (name) ->
+
+		barf """
+			# --- #{name}.coffee
+
+
+			""", "./src/bin/#{name}.coffee"
 
 		if ! hasKey(@hJson, 'bin')
 			@hJson.bin = {}
-		@hJson.bin[name] = str
+		@hJson.bin[name] = "./src/bin/#{name}.js"
 		console.log "   BIN #{name} = #{OL(str)}"
 		return
 
 	# ..........................................................
 
-	addDep: (pkg) ->
+	addUserLib: (name) ->
+
+		barf """
+			# --- #{name}.coffee
+
+
+			""", "./src/lib/#{name}.coffee"
+
+		# --- Add a unit test
+		barf """
+			# --- #{name}.test.offee
+
+			import * as lib from '#{pj.name}/#{name}'
+			Object.assign(global, lib)
+			import * as lib2 from '@jdeighan/llutils/utest'
+			Object.assign(global, lib2)
+
+			equal 2+2, 4
+			""", "./test/#{name}.test.coffee"
+
+		@addExport "./#{name}", "./src/lib/#{name}.js"
+
+		if ! hasKey(@hJson, 'bin')
+			@hJson.bin = {}
+		@hJson.bin[name] = "./src/bin/#{name}.js"
+		console.log "   BIN #{name} = #{OL(str)}"
+		return
+
+	# ..........................................................
+
+	addUserElement: (name) ->
+
+		barf """
+			# --- #{name}.svelte
+
+			<p>A new element</p>
+
+			""", "./src/elements/#{name}.svelte"
+
+		@addExport "./#{name}", "./src/elements/#{name}.js"
+		console.log "   ELEMENT #{name} = #{OL(str)}"
+		return
+
+	# ..........................................................
+
+	hasDep: (pkg) ->
+
+		if hasKey(@hJson, 'dependencies')
+			return hasKey(@hJson.dependencies, pkg)
+		else
+			return false
+
+	# ..........................................................
+
+	hasDevDep: (pkg) ->
+
+		if hasKey(@hJson, 'devDependencies')
+			return hasKey(@hJson.devDependencies, pkg)
+		else
+			return false
+
+	# ..........................................................
+
+	removeDep: (pkg) ->
+
+		if @hasDep(pkg)
+			delete @hJson.dependencies[pkg]
+		if @hasDevDep(pkg)
+			delete @hJson.devDependencies[pkg]
+		return
+
+	# ..........................................................
+
+	addDependency: (pkg) ->
 
 		if ! hasKey(@hJson, 'dependencies')
 			@hJson.dependencies = {}
-		if @hJson?.devDependencies?.pkg
-			delete @hJson.devDependencies.pkg
+		@removeDep pkg
 		version = getVersion(pkg)
 		@hJson.dependencies[pkg] = version
 		console.log "   DEP #{pkg} = #{OL(version)}"
@@ -110,12 +189,11 @@ export class PkgJson
 
 	# ..........................................................
 
-	addDevDep: (pkg) ->
+	addDevDependency: (pkg) ->
 
 		if ! hasKey(@hJson, 'devDependencies')
 			@hJson.devDependencies = {}
-		if @hJson?.dependencies.pkg
-			delete @hJson.dependencies.pkg
+		@removeDep pkg
 		version = getVersion(pkg)
 		@hJson.devDependencies[pkg] = version
 		console.log "   DEV DEP #{pkg} = #{OL(version)}"
@@ -130,9 +208,56 @@ export class PkgJson
 
 	# ..........................................................
 
-	write: () ->
+	write_pkg_json: () ->
 
+		@addExport "./package.json", "./package.json"
 		barfPkgJSON @hJson
+		return
+
+	# ..........................................................
+
+	addStdFile: (fileName) ->
+
+		console.log "Creating standard file #{OL(fileName)}"
+
+		switch fileName
+
+			when 'README.md'
+				barf """
+					README.md file
+					==============
+
+
+					""", "./README.md"
+
+			when '.gitignore'
+				barf """
+					logs/
+					node_modules/
+					typings/
+					*.tsbuildinfo
+					.npmrc
+					/build
+					/public
+					/dist
+
+					# dotenv environment variables file
+					.env
+					.env.test
+
+					test/temp*.*
+					/.svelte-kit
+					""", "./.gitignore"
+
+			when '.npmrc'
+				barf """
+					engine-strict=true
+					# --- loglevel can be silent or warn
+					loglevel=silent
+					""", "./.npmrc"
+
+			else
+				croak "addFile #{OL(fileName)} not implemented"
 		return
 
 # ---------------------------------------------------------------------------

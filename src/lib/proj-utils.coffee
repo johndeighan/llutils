@@ -9,7 +9,7 @@ import {
 import {BOX} from '@jdeighan/llutils/dump'
 import {
 	mkpath, isDir, mkDir, slurp, barf, clearDir,
-	slurpJSON, barfJSON, barfPkgJSON, touch, createFile,
+	slurpJSON, barfJSON, barfPkgJSON, touch,
 	} from '@jdeighan/llutils/fs'
 import {
 	PkgJson,
@@ -18,15 +18,6 @@ import {
 # --- type 'website' will change to 'parcel' for now
 lValidTypes = words('electron codemirror parcel vite none')
 type = undef
-pj = undef     # PkgJson object
-lDeps = []
-lDevDeps = []
-
-# ---------------------------------------------------------------------------
-
-export isDep = (pkg) =>
-
-	return lDeps.includes(pkg) || lDevDeps.includes(pkg)
 
 # ---------------------------------------------------------------------------
 
@@ -39,6 +30,24 @@ export setProjType = (t) =>
 	type = t
 	assert lValidTypes.includes(type), "Bad type: #{OL(type)}"
 	return
+
+# ---------------------------------------------------------------------------
+# --- For example, isType('electron') will return true
+#     when type is 'codemirror'
+
+export isOfType = (t) =>
+
+	switch t
+		when 'parcel'
+			return (type == 'parcel')
+		when 'electron'
+			return (type == 'electron') || (type == 'codemirror')
+		when 'codemirror'
+			return (type == 'codemirror')
+		when 'website'
+			return (type == 'parcel') || (type == 'vite')
+		else
+			return false
 
 # ---------------------------------------------------------------------------
 
@@ -81,54 +90,6 @@ export promptForProjType = () =>
 
 # ---------------------------------------------------------------------------
 
-export promptForLibs = () =>
-
-	loop
-		hResponse = await prompts {
-			type: 'text',
-			name: 'name',
-			message: 'New library name (Enter to end)'
-			}
-		if hResponse.name
-			addLib hResponse.name
-		else
-			return
-
-# ---------------------------------------------------------------------------
-
-export promptForBins = () =>
-
-	loop
-		hResponse = await prompts {
-			type: 'text',
-			name: 'name',
-			message: 'New binary name (Enter to end)'
-			}
-		if hResponse.name
-			addBin hResponse.name
-		else
-			return
-
-# ---------------------------------------------------------------------------
-# --- For example, isType('electron') will return true
-#     when type is 'codemirror'
-
-export isOfType = (t) =>
-
-	switch t
-		when 'parcel'
-			return (type == 'parcel')
-		when 'electron'
-			return (type == 'electron') || (type == 'codemirror')
-		when 'codemirror'
-			return (type == 'codemirror')
-		when 'website'
-			return (type == 'parcel') || (type == 'vite')
-		else
-			return false
-
-# ---------------------------------------------------------------------------
-
 export makeProjDir = (dirname, hOptions={}) =>
 
 	{clear} = getOptions hOptions, {
@@ -158,20 +119,12 @@ export makeProjDir = (dirname, hOptions={}) =>
 		mkDir newDir
 
 	process.chdir newDir
+	make_dirs()
 	return
 
 # ---------------------------------------------------------------------------
 
-export init_git = () =>
-
-	console.log "Initializing git"
-	execCmd "git init"
-	execCmd "git branch -m main"
-	return
-
-# ---------------------------------------------------------------------------
-
-export make_dirs = () =>
+make_dirs = () =>
 
 	console.log "Making directories"
 	console.log "   ./src"
@@ -192,139 +145,49 @@ export make_dirs = () =>
 	return
 
 # ---------------------------------------------------------------------------
-# --- Returns PkgJson object
 
-export init_npm = () =>
+export init_git = () =>
 
-	console.log "Initializing npm"
-	execCmd "npm init -y"
-
-	console.log "Creating package.json"
-	pj = new PkgJson('fix')
-	pj.setField 'description', "A #{type} app"
-	return pj
-
-# ---------------------------------------------------------------------------
-# --- Returns PkgJson object
-
-export read_pkg_json = () =>
-
-	console.log "Reading package.json"
-	pj = new PkgJson()
-	return pj
-
-# ---------------------------------------------------------------------------
-
-export addLib = (name) =>
-
-	createFile "./src/lib/#{name}.coffee", """
-		# --- #{name}.coffee
-		"""
-
-	# --- Add a unit test
-	if pj.isInstalled('@jdeighan/llutils')
-		createFile "./test/#{name}.test.coffee", """
-			# --- #{name}.test.offee
-
-			import * as lib from '#{pj.name}/#{name}'
-			Object.assign(global, lib)
-			import * as lib2 from '@jdeighan/llutils/utest'
-			Object.assign(global, lib2)
-
-			equal 2+2, 4
-			"""
-	else
-		createFile "./test/#{name}.test.coffee", """
-			# --- #{name}.test.offee
-
-			import * as lib from '#{pj.name}/#{name}'
-			Object.assign(global, lib)
-			import test from 'ava'
-
-			test "line 7", (t) =>
-				t.is 2+2, 4
-
-			"""
-	pj.addExport "./#{name}", "./src/lib/#{name}.js"
+	console.log "Initializing git"
+	execCmd "git init"
+	execCmd "git branch -m main"
 	return
 
-# ---------------------------------------------------------------------------
 
-export addBin = (name) =>
 
-	createFile "./src/bin/#{name}.coffee", """
-		# --- #{name}.coffee
-		"""
 
-	pj.addBin name, "./src/bin/#{name}.js"
-	return
+
 
 # ---------------------------------------------------------------------------
-
-export addDep = (pkg) =>
-
-	assert !isDep(pkg), "Package #{pkg} already installed"
-	pj.addDep pkg
-	lDeps.push pkg
-	return
-
+# --- Used in bins addUserBin, addUserLib, addUserElement
 # ---------------------------------------------------------------------------
 
-export addDevDep = (pkg) =>
+export promptForNames = (prompt) =>
 
-	assert !isDep(pkg), "Package #{pkg} already installed"
-	pj.addDevDep pkg
-	lDevDeps.push pkg
-	return
+	lNames = []
+	loop
+		hResponse = await prompts {
+			type: 'text',
+			name: 'name',
+			message: prompt
+			}
+		if hResponse.name
+			lNames.push hResponse.name
+		else
+			return
 
 # ---------------------------------------------------------------------------
 
-export addReadMe = () =>
+export typeSpecificSetup = () =>
 
-	console.log "Creating README.md"
-	barf """
-		README.md file
-		==============
-
-
-		""", "./README.md"
-	return
-
-# ---------------------------------------------------------------------------
-
-export addGitIgnore = () =>
-
-	console.log "Creating .gitignore"
-	barf """
-		logs/
-		node_modules/
-		typings/
-		*.tsbuildinfo
-		.npmrc
-		/build
-		/public
-		/dist
-
-		# dotenv environment variables file
-		.env
-		.env.test
-
-		test/temp*.*
-		/.svelte-kit
-		""", "./.gitignore"
-
-	return
-
-# ---------------------------------------------------------------------------
-
-export addNpmRc = () =>
-
-	console.log "Creating .npmrc"
-	barf """
-		engine-strict=true
-		# --- loglevel can be silent or warn
-		loglevel=silent
-		""", "./.npmrc"
+	if isOfType('website')
+		setUpWebSite()
+	if isOfType('parcel')
+		setUpParcel()
+	if isOfType('electron')
+		setUpElectron()
+	if isOfType('codemirror')
+		setUpCodeMirror()
 	return
 
 # ---------------------------------------------------------------------------
@@ -446,25 +309,3 @@ export setUpCodeMirror = () =>
 
 	return
 
-# ---------------------------------------------------------------------------
-
-export typeSpecificSetup = () =>
-
-	if isOfType('website')
-		setUpWebSite()
-	if isOfType('parcel')
-		setUpParcel()
-	if isOfType('electron')
-		setUpElectron()
-	if isOfType('codemirror')
-		setUpCodeMirror()
-	return
-
-# ---------------------------------------------------------------------------
-
-export write_pkg_json = () =>
-
-	console.log "Writing package.json"
-	pj.addExport "./package.json", "./package.json"
-	pj.write()
-	return

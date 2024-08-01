@@ -44,11 +44,15 @@ import {
   write_pkg_json
 } from '@jdeighan/llutils/proj-utils';
 
+import {
+  NodeEnv
+} from '@jdeighan/llutils/node-env';
+
 console.log("Starting make-new-project");
 
 // ---------------------------------------------------------------------------
 main = async() => {
-  var clear, dirname, env_dev_installs, env_installs, i, j, lNonOptions, len, len1, pkg, ref, ref1, type;
+  var clear, dirname, env_dev_installs, env_installs, i, j, lNonOptions, len, len1, node, pkg, ref, ref1, type;
   ({
     _: lNonOptions,
     c: clear,
@@ -67,19 +71,19 @@ main = async() => {
   }
   dirname = lNonOptions[0];
   makeProjDir(dirname, {clear}); // also cd's to proj dir
-  make_dirs();
   init_git();
-  init_npm();
-  addReadMe();
-  addGitIgnore();
-  addNpmRc();
+  node = new NodeEnv('fix');
+  node.setField('description', `A ${type} app`);
+  node.addFile('README.md');
+  node.addFile('.gitignore');
+  node.addFile('.npmrc');
   // === Install libraries specified via env vars
   env_installs = process.env.PROJECT_INSTALLS;
   if (nonEmpty(env_installs)) {
     ref = words(env_installs);
     for (i = 0, len = ref.length; i < len; i++) {
       pkg = ref[i];
-      addDep(pkg);
+      node.addDependency(pkg);
     }
   }
   env_dev_installs = process.env.PROJECT_DEV_INSTALLS;
@@ -87,12 +91,12 @@ main = async() => {
     ref1 = words(env_dev_installs);
     for (j = 0, len1 = ref1.length; j < len1; j++) {
       pkg = ref1[j];
-      addDevDep(pkg);
+      node.addDevDependency(pkg);
     }
   }
-  addDevDep('ava');
-  typeSpecificSetup();
-  write_pkg_json();
+  node.addDevDependency('ava');
+  typeSpecificSetup(node);
+  node.write_pkg_json();
   return console.log("DONE");
 };
 

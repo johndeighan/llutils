@@ -2,10 +2,10 @@
 // addUserBin.coffee
 
 // --- Add a new binary executable file to an existing project
-var bin, i, lBins, len;
+var i, lLibs, len, lib, node;
 
 import {
-  nonEmpty
+  isEmpty
 } from '@jdeighan/llutils';
 
 import {
@@ -13,29 +13,31 @@ import {
 } from '@jdeighan/llutils/cmd-args';
 
 import {
-  read_pkg_json,
-  addBin,
-  promptForBins
+  promptForNames
 } from '@jdeighan/llutils/proj-utils';
+
+import {
+  NodeEnv
+} from '@jdeighan/llutils/node-env';
 
 ({
   // ---------------------------------------------------------------------------
   // --- If libs aren't specified on the command line,
   //     they are prompted for
-  _: lBins
+  _: lLibs
 } = getArgs());
 
-read_pkg_json();
+node = new NodeEnv();
 
-if (nonEmpty(lBins)) {
-  for (i = 0, len = lBins.length; i < len; i++) {
-    bin = lBins[i];
-    addBin(bin);
-  }
-} else {
-  promptForBins();
+if (isEmpty(lLibs)) {
+  lLibs = (await promptForNames('New binary name (Enter to end)'));
 }
 
-write_pkg_json();
+for (i = 0, len = lLibs.length; i < len; i++) {
+  lib = lLibs[i];
+  node.addUserBin(lib);
+}
+
+node.write_pkg_json();
 
 //# sourceMappingURL=addUserBin.js.map

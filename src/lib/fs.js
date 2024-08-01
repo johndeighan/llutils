@@ -220,11 +220,6 @@ export var touch = (filePath) => {
 };
 
 // ---------------------------------------------------------------------------
-export var createFile = (filePath, contents) => {
-  fs.writeFileSync(filePath, contents);
-};
-
-// ---------------------------------------------------------------------------
 export var isFile = (filePath) => {
   if (!fs.existsSync(filePath)) {
     return false;
@@ -348,9 +343,9 @@ export var slurp = (filePath, hOptions = {}) => {
 // ---------------------------------------------------------------------------
 //   barf - write a string to a file
 //          will ensure that all necessary directories exist
-export var barf = (text, filePath) => {
+export var barf = (contents, filePath) => {
   mkDirsForFile(filePath);
-  fs.writeFileSync(filePath, text);
+  fs.writeFileSync(filePath, contents);
 };
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// addUserLib.coffee
+// addUserElement.coffee
 
-// --- Add new library file(s) to an existing project
+// --- Add a new binary executable file to an existing project
 var i, lLibs, len, lib, node;
 
 import {
@@ -22,7 +22,7 @@ import {
 
 ({
   // ---------------------------------------------------------------------------
-  // --- If libs aren't specified on the command line,
+  // --- If elements aren't specified on the command line,
   //     they are prompted for
   _: lLibs
 } = getArgs());
@@ -30,14 +30,14 @@ import {
 node = new NodeEnv();
 
 if (isEmpty(lLibs)) {
-  lLibs = (await promptForNames('New library name (Enter to end)'));
+  lLibs = (await promptForNames('New element name (Enter to end)'));
 }
 
 for (i = 0, len = lLibs.length; i < len; i++) {
   lib = lLibs[i];
-  node.addUserLib(lib);
+  node.addUserElement(lib);
 }
 
 node.write_pkg_json();
 
-//# sourceMappingURL=addUserLib.js.map
+//# sourceMappingURL=addUserElement.js.map
