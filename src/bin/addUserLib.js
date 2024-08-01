@@ -1,13 +1,11 @@
 #!/usr/bin/env node
-// addLib.coffee
+// addUserLib.coffee
 
 // --- Add a new library file to an existing project
 var i, lLibs, len, lib;
 
 import {
-  undef,
-  defined,
-  notdefined
+  nonEmpty
 } from '@jdeighan/llutils';
 
 import {
@@ -40,4 +38,4 @@ if (nonEmpty(lLibs)) {
 
 write_pkg_json();
 
-//# sourceMappingURL=addLib.js.map
+//# sourceMappingURL=addUserLib.js.map

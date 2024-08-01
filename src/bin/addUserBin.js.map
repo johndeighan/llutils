@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "addUserBin.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\bin\\addUserBin.coffee"
+  ],
+  "names": [],
+  "mappings": "AAE6D;;;AAAA,IAAA,GAAA,EAAA,CAAA,EAAA,KAAA,EAAA;;AAE7D,OAAA;EAAQ,QAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,OAAR;CAAA,MAAA;;AACA,OAAA;EACC,aADD;EACgB,MADhB;EACwB,aADxB;CAAA,MAAA;;AAQA,CAAA,CAAA;;;;EAAC,CAAA,EAAG;AAAJ,CAAA,GAAa,OAAA,CAAA,CAAb;;AAEA,aAAA,CAAA;;AACA,IAAG,QAAA,CAAS,KAAT,CAAH;EACC,KAAA,uCAAA;;IACC,MAAA,CAAO,GAAP;EADD,CADD;CAAA,MAAA;EAIC,aAAA,CAAA,EAJD;;;AAKA,cAAA,CAAA",
+  "sourcesContent": [
+    "# addUserBin.coffee\r\n\r\n# --- Add a new binary executable file to an existing project\r\n\r\nimport {nonEmpty} from '@jdeighan/llutils'\r\nimport {getArgs} from '@jdeighan/llutils/cmd-args'\r\nimport {\r\n\tread_pkg_json, addBin, promptForBins,\r\n\t} from '@jdeighan/llutils/proj-utils'\r\n\r\n# ---------------------------------------------------------------------------\r\n# --- If libs aren't specified on the command line,\r\n#     they are prompted for\r\n\r\n{_: lBins} = getArgs()\r\n\r\nread_pkg_json()\r\nif nonEmpty(lBins)\r\n\tfor bin in lBins\r\n\t\taddBin bin\r\nelse\r\n\tpromptForBins()\r\nwrite_pkg_json()\r\n\r\n"
+  ]
+}

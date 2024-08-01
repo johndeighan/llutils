@@ -27,7 +27,7 @@ export class PkgJson
 		if fix
 			@mergeKeysFromEnv()
 			prefix = process.env.PROJECT_NAME_PREFIX
-			if nonEmpty(prefix)
+			if nonEmpty(prefix) && ! @name.startsWith(prefix)
 				@setField 'name', "#{prefix}#{@hJson.name}"
 			@setField 'license', 'MIT'
 			@addDep '@jdeighan/llutils'
@@ -51,6 +51,12 @@ export class PkgJson
 	name: () ->
 
 		return @hJson.name
+
+	# ..........................................................
+
+	getField: (name) ->
+
+		return @hJson[name]
 
 	# ..........................................................
 

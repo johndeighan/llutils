@@ -44,13 +44,14 @@
 	"bin": {
 		"low-level-build": "src/bin/low-level-build.js",
 		"llb": "src/bin/low-level-build.js",
-		"make-new-project": "src/bin/make-new-project.js",
-		"mnp": "src/bin/make-new-project.js",
 		"for-each-file": "src/bin/for-each-file.js",
 		"fef": "src/bin/for-each-file.js",
 		"map-source-line": "src/bin/map-source-line.js",
 		"msl": "src/bin/map-source-line.js",
+		"make-new-project": "src/bin/make-new-project.js",
+		"mnp": "src/bin/make-new-project.js",
 
+		"addUserLib": "src/bin/addUserLib.js",
 		"brew": "src/bin/brew.js",
 		"bless": "src/bin/bless.js",
 		"shebangify": "src/bin/shebangify.js",

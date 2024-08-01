@@ -39,7 +39,7 @@ export var PkgJson = class PkgJson {
     if (fix) {
       this.mergeKeysFromEnv();
       prefix = process.env.PROJECT_NAME_PREFIX;
-      if (nonEmpty(prefix)) {
+      if (nonEmpty(prefix) && !this.name.startsWith(prefix)) {
         this.setField('name', `${prefix}${this.hJson.name}`);
       }
       this.setField('license', 'MIT');
@@ -65,6 +65,11 @@ export var PkgJson = class PkgJson {
   // ..........................................................
   name() {
     return this.hJson.name;
+  }
+
+  // ..........................................................
+  getField(name) {
+    return this.hJson[name];
   }
 
   // ..........................................................
