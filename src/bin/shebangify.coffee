@@ -14,5 +14,4 @@ assert isProjRoot('.', 'strict'), "Not in package root dir"
 for {relPath} from allFilesMatching('**/src/bin/*.js')
 	contents = slurp relPath
 	if !contents.match(/^\#\!/)
-		console.log relPath
 		barf shebang + "\n" + contents, relPath

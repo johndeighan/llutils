@@ -37,6 +37,7 @@
 		"./text-table": "./src/lib/text-table.js",
 		"./plugins": "./src/lib/plugins.js",
 		"./install-utils": "./src/lib/install-utils.js",
+		"./proj-utils": "./src/lib/proj-utils.js",
 		"./pkg-json": "./src/lib/pkg-json.js",
 		"./package.json": "./package.json"
 	},
@@ -76,10 +77,12 @@
 		"through2": "^4.0.2"
 	},
 	"dependencies": {
+		"chokidar": "^3.6.0",
 		"deep-equal": "^2.2.3",
 		"glob": "^10.4.2",
 		"n-readlines": "^1.0.1",
 		"peggy": "file:../peggy",
+		"prompts": "^2.4.2",
 		"source-map": "^0.6.1",
 		"sprintf-js": "^1.1.3",
 		"svelte": "^5.0.0-next.200",

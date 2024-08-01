@@ -15,6 +15,7 @@ import {
 } from '@jdeighan/llutils';
 
 import {
+  slurpPkgJSON,
   slurpJSON,
   barfJSON,
   barfPkgJSON,
@@ -48,7 +49,7 @@ getVersion = (pkg) => {
 export var PkgJson = class PkgJson {
   constructor() {
     var prefix;
-    this.hJson = slurpJSON('./package.json');
+    this.hJson = slurpPkgJSON();
     this.mergeKeysFromEnv();
     prefix = process.env.PROJECT_NAME_PREFIX;
     if (nonEmpty(prefix)) {
@@ -71,6 +72,11 @@ export var PkgJson = class PkgJson {
       }
       Object.assign(this.hJson, hSetKeys);
     }
+  }
+
+  // ..........................................................
+  name() {
+    return this.hJson.name;
   }
 
   // ..........................................................
@@ -108,11 +114,11 @@ export var PkgJson = class PkgJson {
 
   // ..........................................................
   addDep(pkg) {
-    var ref, version;
+    var ref, ref1, version;
     if (!hasKey(this.hJson, 'dependencies')) {
       this.hJson.dependencies = {};
     }
-    if ((ref = this.hJson) != null ? ref.devDependencies.pkg : void 0) {
+    if ((ref = this.hJson) != null ? (ref1 = ref.devDependencies) != null ? ref1.pkg : void 0 : void 0) {
       delete this.hJson.devDependencies.pkg;
     }
     version = getVersion(pkg);

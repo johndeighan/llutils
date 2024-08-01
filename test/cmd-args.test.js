@@ -13,7 +13,8 @@ Object.assign(global, lib2);
 equal(getArgs('-ab -cd=why'), {
   a: true,
   b: true,
-  cd: 'why'
+  cd: 'why',
+  _: []
 });
 
 equal(getArgs('-ab -cd=whynot letmein'), {
@@ -24,11 +25,13 @@ equal(getArgs('-ab -cd=whynot letmein'), {
 });
 
 equal(getArgs('-label="some label"'), {
-  label: "some label"
+  label: "some label",
+  _: []
 });
 
 equal(getArgs("-label='some label'"), {
-  label: "some label"
+  label: "some label",
+  _: []
 });
 
 hDesc = {

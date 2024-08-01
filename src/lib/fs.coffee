@@ -563,9 +563,11 @@ export readTextFile = (filePath, hOptions={}) =>
 		0
 
 	if eager
+		contents = gen2block(reader)
+		assert defined(contents), "readTextFile(): undef contents"
 		return {
 			hMetaData
-			contents: gen2block(reader)
+			contents
 			nLines
 			}
 	else
@@ -671,6 +673,13 @@ export allPathsTo = (fileName, hOptions={}) ->
 export slurpJSON = (filePath) =>
 
 	return JSON.parse(slurp(filePath))
+
+# ---------------------------------------------------------------------------
+#   slurpPkgJSON - read './package.json' into a hash
+
+export slurpPkgJSON = (filePath='./package.json') =>
+
+	return slurpJSON(filePath)
 
 # ---------------------------------------------------------------------------
 #   barfJSON - write a string to a file

@@ -39,7 +39,8 @@ export var brew = function(code, hMetaData = {}) {
   // --- if key preprocess is set, it must be a function
   //     that converts one block of code to another
   //     block of code
-  assert(isString(code), `code: ${OL(code)}`);
+  assert(defined(code), `code: ${OL(code)}`);
+  assert(isString(code), `Not a string: ${OL(code)}`);
   ({filePath, preprocess, debug} = getOptions(hMetaData, {
     filePath: undef,
     preprocess: undef,
@@ -92,6 +93,7 @@ export var brewFile = function(filePath, hOptions = {}) {
   }));
   assert(isFile(filePath), `No such file: ${filePath}`);
   ({hMetaData, contents} = readTextFile(filePath, 'eager'));
+  assert(defined(contents), "brewFile(): undef contents");
   if (debug) {
     hMetaData.debug = true;
   }

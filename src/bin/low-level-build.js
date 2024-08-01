@@ -2,25 +2,45 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var doLog, echo, fileFilter, hBin, hFilesProcessed, hJson, hMetaData, jsPath, key, nCielo, nCoffee, nPeggy, oneFilePath, ref, ref1, ref2, ref3, ref4, relPath, short_name, stub, tla, value, x, x1, y, y1, z;
+var doLog, echo, ext, fileFilter, force, glob, hBin, hFilesProcessed, hJson, hMetaData, hOptions, jsPath, key, lNonOptions, nCielo, nCoffee, nPeggy, oneFilePath, ref, ref1, ref2, ref3, ref4, relPath, short_name, stub, tla, value, w, x, x1, y, y1, z;
 
 import {
   compile
 } from 'svelte/compiler';
 
 import {
+  watch
+} from 'node:fs';
+
+import chokidar from 'chokidar';
+
+import {
+  undef,
+  defined,
+  notdefined,
   assert,
   npmLogLevel,
+  isEmpty,
   nonEmpty,
-  add_s
+  add_s,
+  OL,
+  execCmd
 } from '@jdeighan/llutils';
 
 import {
+  getArgs
+} from '@jdeighan/llutils/cmd-args';
+
+import {
   isProjRoot,
-  fileExt,
-  withExt,
   barfJSON,
   barfPkgJSON,
+  isFile,
+  slurpJSON,
+  slurpPkgJSON,
+  fileExt,
+  withExt,
+  mkpath,
   allFilesMatching,
   readTextFile,
   newerDestFileExists
@@ -42,8 +62,6 @@ import {
   createElemFile
 } from '@jdeighan/llutils/create-elem';
 
-debugger;
-
 hFilesProcessed = {
   coffee: 0,
   peggy: 0,
@@ -59,8 +77,6 @@ doLog = (str) => {
   }
 };
 
-doLog("-- low-level-build --");
-
 // ---------------------------------------------------------------------------
 // Usage:   node src/bin/low-level-build.js
 
@@ -68,15 +84,35 @@ doLog("-- low-level-build --");
 // 1. Make sure we're in a project root directory
 assert(isProjRoot('.', 'strict'), "Not in package root dir");
 
-if (oneFilePath = process.argv[2]) {
-  if (fileExt(oneFilePath) === '.coffee') {
-    doLog(oneFilePath);
-    brewFile(oneFilePath);
-    hFilesProcessed.coffee += 1;
-  } else if (fileExt(oneFilePath) === '.peggy') {
-    doLog(oneFilePath);
-    peggifyFile(oneFilePath);
-    hFilesProcessed.peggy += 1;
+({
+  _: lNonOptions,
+  e: echo,
+  f: force,
+  w
+} = getArgs(undef, {
+  _: [0, 1],
+  e: 'boolean',
+  f: 'boolean',
+  w: 'boolean'
+}));
+
+doLog("-- low-level-build --");
+
+if (oneFilePath = lNonOptions[0]) {
+  ext = fileExt(oneFilePath);
+  doLog(oneFilePath);
+  switch (ext) {
+    case '.coffee':
+      brewFile(oneFilePath);
+      break;
+    case '.peggy':
+      peggifyFile(oneFilePath);
+      break;
+    case '.cielo':
+      blessFile(oneFilePath);
+      break;
+    case '.svelte':
+      createElemFile(oneFilePath);
   }
   process.exit();
 }
@@ -89,6 +125,9 @@ fileFilter = ({filePath}) => {
   var jsFile;
   if (filePath.match(/node_modules/i)) {
     return false;
+  }
+  if (force) {
+    return true;
   }
   jsFile = withExt(filePath, '.js');
   return !newerDestFileExists(filePath, jsFile);
@@ -208,6 +247,46 @@ nCielo = hFilesProcessed.cielo;
 
 if (nCielo > 0) {
   doLog(`(${nCielo} cielo file${add_s(nCielo)} compiled)`);
+}
+
+if (w) {
+  console.log("watching for file changes...");
+  glob = "**/*.{coffee,peggy,cielo,svelte}";
+  hOptions = {
+    persistent: true,
+    ignoreInitial: true,
+    awaitWriteFinish: {
+      stabilityThreshold: 1000,
+      pollInterval: 100
+    }
+  };
+  chokidar.watch(glob, hOptions).on('all', (eventType, path) => {
+    if (path.match(/node_modules/)) {
+      return;
+    }
+    path = mkpath(path);
+    switch (eventType) {
+      case 'add':
+      case 'change':
+        switch (fileExt(path)) {
+          case '.coffee':
+            brewFile(path);
+            return console.log(`${eventType} ${path}`);
+          case '.peggy':
+            peggifyFile(path);
+            return console.log(`${eventType} ${path}`);
+          case '.cielo':
+            blessFile(path);
+            return console.log(`${eventType} ${path}`);
+          case '.svelte':
+            createElemFile(path);
+            return console.log(`${eventType} ${path}`);
+        }
+        break;
+      case 'unlink':
+        return execCmd(`rm ${withExt(path, '.js')}`);
+    }
+  });
 }
 
 //# sourceMappingURL=low-level-build.js.map

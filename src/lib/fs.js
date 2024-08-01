@@ -526,7 +526,7 @@ export var newerDestFileExists = (srcPath, ...lDestPaths) => {
 
 // ---------------------------------------------------------------------------
 export var readTextFile = (filePath, hOptions = {}) => {
-  var block, eager, firstLine, getLine, hMetaData, lMetaLines, line, nLines, nReader, reader;
+  var block, contents, eager, firstLine, getLine, hMetaData, lMetaLines, line, nLines, nReader, reader;
   // --- returns {hMetaData, reader, nLines}
   //        and possibly contents
   ({eager} = getOptions(hOptions, {
@@ -586,11 +586,9 @@ export var readTextFile = (filePath, hOptions = {}) => {
   // --- number of lines in file
   nLines = defined(lMetaLines) ? lMetaLines.length + 2 : 0;
   if (eager) {
-    return {
-      hMetaData,
-      contents: gen2block(reader),
-      nLines
-    };
+    contents = gen2block(reader);
+    assert(defined(contents), "readTextFile(): undef contents");
+    return {hMetaData, contents, nLines};
   } else {
     return {hMetaData, reader, nLines};
   }
@@ -698,6 +696,12 @@ export var allPathsTo = function*(fileName, hOptions = {}) {
 //   slurpJSON - read a file into a hash
 export var slurpJSON = (filePath) => {
   return JSON.parse(slurp(filePath));
+};
+
+// ---------------------------------------------------------------------------
+//   slurpPkgJSON - read './package.json' into a hash
+export var slurpPkgJSON = (filePath = './package.json') => {
+  return slurpJSON(filePath);
 };
 
 // ---------------------------------------------------------------------------

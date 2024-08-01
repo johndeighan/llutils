@@ -5,7 +5,8 @@ import {
 	assert, croak, OL,
 	} from '@jdeighan/llutils'
 import {
-	slurpJSON, barfJSON, barfPkgJSON, createFile, touch,
+	slurpPkgJSON, slurpJSON, barfJSON, barfPkgJSON,
+	createFile, touch,
 	} from '@jdeighan/llutils/fs'
 
 hVersions = {
@@ -36,7 +37,7 @@ export class PkgJson
 
 	constructor: () ->
 
-		@hJson = slurpJSON('./package.json')
+		@hJson = slurpPkgJSON()
 		@mergeKeysFromEnv()
 		prefix = process.env.PROJECT_NAME_PREFIX
 		if nonEmpty(prefix)
@@ -57,6 +58,12 @@ export class PkgJson
 				hSetKeys = slurpJSON(pkgJson)
 			Object.assign @hJson, hSetKeys
 		return
+
+	# ..........................................................
+
+	name: () ->
+
+		return @hJson.name
 
 	# ..........................................................
 
@@ -102,7 +109,7 @@ export class PkgJson
 
 		if ! hasKey(@hJson, 'dependencies')
 			@hJson.dependencies = {}
-		if @hJson?.devDependencies.pkg
+		if @hJson?.devDependencies?.pkg
 			delete @hJson.devDependencies.pkg
 		version = getVersion(pkg)
 		@hJson.dependencies[pkg] = version

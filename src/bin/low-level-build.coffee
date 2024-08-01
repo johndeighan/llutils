@@ -3,12 +3,17 @@
 # --- Designed to run in ANY project that installs @jdeighan/llutils
 
 import {compile} from 'svelte/compiler'
+import {watch} from 'node:fs'
+import chokidar from 'chokidar'
 
 import {
-	assert, npmLogLevel, nonEmpty, add_s,
+	undef, defined, notdefined, assert, npmLogLevel,
+	isEmpty, nonEmpty, add_s, OL, execCmd,
 	} from '@jdeighan/llutils'
+import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
-	isProjRoot, fileExt, withExt, barfJSON, barfPkgJSON,
+	isProjRoot, barfJSON, barfPkgJSON, isFile,
+	slurpJSON, slurpPkgJSON, fileExt, withExt, mkpath,
 	allFilesMatching, readTextFile, newerDestFileExists,
 	} from '@jdeighan/llutils/fs'
 import {brewFile} from '@jdeighan/llutils/llcoffee'
@@ -16,7 +21,6 @@ import {peggifyFile} from '@jdeighan/llutils/peggy'
 import {blessFile} from '@jdeighan/llutils/cielo'
 import {createElemFile} from '@jdeighan/llutils/create-elem'
 
-debugger
 hFilesProcessed = {
 	coffee: 0
 	peggy: 0
@@ -30,8 +34,6 @@ doLog = (str) =>
 		console.log str
 	return
 
-doLog "-- low-level-build --"
-
 # ---------------------------------------------------------------------------
 # Usage:   node src/bin/low-level-build.js
 
@@ -40,15 +42,32 @@ doLog "-- low-level-build --"
 
 assert isProjRoot('.', 'strict'), "Not in package root dir"
 
-if oneFilePath = process.argv[2]
-	if (fileExt(oneFilePath) == '.coffee')
-		doLog oneFilePath
-		brewFile oneFilePath
-		hFilesProcessed.coffee += 1
-	else if (fileExt(oneFilePath) == '.peggy')
-		doLog oneFilePath
-		peggifyFile oneFilePath
-		hFilesProcessed.peggy += 1
+{
+	_: lNonOptions
+	e: echo
+	f: force
+	w
+	} = getArgs undef, {
+	_: [0,1]
+	e: 'boolean'
+	f: 'boolean'
+	w: 'boolean'
+	}
+
+doLog "-- low-level-build --"
+
+if oneFilePath = lNonOptions[0]
+	ext = fileExt(oneFilePath)
+	doLog oneFilePath
+	switch ext
+		when '.coffee'
+			brewFile oneFilePath
+		when '.peggy'
+			peggifyFile oneFilePath
+		when '.cielo'
+			blessFile oneFilePath
+		when '.svelte'
+			createElemFile oneFilePath
 	process.exit()
 
 # ---------------------------------------------------------------------------
@@ -59,6 +78,8 @@ if oneFilePath = process.argv[2]
 fileFilter = ({filePath}) =>
 	if filePath.match(/node_modules/i)
 		return false
+	if force
+		return true
 	jsFile = withExt(filePath, '.js')
 	return ! newerDestFileExists(filePath, jsFile)
 
@@ -160,3 +181,36 @@ if (nPeggy > 0)
 nCielo = hFilesProcessed.cielo
 if (nCielo > 0)
 	doLog "(#{nCielo} cielo file#{add_s(nCielo)} compiled)"
+
+if w
+	console.log "watching for file changes..."
+	glob = "**/*.{coffee,peggy,cielo,svelte}"
+	hOptions = {
+		persistent: true
+		ignoreInitial: true
+		awaitWriteFinish: {
+			stabilityThreshold: 1000,
+			pollInterval: 100
+			}
+		}
+	chokidar.watch(glob, hOptions).on 'all', (eventType, path) =>
+		if path.match(/node_modules/)
+			return
+		path = mkpath(path)
+		switch eventType
+			when 'add','change'
+				switch fileExt(path)
+					when '.coffee'
+						brewFile path
+						console.log "#{eventType} #{path}"
+					when '.peggy'
+						peggifyFile path
+						console.log "#{eventType} #{path}"
+					when '.cielo'
+						blessFile path
+						console.log "#{eventType} #{path}"
+					when '.svelte'
+						createElemFile path
+						console.log "#{eventType} #{path}"
+			when 'unlink'
+				execCmd "rm #{withExt(path, '.js')}"

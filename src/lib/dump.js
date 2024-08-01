@@ -129,7 +129,7 @@ export var DUMP = (item, label = undef, hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
-export var BOX = (item, label = undef, hOptions = {}) => {
+export var BOX = (item, label = 'RESULT', hOptions = {}) => {
   hOptions = getOptions(hOptions, {
     box: true,
     oneLine: false // never oneLine when boxing

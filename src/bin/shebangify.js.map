@@ -6,8 +6,8 @@
     "src\\bin\\shebangify.coffee"
   ],
   "names": [],
-  "mappings": "AAAmB;AAAA,IAAA,QAAA,EAAA,GAAA,EAAA,OAAA,EAAA,OAAA,EAAA;;AAEnB,OAAA;EAAQ,MAAR;CAAA,MAAA;;AACA,OAAA;EACC,UADD;EACa,gBADb;EAC+B,YAD/B;EAC6C,KAD7C;EACoD,IADpD;CAAA,MAAA;;AAIA,OAAA,GAAU,sBAPS;;;AAWnB,MAAA,CAAO,UAAA,CAAW,GAAX,EAAgB,QAAhB,CAAP,EAAkC,yBAAlC;;AAEA;AAAA,KAAA,QAAA;GAAI,CAAC,OAAD;EACH,QAAA,GAAW,KAAA,CAAM,OAAN;EACX,IAAG,CAAC,QAAQ,CAAC,KAAT,CAAe,OAAf,CAAJ;IACC,OAAO,CAAC,GAAR,CAAY,OAAZ;IACA,IAAA,CAAK,OAAA,GAAU,IAAV,GAAiB,QAAtB,EAAgC,OAAhC,EAFD;;AAFD",
+  "mappings": "AAAmB;AAAA,IAAA,QAAA,EAAA,GAAA,EAAA,OAAA,EAAA,OAAA,EAAA;;AAEnB,OAAA;EAAQ,MAAR;CAAA,MAAA;;AACA,OAAA;EACC,UADD;EACa,gBADb;EAC+B,YAD/B;EAC6C,KAD7C;EACoD,IADpD;CAAA,MAAA;;AAIA,OAAA,GAAU,sBAPS;;;AAWnB,MAAA,CAAO,UAAA,CAAW,GAAX,EAAgB,QAAhB,CAAP,EAAkC,yBAAlC;;AAEA;AAAA,KAAA,QAAA;GAAI,CAAC,OAAD;EACH,QAAA,GAAW,KAAA,CAAM,OAAN;EACX,IAAG,CAAC,QAAQ,CAAC,KAAT,CAAe,OAAf,CAAJ;IACC,IAAA,CAAK,OAAA,GAAU,IAAV,GAAiB,QAAtB,EAAgC,OAAhC,EADD;;AAFD",
   "sourcesContent": [
-    "# shebangify.coffee\r\n\r\nimport {assert} from '@jdeighan/llutils'\r\nimport {\r\n\tisProjRoot, allFilesMatching, readTextFile, slurp, barf,\r\n\t} from '@jdeighan/llutils/fs'\r\n\r\nshebang = \"#!/usr/bin/env node\"\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nassert isProjRoot('.', 'strict'), \"Not in package root dir\"\r\n\r\nfor {relPath} from allFilesMatching('**/src/bin/*.js')\r\n\tcontents = slurp relPath\r\n\tif !contents.match(/^\\#\\!/)\r\n\t\tconsole.log relPath\r\n\t\tbarf shebang + \"\\n\" + contents, relPath\r\n"
+    "# shebangify.coffee\r\n\r\nimport {assert} from '@jdeighan/llutils'\r\nimport {\r\n\tisProjRoot, allFilesMatching, readTextFile, slurp, barf,\r\n\t} from '@jdeighan/llutils/fs'\r\n\r\nshebang = \"#!/usr/bin/env node\"\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nassert isProjRoot('.', 'strict'), \"Not in package root dir\"\r\n\r\nfor {relPath} from allFilesMatching('**/src/bin/*.js')\r\n\tcontents = slurp relPath\r\n\tif !contents.match(/^\\#\\!/)\r\n\t\tbarf shebang + \"\\n\" + contents, relPath\r\n"
   ]
 }

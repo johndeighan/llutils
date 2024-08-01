@@ -103,7 +103,7 @@ export DUMP = (item, label=undef, hOptions={}) =>
 
 # ---------------------------------------------------------------------------
 
-export BOX = (item, label=undef, hOptions={}) =>
+export BOX = (item, label='RESULT', hOptions={}) =>
 
 	hOptions = getOptions hOptions, {
 		box: true

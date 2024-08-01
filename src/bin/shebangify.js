@@ -24,7 +24,6 @@ for (x of ref) {
   ({relPath} = x);
   contents = slurp(relPath);
   if (!contents.match(/^\#\!/)) {
-    console.log(relPath);
     barf(shebang + "\n" + contents, relPath);
   }
 }

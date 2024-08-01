@@ -123,8 +123,7 @@ cmdArgs
 			else
 				croak "Bad return from arg: #{OL(arg)}"
 
-		if (lNonOptions.length > 0)
-			hOptions._ = lNonOptions
+		hOptions._ = lNonOptions
 		return hOptions
 
 arg
