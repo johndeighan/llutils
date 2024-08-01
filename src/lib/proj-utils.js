@@ -31,10 +31,6 @@ import {
   touch
 } from '@jdeighan/llutils/fs';
 
-import {
-  PkgJson
-} from '@jdeighan/llutils/pkg-json';
-
 // --- type 'website' will change to 'parcel' for now
 lValidTypes = words('electron codemirror parcel vite none');
 
