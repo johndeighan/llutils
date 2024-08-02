@@ -2,7 +2,7 @@
 // add-user-element.coffee
 
 // --- Add a new binary executable file to an existing project
-var i, lLibs, len, lib, node;
+var elem, i, lElems, len, node;
 
 import {
   isEmpty
@@ -24,18 +24,18 @@ import {
   // ---------------------------------------------------------------------------
   // --- If elements aren't specified on the command line,
   //     they are prompted for
-  _: lLibs
+  _: lElems
 } = getArgs());
 
 node = new NodeEnv();
 
-if (isEmpty(lLibs)) {
-  lLibs = (await promptForNames('New element name (Enter to end)'));
+if (isEmpty(lElems)) {
+  lElems = (await promptForNames('New element name (Enter to end)'));
 }
 
-for (i = 0, len = lLibs.length; i < len; i++) {
-  lib = lLibs[i];
-  node.addUserElement(lib);
+for (i = 0, len = lElems.length; i < len; i++) {
+  elem = lElems[i];
+  node.addUserElement(elem);
 }
 
 node.write_pkg_json();

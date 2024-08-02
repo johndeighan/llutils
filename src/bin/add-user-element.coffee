@@ -11,12 +11,12 @@ import {NodeEnv} from '@jdeighan/llutils/node-env'
 # --- If elements aren't specified on the command line,
 #     they are prompted for
 
-{_: lLibs} = getArgs()
+{_: lElems} = getArgs()
 
 node = new NodeEnv()
-if isEmpty(lLibs)
-	lLibs = await promptForNames('New element name (Enter to end)')
+if isEmpty(lElems)
+	lElems = await promptForNames('New element name (Enter to end)')
 
-for lib in lLibs
-	node.addUserElement lib
+for elem in lElems
+	node.addUserElement elem
 node.write_pkg_json()

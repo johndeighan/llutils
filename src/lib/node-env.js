@@ -107,7 +107,7 @@ export var NodeEnv = class NodeEnv {
       this.hJson.bin = {};
     }
     this.hJson.bin[name] = `./src/bin/${name}.js`;
-    console.log(`   BIN ${name} = ${OL(str)}`);
+    console.log(`   ADD BIN ${name}`);
   }
 
   // ..........................................................
@@ -129,7 +129,7 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
       this.hJson.bin = {};
     }
     this.hJson.bin[name] = `./src/bin/${name}.js`;
-    console.log(`   BIN ${name} = ${OL(str)}`);
+    console.log(`   ADD BIN ${name}`);
   }
 
   // ..........................................................
@@ -139,7 +139,7 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
 <p>A new element</p>
 `, `./src/elements/${name}.svelte`);
     this.addExport(`./${name}`, `./src/elements/${name}.js`);
-    console.log(`   ELEMENT ${name} = ${OL(str)}`);
+    console.log(`   ADD ELEMENT ${name}`);
   }
 
   // ..........................................................

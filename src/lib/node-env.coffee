@@ -99,7 +99,7 @@ export class NodeEnv
 		if ! hasKey(@hJson, 'bin')
 			@hJson.bin = {}
 		@hJson.bin[name] = "./src/bin/#{name}.js"
-		console.log "   BIN #{name} = #{OL(str)}"
+		console.log "   ADD BIN #{name}"
 		return
 
 	# ..........................................................
@@ -129,7 +129,7 @@ export class NodeEnv
 		if ! hasKey(@hJson, 'bin')
 			@hJson.bin = {}
 		@hJson.bin[name] = "./src/bin/#{name}.js"
-		console.log "   BIN #{name} = #{OL(str)}"
+		console.log "   ADD BIN #{name}"
 		return
 
 	# ..........................................................
@@ -144,7 +144,7 @@ export class NodeEnv
 			""", "./src/elements/#{name}.svelte"
 
 		@addExport "./#{name}", "./src/elements/#{name}.js"
-		console.log "   ELEMENT #{name} = #{OL(str)}"
+		console.log "   ADD ELEMENT #{name}"
 		return
 
 	# ..........................................................
