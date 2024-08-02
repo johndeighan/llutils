@@ -15,7 +15,15 @@ import {NodeEnv} from '@jdeighan/llutils/node-env'
 
 node = new NodeEnv()
 if isEmpty(lElems)
-	lElems = await promptForNames('New element name (Enter to end)')
+	lElems = await promptForNames(
+		'New element name (Enter to end)',
+		((name) =>
+			if (name.indexOf('-') == -1)
+				return "name must contain a hyphen"
+			else
+				return undef
+			)
+		)
 
 for elem in lElems
 	node.addUserElement elem

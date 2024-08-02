@@ -134,8 +134,8 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
 
   // ..........................................................
   addUserElement(name) {
-    barf(`# --- ${name}.svelte
-
+    barf(`<!-- ${name}.svelte -->
+<svelte:options customElement="${name}" />
 <p>A new element</p>
 `, `./src/elements/${name}.svelte`);
     this.addExport(`./${name}`, `./src/elements/${name}.js`);

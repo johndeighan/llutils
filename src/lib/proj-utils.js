@@ -167,8 +167,11 @@ make_dirs = () => {
 // ---------------------------------------------------------------------------
 // --- Used in bins addUserBin, addUserLib, addUserElement
 // ---------------------------------------------------------------------------
-export var promptForNames = async(prompt) => {
-  var hResponse, lNames;
+// --- valFunc is a validation function
+//        return undef if valid
+//        else return error message
+export var promptForNames = async(prompt, valFunc = undef) => {
+  var hResponse, lNames, msg, name;
   lNames = [];
   while (true) {
     hResponse = (await prompts({
@@ -176,8 +179,13 @@ export var promptForNames = async(prompt) => {
       name: 'name',
       message: prompt
     }));
-    if (hResponse.name) {
-      lNames.push(hResponse.name);
+    name = hResponse.name;
+    if (name) {
+      if (validFunc && (msg = validFunc(name))) {
+        console.log(msg);
+      } else {
+        lNames.push(name);
+      }
     } else {
       return lNames;
     }

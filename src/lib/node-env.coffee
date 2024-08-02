@@ -137,8 +137,8 @@ export class NodeEnv
 	addUserElement: (name) ->
 
 		barf """
-			# --- #{name}.svelte
-
+			<!-- #{name}.svelte -->
+			<svelte:options customElement="#{name}" />
 			<p>A new element</p>
 
 			""", "./src/elements/#{name}.svelte"

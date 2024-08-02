@@ -21,6 +21,7 @@ import {
 
 // ---------------------------------------------------------------------------
 export var createElem = (contents, hOptions = {}) => {
+  hOptions.customElement = true;
   return compile(contents, hOptions);
 };
 

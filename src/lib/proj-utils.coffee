@@ -155,8 +155,11 @@ make_dirs = () =>
 # ---------------------------------------------------------------------------
 # --- Used in bins addUserBin, addUserLib, addUserElement
 # ---------------------------------------------------------------------------
+# --- valFunc is a validation function
+#        return undef if valid
+#        else return error message
 
-export promptForNames = (prompt) =>
+export promptForNames = (prompt, valFunc=undef) =>
 
 	lNames = []
 	loop
@@ -165,8 +168,12 @@ export promptForNames = (prompt) =>
 			name: 'name',
 			message: prompt
 			}
-		if hResponse.name
-			lNames.push hResponse.name
+		name = hResponse.name
+		if name
+			if validFunc && (msg = validFunc(name))
+				console.log msg
+			else
+				lNames.push name
 		else
 			return lNames
 
