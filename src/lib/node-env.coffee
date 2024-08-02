@@ -116,7 +116,7 @@ export class NodeEnv
 		barf """
 			# --- #{name}.test.offee
 
-			import * as lib from '#{pj.name}/#{name}'
+			import * as lib from './#{name}'
 			Object.assign(global, lib)
 			import * as lib2 from '@jdeighan/llutils/utest'
 			Object.assign(global, lib2)
