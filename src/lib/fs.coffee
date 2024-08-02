@@ -56,7 +56,6 @@ export isProjRoot = (dir='.', hOptions={}) =>
 		return true
 
 	lExpectedFiles = [
-		'package-lock.json'
 		'README.md'
 		'.gitignore'
 		]

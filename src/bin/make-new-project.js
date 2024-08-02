@@ -91,6 +91,7 @@ main = async() => {
       node.addDevDependency(pkg);
     }
   }
+  node.addDevDependency('coffeescript');
   node.addDevDependency('ava');
   typeSpecificSetup(node);
   node.write_pkg_json();

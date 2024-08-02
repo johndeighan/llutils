@@ -72,6 +72,7 @@ main = () =>
 		for pkg in words(env_dev_installs)
 			node.addDevDependency pkg
 
+	node.addDevDependency 'coffeescript'
 	node.addDevDependency 'ava'
 
 	typeSpecificSetup(node)

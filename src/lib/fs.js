@@ -67,7 +67,7 @@ export var isProjRoot = (dir = '.', hOptions = {}) => {
   if (!strict) {
     return true;
   }
-  lExpectedFiles = ['package-lock.json', 'README.md', '.gitignore'];
+  lExpectedFiles = ['README.md', '.gitignore'];
   for (i = 0, len = lExpectedFiles.length; i < len; i++) {
     name = lExpectedFiles[i];
     filePath = `${dir}/${name}`;
