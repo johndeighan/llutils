@@ -18,6 +18,17 @@ type = undef
 
 # ---------------------------------------------------------------------------
 
+export checkInstall = (cmd) =>
+
+	try
+		output = execCmd "#{cmd} --version"
+		return output
+	catch err
+		console.log "ERROR #{cmd} is not installed"
+		process.exit()
+
+# ---------------------------------------------------------------------------
+
 export setProjType = (t) =>
 
 	if (t == 'vite')
@@ -207,7 +218,7 @@ export setUpParcel = (node) =>
 export setUpElectron = (node) =>
 
 	node.setField 'main', 'src/main.js'
-	node.addScript 'start', 'npm run build && electron .'
+	node.addScript 'start', 'pnpm run build && electron .'
 
 	console.log "Installing (dev) \"electron\""
 	node.addDevDependency 'electron'

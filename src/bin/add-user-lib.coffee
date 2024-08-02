@@ -1,4 +1,4 @@
-# addUserLib.coffee
+# add-user-lib.coffee
 
 # --- Add new library file(s) to an existing project
 

@@ -19,7 +19,7 @@ import {
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
 	setProjType, promptForProjType, makeProjDir,
-	typeSpecificSetup,
+	typeSpecificSetup, checkInstall,
 	} from '@jdeighan/llutils/proj-utils'
 import {NodeEnv} from '@jdeighan/llutils/node-env'
 
@@ -28,6 +28,8 @@ console.log "Starting make-new-project"
 # ---------------------------------------------------------------------------
 
 main = () =>
+	checkInstall 'node'
+	checkInstall 'pnpm'
 	{
 		_: lNonOptions,
 		c: clear,
@@ -76,7 +78,8 @@ main = () =>
 	node.write_pkg_json()
 	console.log """
 		Please run:
-		   yarn
+		   cd ../#{dirname}
+		   pnpm install
 		   parcel
 		"""
 

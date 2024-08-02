@@ -37,6 +37,19 @@ lValidTypes = words('electron codemirror parcel vite none');
 type = undef;
 
 // ---------------------------------------------------------------------------
+export var checkInstall = (cmd) => {
+  var err, output;
+  try {
+    output = execCmd(`${cmd} --version`);
+    return output;
+  } catch (error) {
+    err = error;
+    console.log(`ERROR ${cmd} is not installed`);
+    return process.exit();
+  }
+};
+
+// ---------------------------------------------------------------------------
 export var setProjType = (t) => {
   if (t === 'vite') {
     console.log("Type 'vite' not implemented yet");
@@ -213,7 +226,7 @@ export var setUpParcel = (node) => {
 // ---------------------------------------------------------------------------
 export var setUpElectron = (node) => {
   node.setField('main', 'src/main.js');
-  node.addScript('start', 'npm run build && electron .');
+  node.addScript('start', 'pnpm run build && electron .');
   console.log("Installing (dev) \"electron\"");
   node.addDevDependency('electron');
   console.log("Creating src/main.coffee");

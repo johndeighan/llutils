@@ -33,7 +33,8 @@ import {
   setProjType,
   promptForProjType,
   makeProjDir,
-  typeSpecificSetup
+  typeSpecificSetup,
+  checkInstall
 } from '@jdeighan/llutils/proj-utils';
 
 import {
@@ -45,6 +46,8 @@ console.log("Starting make-new-project");
 // ---------------------------------------------------------------------------
 main = async() => {
   var clear, dirname, env_dev_installs, env_installs, i, j, lNonOptions, len, len1, node, pkg, ref, ref1, type;
+  checkInstall('node');
+  checkInstall('pnpm');
   ({
     _: lNonOptions,
     c: clear,
@@ -92,7 +95,8 @@ main = async() => {
   typeSpecificSetup(node);
   node.write_pkg_json();
   return console.log(`Please run:
-   yarn
+   cd ../${dirname}
+   pnpm install
    parcel`);
 };
 
