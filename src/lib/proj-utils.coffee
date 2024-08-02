@@ -168,7 +168,7 @@ export promptForNames = (prompt) =>
 		if hResponse.name
 			lNames.push hResponse.name
 		else
-			return
+			return lNames
 
 # ---------------------------------------------------------------------------
 
