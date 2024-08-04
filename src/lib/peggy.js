@@ -62,7 +62,7 @@ import {
 
 import {
   brew
-} from '@jdeighan/llutils/coffee';
+} from '@jdeighan/llutils/llcoffee';
 
 import {
   PLLFetcher
@@ -97,10 +97,9 @@ sep = '# ' + '-'.repeat(62);
 
 // ---------------------------------------------------------------------------
 export var getSource = (filePath) => {
-  var code, hMetaData, peggyCode, reader;
-  ({hMetaData, reader} = readTextFile(filePath));
-  code = gen2block(reader);
-  peggyCode = PreProcessPeggy(code, hMetaData);
+  var contents, hMetaData, peggyCode;
+  ({hMetaData, contents} = readTextFile(filePath, 'eager'));
+  peggyCode = PreProcessPeggy(contents, hMetaData);
   return {
     source: filePath,
     text: peggyCode

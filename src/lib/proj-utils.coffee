@@ -195,6 +195,9 @@ export typeSpecificSetup = (node) =>
 
 export setUpWebSite = (node) =>
 
+	console.log "Installing svelte"
+	node.addDevDependency 'svelte'
+
 	console.log "Creating src/index.html"
 	barf """
 		<!DOCTYPE html>

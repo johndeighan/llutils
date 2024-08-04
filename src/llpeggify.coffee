@@ -11,17 +11,15 @@ import {peggifyFile} from '@jdeighan/llutils/peggy'
 
 # ---------------------------------------------------------------------------
 
-debugger
 fileName = process.argv[2]     # --- normally not specified
 
 fileFilter = ({filePath}) =>
 	if filePath.match(/node_modules/i)
 		return false
 	jsFile = withExt(filePath, '.js')
-	mapFile = withExt(filePath, '.js.map')
-	return ! newerDestFileExists(filePath, jsFile, mapFile)
+	return ! newerDestFileExists(filePath, jsFile)
 
-for {relPath} from allFilesMatching('**/*.{pegjs,peggy}', {fileFilter})
+for {relPath} from allFilesMatching('**/*.peggy', {fileFilter})
 	if defined(fileName) && !relPath.endsWith(fileName)
 		continue
 	try

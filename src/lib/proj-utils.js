@@ -210,6 +210,8 @@ export var typeSpecificSetup = (node) => {
 
 // ---------------------------------------------------------------------------
 export var setUpWebSite = (node) => {
+  console.log("Installing svelte");
+  node.addDevDependency('svelte');
   console.log("Creating src/index.html");
   barf(`<!DOCTYPE html>
 <html lang="en">

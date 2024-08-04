@@ -25,21 +25,18 @@ import {
 } from '@jdeighan/llutils/peggy';
 
 // ---------------------------------------------------------------------------
-debugger;
-
 fileName = process.argv[2];
 
 fileFilter = ({filePath}) => {
-  var jsFile, mapFile;
+  var jsFile;
   if (filePath.match(/node_modules/i)) {
     return false;
   }
   jsFile = withExt(filePath, '.js');
-  mapFile = withExt(filePath, '.js.map');
-  return !newerDestFileExists(filePath, jsFile, mapFile);
+  return !newerDestFileExists(filePath, jsFile);
 };
 
-ref = allFilesMatching('**/*.{pegjs,peggy}', {fileFilter});
+ref = allFilesMatching('**/*.peggy', {fileFilter});
 for (x of ref) {
   ({relPath} = x);
   if (defined(fileName) && !relPath.endsWith(fileName)) {

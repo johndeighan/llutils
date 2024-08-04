@@ -2,7 +2,7 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var doLog, echo, ext, fileFilter, force, glob, hBin, hFilesProcessed, hJson, hMetaData, hOptions, jsPath, key, lNonOptions, nCielo, nCoffee, nPeggy, oneFilePath, ref, ref1, ref2, ref3, ref4, relPath, short_name, stub, tla, value, w, x, x1, y, y1, z;
+var contents, doLog, echo, ext, fileFilter, firstLine, force, glob, hBin, hFilesProcessed, hJson, hOptions, key, lNonOptions, nCielo, nCoffee, nPeggy, oneFilePath, reader, ref, ref1, ref2, ref3, ref4, relPath, shebang, short_name, stub, tla, value, w, x, x1, y, y1, z;
 
 import {
   compile
@@ -20,11 +20,13 @@ import {
   notdefined,
   assert,
   npmLogLevel,
+  hasKey,
   isEmpty,
   nonEmpty,
   add_s,
   OL,
-  execCmd
+  execCmd,
+  gen2block
 } from '@jdeighan/llutils';
 
 import {
@@ -36,6 +38,7 @@ import {
   barfJSON,
   barfPkgJSON,
   isFile,
+  barf,
   slurpJSON,
   slurpPkgJSON,
   fileExt,
@@ -76,6 +79,8 @@ doLog = (str) => {
     console.log(str);
   }
 };
+
+shebang = "#!/usr/bin/env node";
 
 // ---------------------------------------------------------------------------
 // Usage:   node src/bin/low-level-build.js
@@ -196,28 +201,26 @@ tla = (stub) => {
   }
 };
 
-ref4 = allFilesMatching('./src/bin/**/*.coffee');
+ref4 = allFilesMatching('./src/bin/**/*.js');
 // ---------------------------------------------------------------------------
-// 4. For every *.coffee file in the 'src/bin' directory that
-//       has key "shebang" set:
+// 4. For every *.js file in the 'src/bin' directory
+//       - add a shebang line if not present
 //       - save <stub>: <jsPath> in hBin
 //       - if has a tla, save <tla>: <jsPath> in hBin
 for (y1 of ref4) {
   ({relPath, stub} = y1);
-  ({hMetaData} = readTextFile(relPath));
-  if (hMetaData != null ? hMetaData.shebang : void 0) {
-    jsPath = withExt(relPath, '.js');
-    hBin[stub] = jsPath;
-    short_name = tla(stub);
-    if (defined(short_name)) {
-      hBin[short_name] = jsPath;
-    }
+  ({reader} = readTextFile(relPath));
+  firstLine = reader().next().value;
+  if (!firstLine.match(/^\#\!/)) {
+    contents = shebang + "\n" + gen2block(reader);
+    barf(contents, relPath);
+  }
+  hBin[stub] = relPath;
+  if (defined(short_name = tla(stub))) {
+    hBin[short_name] = relPath;
   }
 }
 
-// ---------------------------------------------------------------------------
-// 5. Add sub-keys to key 'bin' in package.json
-//    (create if not exists)
 if (nonEmpty(hBin)) {
   hJson = slurpPkgJSON();
   if (!hasKey(hJson, 'bin')) {
@@ -234,6 +237,7 @@ if (nonEmpty(hBin)) {
   barfPkgJSON(hJson);
 }
 
+// --- log number of files processed
 nCoffee = hFilesProcessed.coffee;
 
 if (nCoffee > 0) {

@@ -2,6 +2,8 @@
 	"name": "@jdeighan/llutils",
 	"version": "1.0.16",
 	"type": "module",
+	"license": "MIT",
+	"author": "John Deighan",
 	"description": "compile coffee and peggy files",
 	"exports": {
 		".": "./src/lib/llutils.js",
@@ -55,17 +57,13 @@
 		"add-user-bin": "src/bin/add-user-bin.js",
 		"aub": "src/bin/add-user-bin.js",
 		"add-user-element": "src/bin/add-user-element.js",
-		"aue": "src/bin/add-user-element.js",
-		"brew": "src/bin/brew.js",
-		"bless": "src/bin/bless.js",
-		"shebangify": "src/bin/shebangify.js",
-		"sveltify": "src/bin/sveltify.js"
+		"aue": "src/bin/add-user-element.js"
 	},
 	"scripts": {
-		"clean": "rm -f src/lib/*.js src/bin/*.js test/*.js test/**/*.js **/*.map",
+		"clean": "rm -f src/lib/*.js src/lib/*.map src/bin/*.js src/bin/*.map src/elements/*.js src/elements/*.map test/*.js test/*.map",
 		"build:coffee": "coffee -cmb --no-header .",
 		"build:peggy": "node ./src/llpeggify.js",
-		"build": "clear && npm run build:coffee && npm run build:peggy && node src/bin/low-level-build.js && node src/bin/shebangify.js",
+		"build": "clear && npm run build:coffee && npm run build:peggy && node src/bin/low-level-build.js",
 		"newbuild": "clear && npm run build:coffee && gulp build",
 		"rebuild": "npm run clean && npm run build",
 		"test": "clear && npm run build && npx ava --timeout=1m ./test/*.test.js && git status",
@@ -77,8 +75,6 @@
 		"javascript",
 		"peggy"
 	],
-	"author": "John Deighan",
-	"license": "MIT",
 	"devDependencies": {
 		"ava": "^6.1.3",
 		"coffeescript": "^2.7.0",

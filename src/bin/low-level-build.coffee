@@ -7,12 +7,12 @@ import {watch} from 'node:fs'
 import chokidar from 'chokidar'
 
 import {
-	undef, defined, notdefined, assert, npmLogLevel,
-	isEmpty, nonEmpty, add_s, OL, execCmd,
+	undef, defined, notdefined, assert, npmLogLevel, hasKey,
+	isEmpty, nonEmpty, add_s, OL, execCmd, gen2block,
 	} from '@jdeighan/llutils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
-	isProjRoot, barfJSON, barfPkgJSON, isFile,
+	isProjRoot, barfJSON, barfPkgJSON, isFile, barf,
 	slurpJSON, slurpPkgJSON, fileExt, withExt, mkpath,
 	allFilesMatching, readTextFile, newerDestFileExists,
 	} from '@jdeighan/llutils/fs'
@@ -33,6 +33,8 @@ doLog = (str) =>
 	if echo
 		console.log str
 	return
+
+shebang = "#!/usr/bin/env node"
 
 # ---------------------------------------------------------------------------
 # Usage:   node src/bin/low-level-build.js
@@ -144,23 +146,20 @@ tla = (stub) =>
 		return undef
 
 # ---------------------------------------------------------------------------
-# 4. For every *.coffee file in the 'src/bin' directory that
-#       has key "shebang" set:
+# 4. For every *.js file in the 'src/bin' directory
+#       - add a shebang line if not present
 #       - save <stub>: <jsPath> in hBin
 #       - if has a tla, save <tla>: <jsPath> in hBin
 
-for {relPath, stub} from allFilesMatching('./src/bin/**/*.coffee')
-	{hMetaData} = readTextFile relPath
-	if hMetaData?.shebang
-		jsPath = withExt(relPath, '.js')
-		hBin[stub] = jsPath
-		short_name = tla(stub)
-		if defined(short_name)
-			hBin[short_name] = jsPath
-
-# ---------------------------------------------------------------------------
-# 5. Add sub-keys to key 'bin' in package.json
-#    (create if not exists)
+for {relPath, stub} from allFilesMatching('./src/bin/**/*.js')
+	{reader} = readTextFile relPath
+	firstLine = reader().next().value
+	if !firstLine.match(/^\#\!/)
+		contents = shebang + "\n" + gen2block(reader)
+		barf contents, relPath
+	hBin[stub] = relPath
+	if defined(short_name = tla(stub))
+		hBin[short_name] = relPath
 
 if nonEmpty(hBin)
 	hJson = slurpPkgJSON()
@@ -172,6 +171,8 @@ if nonEmpty(hBin)
 			doLog "   - add bin/#{key} = #{value}"
 			hJson.bin[key] = value
 	barfPkgJSON hJson
+
+# --- log number of files processed
 
 nCoffee = hFilesProcessed.coffee
 if (nCoffee > 0)

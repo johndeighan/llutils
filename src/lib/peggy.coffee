@@ -19,7 +19,7 @@ import {
 	readTextFile, barf, slurp, fileExt, withExt, isFile,
 	normalize, mkpath, fileDir,
 	} from '@jdeighan/llutils/fs'
-import {brew} from '@jdeighan/llutils/coffee'
+import {brew} from '@jdeighan/llutils/llcoffee'
 import {PLLFetcher} from '@jdeighan/llutils/fetcher'
 import {SectionMap} from '@jdeighan/llutils/section-map'
 import {getTracer} from '@jdeighan/llutils/tracer'
@@ -42,9 +42,8 @@ sep = '# ' + '-'.repeat(62)
 
 export getSource = (filePath) =>
 
-	{hMetaData, reader} = readTextFile(filePath)
-	code = gen2block(reader)
-	peggyCode = PreProcessPeggy(code, hMetaData)
+	{hMetaData, contents} = readTextFile(filePath, 'eager')
+	peggyCode = PreProcessPeggy(contents, hMetaData)
 
 	return {
 		source: filePath,
