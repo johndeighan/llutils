@@ -1,10 +1,9 @@
 ---
 filename: card.svelte
 dev: true
-customElement: true
+customElement: "ca-rd"
 css: injected
 ---
-<svelte-options customElement="ca-rd"/>
 
 <h1>
 	{message}

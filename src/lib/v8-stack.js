@@ -77,6 +77,7 @@ export var getV8Stack = (hOptions = {}) => {
     Error.prepareStackTrace = (error, lCallSites) => {
       var column, dir, ext, filePath, fileURL, functionName, hFrame, hParsed, j, lFrames, len, line, methodName, oSite, objType, pos, stub, thisVal, type;
       lFrames = [];
+      debugger;
       for (j = 0, len = lCallSites.length; j < len; j++) {
         oSite = lCallSites[j];
         fileURL = oSite.getFileName();
@@ -151,6 +152,7 @@ export var getV8Stack = (hOptions = {}) => {
           hFrame.type = 'script';
           delete hFrame.functionName;
           if (hFrame.ext === '.js') {
+            debugger;
             mapJStoCoffee(hFrame);
           }
           lFrames.push(hFrame);
@@ -183,7 +185,7 @@ export var getV8Stack = (hOptions = {}) => {
 //        line
 //        column
 export var mapJStoCoffee = (hFrame) => {
-  var column, ext, filePath, hInfo, line;
+  var column, ext, filePath, hMapped, line, name, source;
   // --- Attempt to convert to original coffee file
   assert(hasKey(hFrame, 'filePath'));
   assert(hasKey(hFrame, 'fileName'));
@@ -192,15 +194,16 @@ export var mapJStoCoffee = (hFrame) => {
   assert(hasKey(hFrame, 'column'));
   ({filePath, ext, line, column} = hFrame);
   assert(ext === '.js', `ext = ${ext}`);
-  hInfo = mapSourcePos(filePath, line, column);
-  if (defined(hInfo.source)) {
+  hMapped = mapSourcePos(filePath, line, column);
+  if (defined(hMapped)) {
     // --- successfully mapped
+    ({source, line, column, name} = hMapped);
     hFrame.filePath = withExt(hFrame.filePath, '.coffee');
     hFrame.fileName = withExt(hFrame.fileName, '.coffee');
     hFrame.ext = '.coffee';
-    hFrame.line = hInfo.line;
-    hFrame.column = hInfo.column;
-    hFrame.source = hInfo.source;
+    hFrame.line = hMapped.line;
+    hFrame.column = hMapped.column;
+    hFrame.source = hMapped.source;
   }
 };
 

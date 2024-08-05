@@ -19,7 +19,7 @@ import {
 import {brewFile} from '@jdeighan/llutils/llcoffee'
 import {peggifyFile} from '@jdeighan/llutils/peggy'
 import {blessFile} from '@jdeighan/llutils/cielo'
-import {createElemFile} from '@jdeighan/llutils/create-elem'
+import {sveltifyFile} from '@jdeighan/llutils/svelte-utils'
 
 hFilesProcessed = {
 	coffee: 0
@@ -72,7 +72,7 @@ if oneFilePath = lNonOptions[0]
 		when '.cielo'
 			blessFile oneFilePath
 		when '.svelte'
-			createElemFile oneFilePath
+			sveltifyFile oneFilePath
 	process.exit()
 
 # ---------------------------------------------------------------------------
@@ -121,7 +121,7 @@ for {relPath} from allFilesMatching('**/*.cielo', {fileFilter})
 
 for {relPath} from allFilesMatching('**/*.svelte', {fileFilter})
 	doLog relPath
-	createElemFile relPath
+	sveltifyFile relPath
 	hFilesProcessed.svelte += 1
 
 # ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ if w
 						blessFile path
 						console.log "#{eventType} #{path}"
 					when '.svelte'
-						createElemFile path
+						sveltifyFile path
 						console.log "#{eventType} #{path}"
 			when 'unlink'
 				execCmd "rm #{withExt(path, '.js')}"

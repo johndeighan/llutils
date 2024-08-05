@@ -60,6 +60,7 @@ export getV8Stack = (hOptions={}) =>
 		Error.stackTraceLimit = Infinity
 		Error.prepareStackTrace = (error, lCallSites) =>
 			lFrames = []
+			debugger
 			for oSite in lCallSites
 				fileURL = oSite.getFileName()
 				if defined(fileURL)
@@ -129,6 +130,7 @@ export getV8Stack = (hOptions={}) =>
 					hFrame.type = 'script'
 					delete hFrame.functionName
 					if (hFrame.ext == '.js')
+						debugger
 						mapJStoCoffee(hFrame)
 					lFrames.push hFrame
 					break
@@ -169,16 +171,17 @@ export mapJStoCoffee = (hFrame) =>
 	{filePath, ext, line, column} = hFrame
 	assert (ext == '.js'), "ext = #{ext}"
 
-	hInfo = mapSourcePos filePath, line, column
-	if defined(hInfo.source)
+	hMapped = mapSourcePos filePath, line, column
+	if defined(hMapped)
 		# --- successfully mapped
+		{source, line, column, name} = hMapped
 
 		hFrame.filePath = withExt(hFrame.filePath, '.coffee')
 		hFrame.fileName = withExt(hFrame.fileName, '.coffee')
 		hFrame.ext = '.coffee'
-		hFrame.line = hInfo.line
-		hFrame.column = hInfo.column
-		hFrame.source = hInfo.source
+		hFrame.line = hMapped.line
+		hFrame.column = hMapped.column
+		hFrame.source = hMapped.source
 	return
 
 # ---------------------------------------------------------------------------

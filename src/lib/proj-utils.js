@@ -31,13 +31,12 @@ import {
   touch
 } from '@jdeighan/llutils/fs';
 
-// --- type 'website' will change to 'parcel' for now
 lValidTypes = words('electron codemirror parcel vite none');
 
-type = undef;
+type = 'none';
 
 // ---------------------------------------------------------------------------
-export var checkInstall = (cmd) => {
+export var checkIfInstalled = (cmd) => {
   var err, output;
   try {
     output = execCmd(`${cmd} --version`);
@@ -229,8 +228,16 @@ export var setUpWebSite = (node) => {
 export var setUpParcel = (node) => {
   node.addDevDependency('parcel');
   node.setField('source', 'src/index.html');
-  node.addScript('start', 'parcel');
-  node.addScript('build', 'parcel build');
+  node.addScript('dev', 'run-p "llb -w" parcel');
+  node.addScript('build', 'run-p llb "parcel build"');
+};
+
+// ---------------------------------------------------------------------------
+export var setUpVite = (node) => {
+  node.addDevDependency('vite');
+  node.setField('source', 'src/index.html');
+  node.addScript('dev', 'llb -w && vite');
+  node.addScript('build', 'llb && vite build');
 };
 
 // ---------------------------------------------------------------------------

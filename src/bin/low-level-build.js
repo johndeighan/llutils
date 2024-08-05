@@ -62,8 +62,8 @@ import {
 } from '@jdeighan/llutils/cielo';
 
 import {
-  createElemFile
-} from '@jdeighan/llutils/create-elem';
+  sveltifyFile
+} from '@jdeighan/llutils/svelte-utils';
 
 hFilesProcessed = {
   coffee: 0,
@@ -120,7 +120,7 @@ if (oneFilePath = lNonOptions[0]) {
       blessFile(oneFilePath);
       break;
     case '.svelte':
-      createElemFile(oneFilePath);
+      sveltifyFile(oneFilePath);
   }
   process.exit();
 }
@@ -181,7 +181,7 @@ ref3 = allFilesMatching('**/*.svelte', {fileFilter});
 for (x1 of ref3) {
   ({relPath} = x1);
   doLog(relPath);
-  createElemFile(relPath);
+  sveltifyFile(relPath);
   hFilesProcessed.svelte += 1;
 }
 
@@ -286,7 +286,7 @@ if (w) {
             blessFile(path);
             return console.log(`${eventType} ${path}`);
           case '.svelte':
-            createElemFile(path);
+            sveltifyFile(path);
             return console.log(`${eventType} ${path}`);
         }
         break;

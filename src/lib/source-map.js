@@ -8,7 +8,7 @@ import {
 import {
   SourceMapGenerator,
   SourceMapConsumer
-} from 'source-map';
+} from 'source-map-js';
 
 import {
   undef,
@@ -31,6 +31,11 @@ import {
   slurp,
   barf
 } from '@jdeighan/llutils/fs';
+
+import {
+  DUMP,
+  BOX
+} from '@jdeighan/llutils/dump';
 
 // --- cache to hold previously fetched file contents
 hSourceMaps = {}; // --- { filepath => hMap, ... }
@@ -100,7 +105,7 @@ export var mapLineNum = (jsPath, line, column = 0, hOptions = {}) => {
 
 // ---------------------------------------------------------------------------
 export var mapSourcePos = (jsPath, line, column, hOptions = {}) => {
-  var debug, hMap, hMapped, mapFilePath, name, smc, source;
+  var consumer, debug, hMap, hMapped, mapFilePath, newStr, orgStr;
   // --- Valid options:
   //        debug
   // --- Can map only if:
@@ -108,8 +113,7 @@ export var mapSourcePos = (jsPath, line, column, hOptions = {}) => {
   //        2. <jsPath>.map exists
 
   //     returns {source, line, column, name}
-  //     will return original jsPath, line and column
-  //        if no map file, or unable to map
+  //     or undef if no map file, or unable to map
   ({debug} = getOptions(hOptions, {
     debug: false
   }));
@@ -119,8 +123,13 @@ export var mapSourcePos = (jsPath, line, column, hOptions = {}) => {
   }
   jsPath = mkpath(jsPath);
   mapFilePath = jsPath + '.map';
+  if (!isFile(mapFilePath)) {
+    if (debug) {
+      console.log("Map file missing, returning undef");
+    }
+    return undef;
+  }
   assert(isFile(jsPath), `no such file ${jsPath}`);
-  assert(isFile(mapFilePath), `no such file ${mapFilePath}`);
   assert(fileExt(jsPath) === '.js', "Not a JS file");
   assert(isInteger(line, {
     min: 0
@@ -134,18 +143,15 @@ export var mapSourcePos = (jsPath, line, column, hOptions = {}) => {
   if (debug) {
     dumpMap(hMap);
   }
-  smc = new SourceMapConsumer(hMap);
-  if (debug) {
-    console.log(smc.sources);
-  }
+  consumer = new SourceMapConsumer(hMap);
+  hMapped = consumer.originalPositionFor({line, column});
   // --- hMapped is {source, line, column, name}
-  hMapped = smc.originalPositionFor({line, column});
+  assert(isHash(hMapped), `not a hash: ${OL(hMapped)}`);
   if (debug) {
-    console.log(hMapped);
+    orgStr = `${jsPath} ${line}:${column}`;
+    newStr = `${hMapped.source} ${hMapped.line}:${hMapped.column}`;
+    console.log(`${orgStr} ==> ${newStr}`);
   }
-  assert(isHash(hMapped), `originalPositionFor(${line},${column}) returned non-hash`);
-  ({source, line, column, name} = hMapped);
-  assert(isInteger(line), `originalPositionFor(${line},${column}) returned line = ${line}`);
   return hMapped;
 };
 
@@ -200,10 +206,10 @@ export var SourceMap = class SourceMap extends SourceMapGenerator {
 
   // ..........................................................
   // --- useful for testing
-  async mapPos(pos) {
+  mapPos(pos) {
     var consumer, hMap;
     hMap = JSON.parse(this.toString());
-    consumer = (await new SourceMapConsumer(hMap));
+    consumer = new SourceMapConsumer(hMap);
     return consumer.originalPositionFor(this.getPos(pos));
   }
 

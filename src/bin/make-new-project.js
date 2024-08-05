@@ -34,7 +34,7 @@ import {
   promptForProjType,
   makeProjDir,
   typeSpecificSetup,
-  checkInstall
+  checkIfInstalled
 } from '@jdeighan/llutils/proj-utils';
 
 import {
@@ -46,8 +46,8 @@ console.log("Starting make-new-project");
 // ---------------------------------------------------------------------------
 main = async() => {
   var clear, dirname, env_dev_installs, env_installs, i, j, lNonOptions, len, len1, node, pkg, ref, ref1, type;
-  checkInstall('node');
-  checkInstall('pnpm');
+  checkIfInstalled('node');
+  checkIfInstalled('pnpm');
   ({
     _: lNonOptions,
     c: clear,
@@ -69,7 +69,9 @@ main = async() => {
   execCmd("git init");
   execCmd("git branch -m main");
   execCmd("npm init -y");
-  node = new NodeEnv('fix');
+  node = new NodeEnv('fixPkgJson');
+  node.addDependency('@jdeighan/llutils');
+  node.addDevDependency('npm-run-all');
   node.setField('description', `A ${type} app`);
   node.addFile('README.md');
   node.addFile('.gitignore');

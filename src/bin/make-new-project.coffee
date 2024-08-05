@@ -19,7 +19,7 @@ import {
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
 	setProjType, promptForProjType, makeProjDir,
-	typeSpecificSetup, checkInstall,
+	typeSpecificSetup, checkIfInstalled,
 	} from '@jdeighan/llutils/proj-utils'
 import {NodeEnv} from '@jdeighan/llutils/node-env'
 
@@ -28,8 +28,8 @@ console.log "Starting make-new-project"
 # ---------------------------------------------------------------------------
 
 main = () =>
-	checkInstall 'node'
-	checkInstall 'pnpm'
+	checkIfInstalled 'node'
+	checkIfInstalled 'pnpm'
 	{
 		_: lNonOptions,
 		c: clear,
@@ -54,7 +54,9 @@ main = () =>
 	execCmd "git branch -m main"
 	execCmd "npm init -y"
 
-	node = new NodeEnv('fix')
+	node = new NodeEnv('fixPkgJson')
+	node.addDependency '@jdeighan/llutils'
+	node.addDevDependency 'npm-run-all'
 	node.setField 'description', "A #{type} app"
 	node.addFile 'README.md'
 	node.addFile '.gitignore'

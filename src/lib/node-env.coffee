@@ -20,17 +20,16 @@ export class NodeEnv
 
 	constructor: (hOptions={}) ->
 
-		{fix} = getOptions hOptions, {
-			fix: false
+		{fixPkgJson} = getOptions hOptions, {
+			fixPkgJson: false
 			}
 		@hJson = slurpPkgJSON()
-		if fix
+		if fixPkgJson
 			@mergeKeysFromEnv()
 			prefix = process.env.PROJECT_NAME_PREFIX
 			if nonEmpty(prefix) && ! @hJson.name.startsWith(prefix)
 				@setField 'name', "#{prefix}#{@hJson.name}"
 			@setField 'license', 'MIT'
-			@addDependency '@jdeighan/llutils'
 
 	# ..........................................................
 
@@ -216,14 +215,14 @@ export class NodeEnv
 
 	# ..........................................................
 
-	addFile: (fileName) ->
+	addFile: (fileName, contents=undef) ->
 
 		console.log "Creating standard file #{OL(fileName)}"
 
 		switch fileName
 
 			when 'README.md'
-				barf """
+				barf contents || """
 					README.md file
 					==============
 
@@ -231,7 +230,7 @@ export class NodeEnv
 					""", "./README.md"
 
 			when '.gitignore'
-				barf """
+				barf contents || """
 					logs/
 					node_modules/
 					typings/
@@ -250,7 +249,7 @@ export class NodeEnv
 					""", "./.gitignore"
 
 			when '.npmrc'
-				barf """
+				barf contents || """
 					engine-strict=true
 					# --- loglevel can be silent or warn
 					loglevel=silent

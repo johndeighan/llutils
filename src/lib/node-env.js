@@ -33,19 +33,18 @@ import {
 //        - adjust name if env var PROJECT_NAME_PREFIX is set
 export var NodeEnv = class NodeEnv {
   constructor(hOptions = {}) {
-    var fix, prefix;
-    ({fix} = getOptions(hOptions, {
-      fix: false
+    var fixPkgJson, prefix;
+    ({fixPkgJson} = getOptions(hOptions, {
+      fixPkgJson: false
     }));
     this.hJson = slurpPkgJSON();
-    if (fix) {
+    if (fixPkgJson) {
       this.mergeKeysFromEnv();
       prefix = process.env.PROJECT_NAME_PREFIX;
       if (nonEmpty(prefix) && !this.hJson.name.startsWith(prefix)) {
         this.setField('name', `${prefix}${this.hJson.name}`);
       }
       this.setField('license', 'MIT');
-      this.addDependency('@jdeighan/llutils');
     }
   }
 
@@ -206,17 +205,17 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
   }
 
   // ..........................................................
-  addFile(fileName) {
+  addFile(fileName, contents = undef) {
     console.log(`Creating standard file ${OL(fileName)}`);
     switch (fileName) {
       case 'README.md':
-        barf(`README.md file
+        barf(contents || `README.md file
 ==============
 
 `, "./README.md");
         break;
       case '.gitignore':
-        barf(`logs/
+        barf(contents || `logs/
 node_modules/
 typings/
 *.tsbuildinfo
@@ -233,7 +232,7 @@ test/temp*.*
 /.svelte-kit`, "./.gitignore");
         break;
       case '.npmrc':
-        barf(`engine-strict=true
+        barf(contents || `engine-strict=true
 # --- loglevel can be silent or warn
 loglevel=silent`, "./.npmrc");
         break;

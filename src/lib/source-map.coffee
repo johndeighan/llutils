@@ -3,7 +3,7 @@
 import {readFileSync} from 'node:fs'
 import {
 	SourceMapGenerator, SourceMapConsumer,
-	} from 'source-map'
+	} from 'source-map-js'
 
 import {
 	undef, defined, notdefined, getOptions, OL,
@@ -13,6 +13,7 @@ import {
 import {
 	isFile, mkpath, parsePath, fileExt, slurp, barf,
 	} from '@jdeighan/llutils/fs'
+import {DUMP, BOX} from '@jdeighan/llutils/dump'
 
 # --- cache to hold previously fetched file contents
 hSourceMaps = {}    # --- { filepath => hMap, ... }
@@ -85,8 +86,7 @@ export mapSourcePos = (jsPath, line, column, hOptions={}) =>
 	#        2. <jsPath>.map exists
 	#
 	#     returns {source, line, column, name}
-	#     will return original jsPath, line and column
-	#        if no map file, or unable to map
+	#     or undef if no map file, or unable to map
 
 	{debug} = getOptions hOptions, {
 		debug: false
@@ -98,10 +98,13 @@ export mapSourcePos = (jsPath, line, column, hOptions={}) =>
 
 	jsPath = mkpath jsPath
 	mapFilePath = jsPath + '.map'
+	if !isFile(mapFilePath)
+		if debug
+			console.log "Map file missing, returning undef"
+		return undef
 
 	assert isFile(jsPath), "no such file #{jsPath}"
-	assert isFile(mapFilePath), "no such file #{mapFilePath}"
-	assert fileExt(jsPath) == '.js', "Not a JS file"
+	assert (fileExt(jsPath) == '.js'), "Not a JS file"
 	assert isInteger(line, {min: 0}), "line #{line} not an integer"
 	assert isInteger(column, {min: 0}), "column #{column} not an integer"
 
@@ -111,17 +114,15 @@ export mapSourcePos = (jsPath, line, column, hOptions={}) =>
 	if debug
 		dumpMap hMap
 
-	smc = new SourceMapConsumer(hMap)
-	if debug
-		console.log smc.sources
+	consumer = new SourceMapConsumer(hMap)
+	hMapped = consumer.originalPositionFor({line, column})
 
 	# --- hMapped is {source, line, column, name}
-	hMapped = smc.originalPositionFor({line, column})
+	assert isHash(hMapped), "not a hash: #{OL(hMapped)}"
 	if debug
-		console.log hMapped
-	assert isHash(hMapped), "originalPositionFor(#{line},#{column}) returned non-hash"
-	{source, line, column, name} = hMapped
-	assert isInteger(line), "originalPositionFor(#{line},#{column}) returned line = #{line}"
+		orgStr = "#{jsPath} #{line}:#{column}"
+		newStr = "#{hMapped.source} #{hMapped.line}:#{hMapped.column}"
+		console.log "#{orgStr} ==> #{newStr}"
 	return hMapped
 
 # ---------------------------------------------------------------------------
@@ -183,5 +184,5 @@ export class SourceMap extends SourceMapGenerator
 	mapPos: (pos) ->
 
 		hMap = JSON.parse(@toString())
-		consumer = await new SourceMapConsumer(hMap)
+		consumer = new SourceMapConsumer(hMap)
 		return consumer.originalPositionFor(@getPos(pos))
