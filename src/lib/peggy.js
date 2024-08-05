@@ -220,15 +220,18 @@ export var peggify = (code, hMetaData = {}) => {
       return {
         orgCode: code,
         js: jsCode,
+        code: jsCode,
         sourceMap: map.toString(),
         peggyCode
       };
     } else {
       hOptions.output = 'source';
+      code = peggy.generate(input, hOptions);
       return {
         orgCode: code,
         peggyCode,
-        js: peggy.generate(input, hOptions)
+        code,
+        js: code
       };
     }
   } catch (error) {

@@ -465,6 +465,21 @@ export var allFilesMatching = function*(pattern = '*', hOptions = {}) {
 };
 
 // ---------------------------------------------------------------------------
+// --- fileFilter, if defined, gets (filePath)
+export var deleteFilesMatching = (pattern, hOptions = {}) => {
+  var ref, relPath, x;
+  hOptions = getOptions(hOptions, {
+    fileFilter: undef
+  });
+  assert(pattern !== '*', "Can't delete files matching '*'");
+  ref = allFilesMatching(pattern, hOptions);
+  for (x of ref) {
+    ({relPath} = x);
+    fs.rmSync(relPath);
+  }
+};
+
+// ---------------------------------------------------------------------------
 export var allLinesIn = function*(filePath, filterFunc = undef) {
   var buffer, nReader, result;
   assert(isFile(filePath), `No such file: ${OL(filePath)}`);

@@ -81,6 +81,7 @@ export var brew = function(code, hMetaData = {}) {
     orgCode: code,
     preprocCode,
     js,
+    code: js,
     sourceMap: v3SourceMap
   };
 };

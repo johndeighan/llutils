@@ -14,13 +14,18 @@ import {
 
 export sveltify = (code, hMetaData={}) =>
 
+	hMetaData.filename = hMetaData.filePath
+	delete hMetaData.filePath
 	elem = hMetaData.customElement
 	if isString(elem, 'nonempty')
 		checkCustomElemName(elem)
 		hMetaData.customElement = true
 		str = "<svelte:options customElement=#{OL(elem)}/>"
 		code = str + "\n" + code
-	return compile code, hMetaData
+	hResult = compile code, hMetaData
+#	console.dir hResult
+	hResult.code = hResult.js.code
+	return hResult
 
 # ---------------------------------------------------------------------------
 
@@ -30,8 +35,6 @@ export sveltifyFile = (filePath, hOptions={}) =>
 
 	assert (fileExt(filePath) == '.svelte'), "Not a svelte file"
 	{hMetaData, contents} = readTextFile filePath, 'eager'
-	hMetaData.filename = hMetaData.filePath
-	delete hMetaData.filePath
 	Object.assign hMetaData, hOptions
 	{js} = sveltify contents, hMetaData
 	barf js.code, withExt(filePath, '.js')

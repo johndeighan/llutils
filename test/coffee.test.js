@@ -1,7 +1,18 @@
-  // coffee.test.coffee
+// coffee.test.coffee
+var blocks, code, filePath, js, orgCode;
+
 import {
-  undef
+  undef,
+  isString
 } from '@jdeighan/llutils';
+
+import {
+  slurp
+} from '@jdeighan/llutils/fs';
+
+import {
+  TextBlockList
+} from '@jdeighan/llutils/text-block';
 
 import * as lib from '@jdeighan/llutils/coffee';
 
@@ -94,5 +105,51 @@ f(a,b)`, ['x', 'y', 'a', 'b']);
 f = (m,n) =>
 	console.log 'OK'`, ['x', 'y', 'console']);
 })();
+
+// ---------------------------------------------------------------------------
+filePath = "test/brew/test.coffee";
+
+code = slurp(filePath);
+
+truthy(isString(code));
+
+blocks = new TextBlockList();
+
+blocks.addBlock(filePath, code);
+
+({orgCode, js} = brew(code));
+
+truthy(orgCode === code);
+
+blocks.addBlock('JavaScript', js);
+
+equal(blocks.asString('format=box'), `┌────────  test/brew/test.coffee  ─────────┐
+│ import {undef} from '@jdeighan/llutils'  │
+│                                          │
+│ hAST = {                                 │
+│    type: 'program'                       │
+│    name: 'John'                          │
+│    }                                     │
+│                                          │
+│ equal extract(hAST, """                  │
+│    type="program"                        │
+│    """), {name: 'John'}                  │
+│                                          │
+├──────────────  JavaScript  ──────────────┤
+│ var hAST;                                │
+│                                          │
+│ import {                                 │
+│   undef                                  │
+│ } from '@jdeighan/llutils';              │
+│                                          │
+│ hAST = {                                 │
+│   type: 'program',                       │
+│   name: 'John'                           │
+│ };                                       │
+│                                          │
+│ equal(extract(hAST, \`type="program"\`), { │
+│   name: 'John'                           │
+│ });                                      │
+└──────────────────────────────────────────┘`);
 
 //# sourceMappingURL=coffee.test.js.map

@@ -101,7 +101,7 @@ for {relPath} from allFilesMatching('**/*.coffee', {fileFilter})
 # 3. Search src folder for *.peggy files and compile them
 #    unless newer *.js file exists
 
-for {relPath} from allFilesMatching('**/*.{pegjs,peggy}', {fileFilter})
+for {relPath} from allFilesMatching('**/*.{peggy}', {fileFilter})
 	doLog relPath
 	peggifyFile relPath
 	hFilesProcessed.peggy += 1

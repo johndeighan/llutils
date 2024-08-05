@@ -68,6 +68,7 @@ export brew = (code, hMetaData={}) ->
 		orgCode: code
 		preprocCode
 		js
+		code: js
 		sourceMap: v3SourceMap
 		}
 

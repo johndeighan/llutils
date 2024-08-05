@@ -152,7 +152,7 @@ for (x of ref) {
   hFilesProcessed.coffee += 1;
 }
 
-ref1 = allFilesMatching('**/*.{pegjs,peggy}', {fileFilter});
+ref1 = allFilesMatching('**/*.{peggy}', {fileFilter});
 // ---------------------------------------------------------------------------
 // 3. Search src folder for *.peggy files and compile them
 //    unless newer *.js file exists

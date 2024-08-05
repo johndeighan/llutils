@@ -445,6 +445,20 @@ export allFilesMatching = (pattern='*', hOptions={}) ->
 	return
 
 # ---------------------------------------------------------------------------
+# --- fileFilter, if defined, gets (filePath)
+
+export deleteFilesMatching = (pattern, hOptions={}) =>
+
+	hOptions = getOptions hOptions, {
+		fileFilter: undef
+		}
+
+	assert (pattern != '*'), "Can't delete files matching '*'"
+	for {relPath} from allFilesMatching(pattern, hOptions)
+		fs.rmSync relPath
+	return
+
+# ---------------------------------------------------------------------------
 
 export allLinesIn = (filePath, filterFunc=undef) ->
 

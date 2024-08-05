@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "file-processor.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\file-processor.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAA4B;AAAA,IAAA,QAAA,EAAA,MAAA,EAAA,OAAA,EAAA,MAAA,EAAA;;AAE5B,OAAA;EAAQ,KAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,mBAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,IAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,OAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,eAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,QAAR;CAAA,MAAA;;AAEA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EAZ4B;;;AAgB5B,mBAAA,CAAoB,+BAApB;;AACA,mBAAA,CAAoB,gCAApB;;AAEA,QAAA,GAAW;EACV,IAAA,EAAM;AADI;;AAIX,OAAA,GAAU,SAAA,CAAU,mCAAV,EAA+C,KAA/C,EAAsD,IAAtD,EAA4D,QAA5D;;AACV,KAAA,CAAM,OAAN,EAAe,CAAf;;AAEA,MAAA,GAAS,SAAA,CAAU,kCAAV,EAA8C,KAA9C,EAAqD,OAArD,EAA8D,QAA9D;;AACT,KAAA,CAAM,MAAN,EAAc,CAAd;;AAEA,MAAA,GAAS,SAAA,CAAU,kCAAV,EAA8C,KAA9C,EAAqD,CAAC,eAAD,EAAkB,IAAlB,CAArD,EAA8E,QAA9E;;AACT,KAAA,CAAM,MAAN,EAAc,CAAd;;AAEA,OAAA,GAAU,SAAA,CAAU,mCAAV,EAA+C,KAA/C,EAAsD,QAAtD,EAAgE,QAAhE;;AACV,KAAA,CAAM,MAAN,EAAc,CAAd",
+  "sourcesContent": [
+    "# file-processor.test.coffee\r\n\r\nimport {undef} from '@jdeighan/llutils'\r\nimport {deleteFilesMatching} from '@jdeighan/llutils/fs'\r\nimport {brew} from '@jdeighan/llutils/llcoffee'\r\nimport {peggify} from '@jdeighan/llutils/peggy'\r\nimport {cieloPreProcess} from '@jdeighan/llutils/cielo'\r\nimport {sveltify} from '@jdeighan/llutils/svelte-utils'\r\n\r\nimport * as lib from '@jdeighan/llutils/file-processor'\r\nObject.assign(global, lib)\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\ndeleteFilesMatching \"./test/file-processor/**/*.js\"\r\ndeleteFilesMatching \"./test/file-processor/**/*.map\"\r\n\r\nhOptions = {\r\n\techo: false\r\n\t}\r\n\r\nnCoffee = procFiles \"./test/file-processor/**/*.coffee\", '.js', brew, hOptions\r\nequal nCoffee, 3\r\n\r\nnPeggy = procFiles \"./test/file-processor/**/*.peggy\", '.js', peggify, hOptions\r\nequal nPeggy, 1\r\n\r\nnCielo = procFiles \"./test/file-processor/**/*.cielo\", '.js', [cieloPreProcess, brew], hOptions\r\nequal nCielo, 1\r\n\r\nnSvelte = procFiles \"./test/file-processor/**/*.svelte\", '.js', sveltify, hOptions\r\nequal nCielo, 1\r\n"
+  ]
+}
