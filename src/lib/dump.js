@@ -28,12 +28,6 @@ import {
   toNICE
 } from '@jdeighan/llutils/to-nice';
 
-export var defValue = '.undef.';
-
-export var setDefValue = (str) => {
-  defValue = str;
-};
-
 export var defLabel = 'VALUE';
 
 export var setDefLabel = (str) => {
@@ -49,9 +43,6 @@ export var setMinWidth = (w) => {
 // ---------------------------------------------------------------------------
 export var DUMP = (item, label = undef, hOptions = {}) => {
   var asArray, blocks, box, debug, echo, esc, format, hOpt, longStr, maxWidth, nocr, oneLine, sortKeys, str;
-  if (isString(item) && isEmpty(item)) {
-    item = defValue;
-  }
   if (defined(label)) {
     assert(isString(label), `not a string: ${OL(label)}`);
     label = label.replaceAll('_', ' ');

@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "",
+  "sourceRoot": "",
+  "sources": [
+    "test/low-level-build/subdir/test3.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAc;AAEd,OAAO,CAAC,GAAR,CAAY,sBAAZ",
+  "sourcesContent": [
+    "# test3.coffee\n\nconsole.log \"testing a third time\""
+  ]
+}

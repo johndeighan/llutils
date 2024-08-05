@@ -10,9 +10,6 @@ import {
 	} from '@jdeighan/llutils/text-block'
 import {toNICE} from '@jdeighan/llutils/to-nice'
 
-export defValue = '.undef.'
-export setDefValue = (str) => defValue = str; return
-
 export defLabel = 'VALUE'
 export setDefLabel = (str) => defLabel = str; return
 
@@ -22,9 +19,6 @@ export setMinWidth = (w) => minWidth = w
 # ---------------------------------------------------------------------------
 
 export DUMP = (item, label=undef, hOptions={}) =>
-
-	if isString(item) && isEmpty(item)
-		item = defValue
 
 	if defined(label)
 		assert isString(label), "not a string: #{OL(label)}"

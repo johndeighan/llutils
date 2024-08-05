@@ -268,17 +268,30 @@ export var UnitTester = class UnitTester {
 
   // ..........................................................
   matches(val, regexp) {
-    var label;
+    var debug, label, pos;
     assert(isString(val), `Not a string: ${OL(val)}`);
     [label, val] = this.begin(val, undef, 'matches');
-    // --- convert strings to regular expressions
-    if (isString(regexp)) {
-      regexp = new RegExp(regexp);
+    debug = val.startsWith('test/file-processor');
+    if (debug) {
+      console.log("IN match()");
     }
-    assert(isRegExp(regexp), `Not a string or regexp: ${OL(regexp)}`);
-    test(label, (t) => {
-      return t.truthy(defined(val.match(regexp)));
-    });
+    // --- if regexp is a string, that string must exist within val
+    if (isString(regexp)) {
+      pos = val.indexOf(regexp);
+      if (pos === -1) {
+        console.log('-'.repeat(40));
+        console.log(val);
+        console.log('-'.repeat(40));
+      }
+      test(label, (t) => {
+        return t.truthy(pos >= 0);
+      });
+    } else {
+      assert(isRegExp(regexp), `Not a string or regexp: ${OL(regexp)}`);
+      test(label, (t) => {
+        return t.truthy(defined(val.match(regexp)));
+      });
+    }
     this.end();
   }
 

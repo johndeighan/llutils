@@ -2,15 +2,7 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var contents, doLog, echo, ext, fileFilter, firstLine, force, glob, hBin, hFilesProcessed, hJson, hOptions, key, lNonOptions, nCielo, nCoffee, nPeggy, oneFilePath, reader, ref, ref1, ref2, ref3, ref4, relPath, shebang, short_name, stub, tla, value, w, x, x1, y, y1, z;
-
-import {
-  compile
-} from 'svelte/compiler';
-
-import {
-  watch
-} from 'node:fs';
+var contents, doLog, echo, ext, fileFilter, firstLine, force, glob, hBin, hFileTypes, hJson, hOptions, i, j, key, lNonOptions, len, len1, n, outExt, processor, reader, ref, ref1, ref2, ref3, relPath, root, shebang, short_name, stub, tla, value, watch, x, y;
 
 import chokidar from 'chokidar';
 
@@ -21,6 +13,7 @@ import {
   assert,
   npmLogLevel,
   hasKey,
+  keys,
   isEmpty,
   nonEmpty,
   add_s,
@@ -54,22 +47,38 @@ import {
 } from '@jdeighan/llutils/llcoffee';
 
 import {
-  peggifyFile
-} from '@jdeighan/llutils/peggy';
-
-import {
   blessFile
 } from '@jdeighan/llutils/cielo';
+
+import {
+  peggifyFile
+} from '@jdeighan/llutils/peggy';
 
 import {
   sveltifyFile
 } from '@jdeighan/llutils/svelte-utils';
 
-hFilesProcessed = {
-  coffee: 0,
-  peggy: 0,
-  cielo: 0,
-  svelte: 0
+import {
+  procFiles
+} from '@jdeighan/llutils/file-processor';
+
+hFileTypes = {
+  '.coffee': {
+    processor: brewFile,
+    outExt: '.js'
+  },
+  '.cielo': {
+    processor: blessFile,
+    outExt: '.js'
+  },
+  '.peggy': {
+    processor: peggifyFile,
+    outExt: '.js'
+  },
+  '.svelte': {
+    processor: sveltifyFile,
+    outExt: '.js'
+  }
 };
 
 echo = npmLogLevel() !== 'silent';
@@ -93,7 +102,8 @@ assert(isProjRoot('.', 'strict'), "Not in package root dir");
   _: lNonOptions,
   e: echo,
   f: force,
-  w
+  w: watch,
+  root
 } = getArgs({
   _: {
     min: 0,
@@ -101,88 +111,40 @@ assert(isProjRoot('.', 'strict'), "Not in package root dir");
   },
   e: 'boolean',
   f: 'boolean',
-  w: 'boolean'
+  w: 'boolean',
+  root: 'string'
 }));
 
-doLog("-- low-level-build --");
+if (notdefined(root)) {
+  root = '.';
+}
 
-if (oneFilePath = lNonOptions[0]) {
-  ext = fileExt(oneFilePath);
-  doLog(oneFilePath);
-  switch (ext) {
-    case '.coffee':
-      brewFile(oneFilePath);
-      break;
-    case '.peggy':
-      peggifyFile(oneFilePath);
-      break;
-    case '.cielo':
-      blessFile(oneFilePath);
-      break;
-    case '.svelte':
-      sveltifyFile(oneFilePath);
+ref = keys(hFileTypes);
+// ---------------------------------------------------------------------------
+// Process all files
+for (i = 0, len = ref.length; i < len; i++) {
+  ext = ref[i];
+  ({processor, outExt} = hFileTypes[ext]);
+  fileFilter = ({filePath}) => {
+    var outFile;
+    if (filePath.match(/node_modules/i)) {
+      return false;
+    }
+    if (force) {
+      return true;
+    }
+    outFile = withExt(filePath, outExt);
+    return !newerDestFileExists(filePath, outFile);
+  };
+  n = 0;
+  ref1 = allFilesMatching(`${root}/**/*${ext}`, {fileFilter});
+  for (x of ref1) {
+    ({relPath} = x);
+    console.log(relPath);
+    processor(relPath);
+    n += 1;
   }
-  process.exit();
-}
-
-// ---------------------------------------------------------------------------
-// --- A file is out of date unless a *.js file exists
-//        that's newer than the original file
-// --- But ignore files inside node_modules
-fileFilter = ({filePath}) => {
-  var jsFile;
-  if (filePath.match(/node_modules/i)) {
-    return false;
-  }
-  if (force) {
-    return true;
-  }
-  jsFile = withExt(filePath, '.js');
-  return !newerDestFileExists(filePath, jsFile);
-};
-
-ref = allFilesMatching('**/*.coffee', {fileFilter});
-// ---------------------------------------------------------------------------
-// 2. Search project for *.coffee files and compile them
-//    unless newer *.js file exists
-for (x of ref) {
-  ({relPath} = x);
-  doLog(relPath);
-  brewFile(relPath);
-  hFilesProcessed.coffee += 1;
-}
-
-ref1 = allFilesMatching('**/*.{peggy}', {fileFilter});
-// ---------------------------------------------------------------------------
-// 3. Search src folder for *.peggy files and compile them
-//    unless newer *.js file exists
-for (y of ref1) {
-  ({relPath} = y);
-  doLog(relPath);
-  peggifyFile(relPath);
-  hFilesProcessed.peggy += 1;
-}
-
-ref2 = allFilesMatching('**/*.cielo', {fileFilter});
-// ---------------------------------------------------------------------------
-// 4. Search src folder for *.cielo files and compile them
-//    unless newer *.js file exists
-for (z of ref2) {
-  ({relPath} = z);
-  doLog(relPath);
-  blessFile(relPath);
-  hFilesProcessed.cielo += 1;
-}
-
-ref3 = allFilesMatching('**/*.svelte', {fileFilter});
-// ---------------------------------------------------------------------------
-// 5. Search src folder for *.svelte files and compile them
-//    unless newer *.js file exists
-for (x1 of ref3) {
-  ({relPath} = x1);
-  doLog(relPath);
-  sveltifyFile(relPath);
-  hFilesProcessed.svelte += 1;
+  hFileTypes[ext].numProcessed = n;
 }
 
 // ---------------------------------------------------------------------------
@@ -201,14 +163,14 @@ tla = (stub) => {
   }
 };
 
-ref4 = allFilesMatching('./src/bin/**/*.js');
+ref2 = allFilesMatching('./src/bin/**/*.js');
 // ---------------------------------------------------------------------------
 // 4. For every *.js file in the 'src/bin' directory
 //       - add a shebang line if not present
 //       - save <stub>: <jsPath> in hBin
 //       - if has a tla, save <tla>: <jsPath> in hBin
-for (y1 of ref4) {
-  ({relPath, stub} = y1);
+for (y of ref2) {
+  ({relPath, stub} = y);
   ({reader} = readTextFile(relPath));
   firstLine = reader().next().value;
   if (!firstLine.match(/^\#\!/)) {
@@ -237,26 +199,18 @@ if (nonEmpty(hBin)) {
   barfPkgJSON(hJson);
 }
 
+ref3 = keys(hFileTypes);
 // --- log number of files processed
-nCoffee = hFilesProcessed.coffee;
-
-if (nCoffee > 0) {
-  doLog(`(${nCoffee} coffee file${add_s(nCoffee)} compiled)`);
+for (j = 0, len1 = ref3.length; j < len1; j++) {
+  ext = ref3[j];
+  n = hFileTypes[ext].numProcessed;
+  if (defined(n) && (n > 0)) {
+    console.log(`${n} *${ext} file${add_s(n)} compiled`);
+  }
 }
 
-nPeggy = hFilesProcessed.peggy;
-
-if (nPeggy > 0) {
-  doLog(`(${nPeggy} peggy file${add_s(nPeggy)} compiled)`);
-}
-
-nCielo = hFilesProcessed.cielo;
-
-if (nCielo > 0) {
-  doLog(`(${nCielo} cielo file${add_s(nCielo)} compiled)`);
-}
-
-if (w) {
+// --- watch for file changes
+if (watch) {
   console.log("watching for file changes...");
   glob = "**/*.{coffee,peggy,cielo,svelte}";
   hOptions = {

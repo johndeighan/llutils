@@ -242,12 +242,23 @@ export class UnitTester
 		assert isString(val), "Not a string: #{OL(val)}"
 		[label, val] = @begin(val, undef, 'matches')
 
-		# --- convert strings to regular expressions
+		debug = val.startsWith('test/file-processor')
+		if debug
+			console.log "IN match()"
+
+		# --- if regexp is a string, that string must exist within val
 		if isString(regexp)
-			regexp = new RegExp(regexp)
-		assert isRegExp(regexp), "Not a string or regexp: #{OL(regexp)}"
-		test label, (t) =>
-			t.truthy(defined(val.match(regexp)))
+			pos = val.indexOf(regexp)
+			if (pos == -1)
+				console.log '-'.repeat(40)
+				console.log val
+				console.log '-'.repeat(40)
+			test label, (t) =>
+				t.truthy(pos >= 0)
+		else
+			assert isRegExp(regexp), "Not a string or regexp: #{OL(regexp)}"
+			test label, (t) =>
+				t.truthy(defined(val.match(regexp)))
 		@end()
 		return
 

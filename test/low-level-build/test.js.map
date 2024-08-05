@@ -3,7 +3,7 @@
   "file": "",
   "sourceRoot": "",
   "sources": [
-    "test/file-processor/test.coffee"
+    "test/low-level-build/test.coffee"
   ],
   "names": [],
   "mappings": "AAAa;AAEb,OAAO,CAAC,GAAR,CAAY,SAAZ",

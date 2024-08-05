@@ -624,12 +624,17 @@ export var nonEmpty = (x) => {
 
 // ---------------------------------------------------------------------------
 export var execCmd = (cmdLine, hOptions = {}) => {
+  var result;
   // --- may throw an exception
   hOptions = getOptions(hOptions, {
     encoding: 'utf8',
     windowsHide: true
   });
-  return execSync(cmdLine, hOptions).toString();
+  result = execSync(cmdLine, hOptions);
+  assert(defined(result), "undef return from execSync()");
+  result = result.toString();
+  assert(defined(result), "undef return from execSync()");
+  return result;
 };
 
 // ---------------------------------------------------------------------------

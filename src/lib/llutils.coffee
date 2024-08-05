@@ -538,7 +538,11 @@ export execCmd = (cmdLine, hOptions={}) =>
 		encoding: 'utf8'
 		windowsHide: true
 		}
-	return execSync(cmdLine, hOptions).toString()
+	result = execSync(cmdLine, hOptions)
+	assert defined(result), "undef return from execSync()"
+	result = result.toString()
+	assert defined(result), "undef return from execSync()"
+	return result
 
 # ---------------------------------------------------------------------------
 

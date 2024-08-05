@@ -1,2 +1,2 @@
-// testme.cielo
+// test.coffee
 console.log("testing");

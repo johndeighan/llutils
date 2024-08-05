@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "low-level-build.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\low-level-build.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAA6B;AAAA,IAAA,GAAA,EAAA,IAAA,EAAA;;AAE7B,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;EAC6B,OAD7B;CAAA,MAAA;;AAGA,OAAA;EAAQ,mBAAR;CAAA,MAAA;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EAP6B;;;AAW7B,mBAAA,CAAoB,gCAApB;;AACA,GAAA,GAAM;;AACN,IAAA,GAAO;;AACP,GAAA,GAAM,OAAA,CAAQ,CAAA,KAAA,CAAA,CAAQ,GAAR,CAAA,OAAA,CAAA,CAAqB,IAArB,CAAA,CAAR;;AACN,OAAA,CAAQ,GAAR,EAAa,CAAA;;;wBAAA,CAAb",
+  "sourcesContent": [
+    "# low-level-build.test.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined, execCmd,\r\n\t} from '@jdeighan/llutils'\r\nimport {deleteFilesMatching} from '@jdeighan/llutils/fs'\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\ndeleteFilesMatching \"./test/low-level-build/**/*.js\"\r\nbin = \"./src/bin/low-level-build.js\"\r\nroot = \"./test/low-level-build\"\r\nstr = execCmd \"node #{bin} -root=#{root}\"\r\nmatches str, \"\"\"\r\n\t3 *.coffee files compiled\r\n\t1 *.cielo file compiled\r\n\t1 *.peggy file compiled\r\n\t1 *.svelte file compiled\r\n\t\"\"\"\r\n"
+  ]
+}

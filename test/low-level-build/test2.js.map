@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "",
+  "sourceRoot": "",
+  "sources": [
+    "test/low-level-build/test2.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAc;AAEd,OAAO,CAAC,GAAR,CAAY,uBAAZ",
+  "sourcesContent": [
+    "# test2.coffee\n\nconsole.log \"testing a second time\""
+  ]
+}
