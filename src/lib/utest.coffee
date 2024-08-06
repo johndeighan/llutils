@@ -5,9 +5,9 @@ import test from 'ava'
 import {
 	undef, defined, notdefined, rtrim, isEmpty, nonEmpty, OL,
 	isString, isNumber, isArray, isClass, isFunction, isRegExp, isInteger,
-	assert, croak, blockToArray, untabify,
+	assert, croak, blockToArray, untabify, execCmd,
 	} from '@jdeighan/llutils'
-import {fileExt} from '@jdeighan/llutils/fs'
+import {isFile, slurp, fileExt} from '@jdeighan/llutils/fs'
 import {getMyOutsideCaller} from '@jdeighan/llutils/v8-stack'
 import {toNICE} from '@jdeighan/llutils/to-nice'
 
@@ -264,6 +264,37 @@ export class UnitTester
 
 	# ..........................................................
 
+	fileExists: (filePath, contents=undef) ->
+
+		[label] = @begin(undef, undef, 'fileExists')
+		test label, (t) =>
+			t.truthy(isFile(filePath))
+			if defined(contents)
+				t.is slurp(filePath).trim(), contents.trim()
+		@end()
+		return
+
+	# ..........................................................
+
+	fileCompiles: (filePath) ->
+
+		[label] = @begin(undef, undef, 'compiles')
+		try
+			switch ext = fileExt(filePath)
+				when '.js'
+					execCmd "node -c #{filePath}"
+				else
+					croak "Unsupported file type: #{ext}"
+			ok = true
+		catch err
+			console.log err
+			ok = false
+		test label, (t) => t.truthy(ok)
+		@end()
+		return
+
+	# ..........................................................
+
 	fails: (func) ->
 
 		[label] = @begin(undef, undef, 'fails')
@@ -336,3 +367,5 @@ export matches = (str, regexp) => return u.matches(str, regexp)
 export fails = (func) => return u.fails(func)
 export throws = (func, errClass) => return u.throws(func, errClass)
 export succeeds = (func) => return u.succeeds(func)
+export fileExists = (filePath, contents) => return u.fileExists(filePath, contents)
+export fileCompiles = (filePath) => return u.fileCompiles(filePath)

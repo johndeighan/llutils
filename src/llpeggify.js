@@ -1,8 +1,6 @@
-// llpeggify.coffee
+  // llpeggify.coffee
 
-// --- Part of build process, can't use getArgs()
-var err, fileFilter, fileName, ref, relPath, x;
-
+  // --- Part of build process, can't use getArgs()
 import {
   globSync
 } from 'glob';
@@ -21,34 +19,14 @@ import {
 } from '@jdeighan/llutils/fs';
 
 import {
-  peggifyFile
+  peggify
 } from '@jdeighan/llutils/peggy';
 
+import {
+  procFiles
+} from '@jdeighan/llutils/file-processor';
+
 // ---------------------------------------------------------------------------
-fileName = process.argv[2];
-
-fileFilter = ({filePath}) => {
-  var jsFile;
-  if (filePath.match(/node_modules/i)) {
-    return false;
-  }
-  jsFile = withExt(filePath, '.js');
-  return !newerDestFileExists(filePath, jsFile);
-};
-
-ref = allFilesMatching('**/*.peggy', {fileFilter});
-for (x of ref) {
-  ({relPath} = x);
-  if (defined(fileName) && !relPath.endsWith(fileName)) {
-    continue;
-  }
-  try {
-    console.log(`llpeggify ${relPath}`);
-    peggifyFile(relPath);
-  } catch (error) {
-    err = error;
-    console.log(`in ${relPath}: ${err.message}`);
-  }
-}
+procFiles('**/*.peggy', '.js', peggify);
 
 //# sourceMappingURL=llpeggify.js.map

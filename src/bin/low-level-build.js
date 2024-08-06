@@ -2,7 +2,7 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var contents, doLog, echo, ext, fileFilter, firstLine, force, glob, hBin, hFileTypes, hJson, hOptions, i, j, key, lNonOptions, len, len1, n, outExt, processor, reader, ref, ref1, ref2, ref3, relPath, root, shebang, short_name, stub, tla, value, watch, x, y;
+var contents, doLog, echo, ext, fileFilter, firstLine, force, glob, hBin, hFileTypes, hJson, hOptions, i, j, key, lFuncs, lNonOptions, len, len1, n, outExt, reader, ref, ref1, ref2, relPath, root, shebang, short_name, stub, tla, value, watch, x;
 
 import chokidar from 'chokidar';
 
@@ -43,19 +43,20 @@ import {
 } from '@jdeighan/llutils/fs';
 
 import {
-  brewFile
+  brew
 } from '@jdeighan/llutils/llcoffee';
 
 import {
-  blessFile
+  bless,
+  cieloPreProcess
 } from '@jdeighan/llutils/cielo';
 
 import {
-  peggifyFile
+  peggify
 } from '@jdeighan/llutils/peggy';
 
 import {
-  sveltifyFile
+  sveltify
 } from '@jdeighan/llutils/svelte-utils';
 
 import {
@@ -64,19 +65,19 @@ import {
 
 hFileTypes = {
   '.coffee': {
-    processor: brewFile,
+    lFuncs: [brew],
     outExt: '.js'
   },
   '.cielo': {
-    processor: blessFile,
+    lFuncs: [cieloPreProcess, brew],
     outExt: '.js'
   },
   '.peggy': {
-    processor: peggifyFile,
+    lFuncs: [peggify],
     outExt: '.js'
   },
   '.svelte': {
-    processor: sveltifyFile,
+    lFuncs: [sveltify],
     outExt: '.js'
   }
 };
@@ -124,7 +125,7 @@ ref = keys(hFileTypes);
 // Process all files
 for (i = 0, len = ref.length; i < len; i++) {
   ext = ref[i];
-  ({processor, outExt} = hFileTypes[ext]);
+  ({lFuncs, outExt} = hFileTypes[ext]);
   fileFilter = ({filePath}) => {
     var outFile;
     if (filePath.match(/node_modules/i)) {
@@ -137,13 +138,8 @@ for (i = 0, len = ref.length; i < len; i++) {
     return !newerDestFileExists(filePath, outFile);
   };
   n = 0;
-  ref1 = allFilesMatching(`${root}/**/*${ext}`, {fileFilter});
-  for (x of ref1) {
-    ({relPath} = x);
-    console.log(relPath);
-    processor(relPath);
-    n += 1;
-  }
+  // --- possible options: force, debug, logOnly, echo
+  n = procFiles(`${root}/**/*${ext}`, outExt, lFuncs);
   hFileTypes[ext].numProcessed = n;
 }
 
@@ -163,14 +159,14 @@ tla = (stub) => {
   }
 };
 
-ref2 = allFilesMatching('./src/bin/**/*.js');
+ref1 = allFilesMatching('./src/bin/**/*.js');
 // ---------------------------------------------------------------------------
 // 4. For every *.js file in the 'src/bin' directory
 //       - add a shebang line if not present
 //       - save <stub>: <jsPath> in hBin
 //       - if has a tla, save <tla>: <jsPath> in hBin
-for (y of ref2) {
-  ({relPath, stub} = y);
+for (x of ref1) {
+  ({relPath, stub} = x);
   ({reader} = readTextFile(relPath));
   firstLine = reader().next().value;
   if (!firstLine.match(/^\#\!/)) {
@@ -199,10 +195,10 @@ if (nonEmpty(hBin)) {
   barfPkgJSON(hJson);
 }
 
-ref3 = keys(hFileTypes);
+ref2 = keys(hFileTypes);
 // --- log number of files processed
-for (j = 0, len1 = ref3.length; j < len1; j++) {
-  ext = ref3[j];
+for (j = 0, len1 = ref2.length; j < len1; j++) {
+  ext = ref2[j];
   n = hFileTypes[ext].numProcessed;
   if (defined(n) && (n > 0)) {
     console.log(`${n} *${ext} file${add_s(n)} compiled`);
@@ -226,26 +222,14 @@ if (watch) {
       return;
     }
     path = mkpath(path);
+    ext = fileExt(path);
+    ({lFuncs, outExt} = hFileTypes[ext]);
     switch (eventType) {
       case 'add':
       case 'change':
-        switch (fileExt(path)) {
-          case '.coffee':
-            brewFile(path);
-            return console.log(`${eventType} ${path}`);
-          case '.peggy':
-            peggifyFile(path);
-            return console.log(`${eventType} ${path}`);
-          case '.cielo':
-            blessFile(path);
-            return console.log(`${eventType} ${path}`);
-          case '.svelte':
-            sveltifyFile(path);
-            return console.log(`${eventType} ${path}`);
-        }
-        break;
+        return procFiles(path, outExt, lFuncs);
       case 'unlink':
-        return execCmd(`rm ${withExt(path, '.js')}`);
+        return execCmd(`rm ${withExt(path, outExt)}`);
     }
   });
 }

@@ -74,23 +74,6 @@ export brew = (code, hMetaData={}) ->
 
 # ---------------------------------------------------------------------------
 
-export brewFile = (filePath, hOptions={}) ->
-
-	{debug} = getOptions hOptions, {
-		debug: false
-		}
-	assert isFile(filePath), "No such file: #{filePath}"
-	{hMetaData, contents} = readTextFile(filePath, 'eager')
-	assert defined(contents), "brewFile(): undef contents"
-	if debug
-		hMetaData.debug = true
-	h = brew contents, hMetaData
-	barf h.js, withExt(filePath, '.js')
-	barf h.sourceMap, withExt(filePath, '.js.map')
-	return h
-
-# ---------------------------------------------------------------------------
-
 export getShebang = (hMetaData) =>
 
 	shebang = hMetaData.shebang

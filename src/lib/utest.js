@@ -21,10 +21,13 @@ import {
   assert,
   croak,
   blockToArray,
-  untabify
+  untabify,
+  execCmd
 } from '@jdeighan/llutils';
 
 import {
+  isFile,
+  slurp,
   fileExt
 } from '@jdeighan/llutils/fs';
 
@@ -296,6 +299,43 @@ export var UnitTester = class UnitTester {
   }
 
   // ..........................................................
+  fileExists(filePath, contents = undef) {
+    var label;
+    [label] = this.begin(undef, undef, 'fileExists');
+    test(label, (t) => {
+      t.truthy(isFile(filePath));
+      if (defined(contents)) {
+        return t.is(slurp(filePath).trim(), contents.trim());
+      }
+    });
+    this.end();
+  }
+
+  // ..........................................................
+  fileCompiles(filePath) {
+    var err, ext, label, ok;
+    [label] = this.begin(undef, undef, 'compiles');
+    try {
+      switch (ext = fileExt(filePath)) {
+        case '.js':
+          execCmd(`node -c ${filePath}`);
+          break;
+        default:
+          croak(`Unsupported file type: ${ext}`);
+      }
+      ok = true;
+    } catch (error) {
+      err = error;
+      console.log(err);
+      ok = false;
+    }
+    test(label, (t) => {
+      return t.truthy(ok);
+    });
+    this.end();
+  }
+
+  // ..........................................................
   fails(func) {
     var err, label, ok;
     [label] = this.begin(undef, undef, 'fails');
@@ -412,6 +452,14 @@ export var throws = (func, errClass) => {
 
 export var succeeds = (func) => {
   return u.succeeds(func);
+};
+
+export var fileExists = (filePath, contents) => {
+  return u.fileExists(filePath, contents);
+};
+
+export var fileCompiles = (filePath) => {
+  return u.fileCompiles(filePath);
 };
 
 //# sourceMappingURL=utest.js.map

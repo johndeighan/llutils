@@ -22,20 +22,6 @@ export bless = (code, hMetaData={}) ->
 
 # ---------------------------------------------------------------------------
 
-export blessFile = (filePath) ->
-
-	assert isFile(filePath), "No such file: #{filePath}"
-	{hMetaData, reader} = readTextFile(filePath)
-	code = gen2block(reader)
-	{js, sourceMap, preprocCode} = bless code, hMetaData, {filePath}
-	if preprocCode
-		barf preprocCode, withExt(filePath, '.coffee.txt')
-	barf js, withExt(filePath, '.js')
-	barf sourceMap, withExt(filePath, '.js.map')
-	return {js, sourceMap}
-
-# ---------------------------------------------------------------------------
-
 export cieloPreProcess = (code, hOptions) =>
 
 	{debug} = getOptions hOptions, {

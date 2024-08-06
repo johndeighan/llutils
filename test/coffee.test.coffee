@@ -34,18 +34,6 @@ equal brew('v = 5', {shebang: 'abc'}).js, """
 	"""
 
 # ---------------------------------------------------------------------------
-#symbol "brewFile(filePath)"
-
-(() =>
-	filePath = './test/coffee/test1.coffee'
-	equal brewFile(filePath).js, """
-		var v;
-
-		v = 5;
-		"""
-	)()
-
-# ---------------------------------------------------------------------------
 #symbol "toAST(code)"
 
 succeeds () => toAST('v = 5')

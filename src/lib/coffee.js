@@ -58,13 +58,11 @@ import {
 } from '@jdeighan/llutils/heredoc';
 
 import {
-  brew,
-  brewFile
+  brew
 } from '@jdeighan/llutils/llcoffee';
 
 export {
-  brew,
-  brewFile
+  brew
 };
 
 // ---------------------------------------------------------------------------

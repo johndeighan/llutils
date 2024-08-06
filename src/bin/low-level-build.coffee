@@ -14,27 +14,27 @@ import {
 	slurpJSON, slurpPkgJSON, fileExt, withExt, mkpath,
 	allFilesMatching, readTextFile, newerDestFileExists,
 	} from '@jdeighan/llutils/fs'
-import {brewFile} from '@jdeighan/llutils/llcoffee'
-import {blessFile} from '@jdeighan/llutils/cielo'
-import {peggifyFile} from '@jdeighan/llutils/peggy'
-import {sveltifyFile} from '@jdeighan/llutils/svelte-utils'
+import {brew} from '@jdeighan/llutils/llcoffee'
+import {bless, cieloPreProcess} from '@jdeighan/llutils/cielo'
+import {peggify} from '@jdeighan/llutils/peggy'
+import {sveltify} from '@jdeighan/llutils/svelte-utils'
 import {procFiles} from '@jdeighan/llutils/file-processor'
 
 hFileTypes = {
 	'.coffee': {
-		processor: brewFile
+		lFuncs: [brew]
 		outExt: '.js'
 		}
 	'.cielo': {
-		processor: blessFile
+		lFuncs: [cieloPreProcess, brew]
 		outExt: '.js'
 		}
 	'.peggy': {
-		processor: peggifyFile
+		lFuncs: [peggify]
 		outExt: '.js'
 		}
 	'.svelte': {
-		processor: sveltifyFile
+		lFuncs: [sveltify]
 		outExt: '.js'
 		}
 	}
@@ -79,7 +79,7 @@ if notdefined(root)
 # Process all files
 
 for ext in keys(hFileTypes)
-	{processor, outExt} = hFileTypes[ext]
+	{lFuncs, outExt} = hFileTypes[ext]
 	fileFilter = ({filePath}) =>
 		if filePath.match(/node_modules/i)
 			return false
@@ -88,10 +88,9 @@ for ext in keys(hFileTypes)
 		outFile = withExt(filePath, outExt)
 		return ! newerDestFileExists(filePath, outFile)
 	n = 0
-	for {relPath} from allFilesMatching("#{root}/**/*#{ext}", {fileFilter})
-		console.log relPath
-		processor relPath
-		n += 1
+
+	# --- possible options: force, debug, logOnly, echo
+	n = procFiles "#{root}/**/*#{ext}", outExt, lFuncs
 	hFileTypes[ext].numProcessed = n
 
 # ---------------------------------------------------------------------------
@@ -166,20 +165,10 @@ if watch
 		if path.match(/node_modules/)
 			return
 		path = mkpath(path)
+		ext = fileExt(path)
+		{lFuncs, outExt} = hFileTypes[ext]
 		switch eventType
 			when 'add','change'
-				switch fileExt(path)
-					when '.coffee'
-						brewFile path
-						console.log "#{eventType} #{path}"
-					when '.peggy'
-						peggifyFile path
-						console.log "#{eventType} #{path}"
-					when '.cielo'
-						blessFile path
-						console.log "#{eventType} #{path}"
-					when '.svelte'
-						sveltifyFile path
-						console.log "#{eventType} #{path}"
+				procFiles path, outExt, lFuncs
 			when 'unlink'
-				execCmd "rm #{withExt(path, '.js')}"
+				execCmd "rm #{withExt(path, outExt)}"

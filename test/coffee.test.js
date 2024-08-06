@@ -51,16 +51,6 @@ var v;
 v = 5;`);
 
 // ---------------------------------------------------------------------------
-//symbol "brewFile(filePath)"
-(() => {
-  var filePath;
-  filePath = './test/coffee/test1.coffee';
-  return equal(brewFile(filePath).js, `var v;
-
-v = 5;`);
-})();
-
-// ---------------------------------------------------------------------------
 //symbol "toAST(code)"
 succeeds(() => {
   return toAST('v = 5');

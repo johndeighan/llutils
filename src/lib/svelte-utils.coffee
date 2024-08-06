@@ -29,18 +29,6 @@ export sveltify = (code, hMetaData={}) =>
 
 # ---------------------------------------------------------------------------
 
-export sveltifyFile = (filePath, hOptions={}) =>
-
-	hOptions = getOptions hOptions
-
-	assert (fileExt(filePath) == '.svelte'), "Not a svelte file"
-	{hMetaData, contents} = readTextFile filePath, 'eager'
-	Object.assign hMetaData, hOptions
-	{js} = sveltify contents, hMetaData
-	barf js.code, withExt(filePath, '.js')
-
-# ---------------------------------------------------------------------------
-
 checkCustomElemName = (name) =>
 
 	assert (name.length > 0), "empty name: #{OL(name)}"

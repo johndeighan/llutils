@@ -84,6 +84,10 @@ import {
   ByteCodeWriter
 } from '@jdeighan/llutils/bytecode-writer';
 
+import {
+  procFiles
+} from '@jdeighan/llutils/file-processor';
+
 assert(isFunction(brew), `brew is not a function: ${OL(brew)}`);
 
 // --- code converter is applied to each code block in a peggy file
@@ -243,36 +247,6 @@ export var peggify = (code, hMetaData = {}) => {
     }
     throw err;
   }
-};
-
-// ---------------------------------------------------------------------------
-export var peggifyFile = (filePath, hOptions = {}) => {
-  var code, debug, hMetaData, js, jsFilePath, reader, sourceMap, sourceMapFilePath;
-  hOptions = getOptions(hOptions, {
-    debug: false
-  });
-  debug = hOptions.debug || false;
-  if (debug) {
-    console.log(`peggifyFile(${OL(filePath)})`);
-  }
-  ({hMetaData, reader} = readTextFile(filePath));
-  Object.assign(hMetaData, hOptions);
-  if (debug) {
-    console.log(`   hMetaData = ${OL(hMetaData)}`);
-  }
-  code = gen2block(reader);
-  if (debug) {
-    console.log(`   code = ${escapeStr(code).substring(0, 40)}...`);
-  }
-  ({js, sourceMap} = peggify(code, hMetaData, filePath));
-  assert(isString(js), `js not a string ${OL(js)}`);
-  jsFilePath = withExt(filePath, '.js');
-  barf(js, jsFilePath);
-  if (defined(sourceMap)) {
-    sourceMapFilePath = withExt(filePath, '.js.map');
-    barf(sourceMap, sourceMapFilePath);
-  }
-  return {jsFilePath, sourceMapFilePath};
 };
 
 // ---------------------------------------------------------------------------
@@ -462,7 +436,8 @@ export var getParser = async(filePath, hOptions = {}) => {
   }
   assert(isFile(fullPath), `No such file: ${OL(filePath)}`);
   assert(fileExt(fullPath) === '.peggy', `Not a peggy file: ${OL(filePath)}`);
-  ({jsFilePath} = peggifyFile(fullPath));
+  procFiles(fullPath, '.js', [peggify]);
+  jsFilePath = withExt(filePath, '.js');
   if (debug) {
     console.log(`JS file = ${OL(jsFilePath)}`);
   }

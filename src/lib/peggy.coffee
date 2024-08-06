@@ -25,6 +25,7 @@ import {SectionMap} from '@jdeighan/llutils/section-map'
 import {getTracer} from '@jdeighan/llutils/tracer'
 import {OpDumper} from '@jdeighan/llutils/op-dumper'
 import {ByteCodeWriter} from '@jdeighan/llutils/bytecode-writer'
+import {procFiles} from '@jdeighan/llutils/file-processor'
 
 assert isFunction(brew), "brew is not a function: #{OL(brew)}"
 
@@ -175,41 +176,6 @@ export peggify = (code, hMetaData={}) =>
 		if defined(filePath) && defined(type) && ! debug
 			barf peggyCode, withExt(filePath, ".peggy.txt")
 		throw err
-
-# ---------------------------------------------------------------------------
-
-export peggifyFile = (filePath, hOptions={}) =>
-
-	hOptions = getOptions hOptions, {
-		debug: false
-		}
-	debug = hOptions.debug || false
-
-	if debug
-		console.log "peggifyFile(#{OL(filePath)})"
-
-	{hMetaData, reader} = readTextFile(filePath)
-	Object.assign hMetaData, hOptions
-
-	if debug
-		console.log "   hMetaData = #{OL(hMetaData)}"
-
-	code = gen2block(reader)
-
-	if debug
-		console.log "   code = #{escapeStr(code).substring(0, 40)}..."
-
-	{js, sourceMap} = peggify code, hMetaData, filePath
-	assert isString(js), "js not a string #{OL(js)}"
-	jsFilePath = withExt(filePath, '.js')
-	barf js, jsFilePath
-	if defined(sourceMap)
-		sourceMapFilePath = withExt(filePath, '.js.map')
-		barf sourceMap, sourceMapFilePath
-	return {
-		jsFilePath
-		sourceMapFilePath
-		}
 
 # ---------------------------------------------------------------------------
 
@@ -418,7 +384,8 @@ export getParser = (filePath, hOptions={}) =>
 	assert isFile(fullPath), "No such file: #{OL(filePath)}"
 	assert (fileExt(fullPath)=='.peggy'), "Not a peggy file: #{OL(filePath)}"
 
-	{jsFilePath} = peggifyFile(fullPath)
+	procFiles fullPath, '.js', [peggify]
+	jsFilePath = withExt(filePath, '.js')
 	if debug
 		console.log "JS file = #{OL(jsFilePath)}"
 

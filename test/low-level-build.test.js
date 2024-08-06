@@ -30,4 +30,18 @@ matches(str, `3 *.coffee files compiled
 1 *.peggy file compiled
 1 *.svelte file compiled`);
 
+fileExists(`${root}/test.js`, `// test.coffee
+console.log("testing");`);
+
+fileExists(`${root}/testme.js`, `// testme.cielo
+console.log("testing");`);
+
+fileExists(`${root}/lang.js`);
+
+fileCompiles(`${root}/lang.js`);
+
+fileExists(`${root}/card.js`);
+
+fileCompiles(`${root}/card.js`);
+
 //# sourceMappingURL=low-level-build.test.js.map

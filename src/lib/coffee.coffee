@@ -19,9 +19,9 @@ import {
 	ASTWalker, removeExtraASTKeys,
 	} from '@jdeighan/llutils/ast-walker'
 import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
-import {brew, brewFile} from '@jdeighan/llutils/llcoffee'
+import {brew} from '@jdeighan/llutils/llcoffee'
 
-export {brew, brewFile}
+export {brew}
 
 # ---------------------------------------------------------------------------
 

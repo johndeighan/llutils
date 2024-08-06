@@ -43,17 +43,6 @@ export var sveltify = (code, hMetaData = {}) => {
 };
 
 // ---------------------------------------------------------------------------
-export var sveltifyFile = (filePath, hOptions = {}) => {
-  var contents, hMetaData, js;
-  hOptions = getOptions(hOptions);
-  assert(fileExt(filePath) === '.svelte', "Not a svelte file");
-  ({hMetaData, contents} = readTextFile(filePath, 'eager'));
-  Object.assign(hMetaData, hOptions);
-  ({js} = sveltify(contents, hMetaData));
-  return barf(js.code, withExt(filePath, '.js'));
-};
-
-// ---------------------------------------------------------------------------
 checkCustomElemName = (name) => {
   assert(name.length > 0, `empty name: ${OL(name)}`);
   assert(name.indexOf('-') > 0, `Bad custom elem name: ${OL(name)}`);
