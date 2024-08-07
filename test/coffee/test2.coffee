@@ -4,7 +4,7 @@ import {assert, isString, OL} from '@jdeighan/llutils'
 
 # ---------------------------------------------------------------------------
 
-export bless = (code) ->
+export func = (code) ->
 
 	x = cieloPreProcess()
 	return code

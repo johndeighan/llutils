@@ -1,5 +1,5 @@
 // coffee.test.coffee
-var blocks, code, filePath, js, orgCode;
+var blocks, code, coffeeCode, filePath;
 
 import {
   undef,
@@ -32,20 +32,20 @@ fails(() => {
   return brew('let v = 5');
 });
 
-equal(brew('v = 5').js, `var v;
+matches(brew('v = 5').code, `var v;
 
 v = 5;`);
 
 equal(brew('v = 5', {
   shebang: true
-}).js, `#!/usr/bin/env node
+}).code, `#!/usr/bin/env node
 var v;
 
 v = 5;`);
 
 equal(brew('v = 5', {
   shebang: 'abc'
-}).js, `abc
+}).code, `abc
 var v;
 
 v = 5;`);
@@ -97,23 +97,21 @@ f = (m,n) =>
 })();
 
 // ---------------------------------------------------------------------------
-filePath = "test/brew/test.coffee";
+filePath = "test/coffee/test.coffee";
 
-code = slurp(filePath);
+coffeeCode = slurp(filePath);
 
-truthy(isString(code));
+truthy(isString(coffeeCode));
 
 blocks = new TextBlockList();
 
-blocks.addBlock(filePath, code);
+blocks.addBlock(filePath, coffeeCode);
 
-({orgCode, js} = brew(code));
+({code} = brew(coffeeCode));
 
-truthy(orgCode === code);
+blocks.addBlock('JavaScript', code);
 
-blocks.addBlock('JavaScript', js);
-
-equal(blocks.asString('format=box'), `┌────────  test/brew/test.coffee  ─────────┐
+equal(blocks.asString('format=box'), `┌───────  test/coffee/test.coffee  ────────┐
 │ import {undef} from '@jdeighan/llutils'  │
 │                                          │
 │ hAST = {                                 │
@@ -140,6 +138,7 @@ equal(blocks.asString('format=box'), `┌────────  test/brew/tes
 │ equal(extract(hAST, \`type="program"\`), { │
 │   name: 'John'                           │
 │ });                                      │
+│                                          │
 └──────────────────────────────────────────┘`);
 
 //# sourceMappingURL=coffee.test.js.map

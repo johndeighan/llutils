@@ -19,7 +19,7 @@ import {
 	readTextFile, barf, slurp, fileExt, withExt, isFile,
 	normalize, mkpath, fileDir,
 	} from '@jdeighan/llutils/fs'
-import {brew} from '@jdeighan/llutils/llcoffee'
+import {brew} from '@jdeighan/llutils/file-processor'
 import {PLLFetcher} from '@jdeighan/llutils/fetcher'
 import {SectionMap} from '@jdeighan/llutils/section-map'
 import {getTracer} from '@jdeighan/llutils/tracer'
@@ -52,7 +52,7 @@ export getSource = (filePath) =>
 		}
 
 # ---------------------------------------------------------------------------
-# --- Only creates the parser
+# --- Only creates the parser as a *.js file
 
 export peggify = (code, hMetaData={}) =>
 
@@ -219,11 +219,14 @@ export meSplitter = (str) =>
 
 export PreProcessPeggy = (code, hMetaData) =>
 
+	debugger
 	assert isString(code), "not a string: #{typeof code}"
 	{type, debug} = getOptions hMetaData, {
 		type: 'coffee'
 		debug: false
 		}
+	if notdefined(type)
+		return code
 
 	src = new PLLFetcher(code)
 
@@ -239,16 +242,16 @@ export PreProcessPeggy = (code, hMetaData) =>
 		# --- 'header' will be CoffeeScript code
 		header: (block) =>
 			try
-				{js, sourceMap} = hCodeConverters[type](block)
+				{code, sourceMap} = hCodeConverters[type](block)
 
 			catch err
 				console.log "ERROR: Unable to convert #{OL(type)} code to JS"
 				console.log err
-				js = ''
+				code = ''
 
 			return [
 				'{{'
-				indented(js)
+				indented(code)
 				'}}'
 				].join("\n")
 
@@ -358,7 +361,7 @@ export PreProcessPeggy = (code, hMetaData) =>
 	return peggyCode
 
 # ---------------------------------------------------------------------------
-# --- a converter should return {js: jsCode, sourceMap: srcMap}
+# --- a converter should return {code: jsCode, sourceMap: srcMap}
 
 export addCodeConverter = (name, func) =>
 
@@ -384,7 +387,7 @@ export getParser = (filePath, hOptions={}) =>
 	assert isFile(fullPath), "No such file: #{OL(filePath)}"
 	assert (fileExt(fullPath)=='.peggy'), "Not a peggy file: #{OL(filePath)}"
 
-	procFiles fullPath, '.js', [peggify]
+	procFiles fullPath, peggify, '.js'
 	jsFilePath = withExt(filePath, '.js')
 	if debug
 		console.log "JS file = #{OL(jsFilePath)}"

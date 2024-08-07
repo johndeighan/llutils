@@ -6,8 +6,8 @@
     "test\\coffee\\test2.coffee"
   ],
   "names": [],
-  "mappings": "AAAc;AAEd,OAAA;EAAQ,MAAR;EAAgB,QAAhB;EAA0B,EAA1B;CAAA,MAAA,oBAFc;;;AAMd,OAAA,IAAO,KAAA,GAAQ,QAAA,CAAC,IAAD,CAAA;AAEf,MAAA;EAAC,CAAA,GAAI,eAAA,CAAA;AACJ,SAAO;AAHO,EAND;;;AAad,OAAA,IAAO,eAAA,GAAkB,CAAC,IAAD,EAAO,QAAP,CAAA,GAAA;AAExB,SAAO,MAAM,CAAC,IAAP,CAAY,IAAZ;AAFiB;;AAbX",
+  "mappings": "AAAc;AAEd,OAAA;EAAQ,MAAR;EAAgB,QAAhB;EAA0B,EAA1B;CAAA,MAAA,oBAFc;;;AAMd,OAAA,IAAO,IAAA,GAAO,QAAA,CAAC,IAAD,CAAA;AAEd,MAAA;EAAC,CAAA,GAAI,eAAA,CAAA;AACJ,SAAO;AAHM,EANA;;;AAad,OAAA,IAAO,eAAA,GAAkB,CAAC,IAAD,EAAO,QAAP,CAAA,GAAA;AAExB,SAAO,MAAM,CAAC,IAAP,CAAY,IAAZ;AAFiB;;AAbX",
   "sourcesContent": [
-    "# test2.coffee\r\n\r\nimport {assert, isString, OL} from '@jdeighan/llutils'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport bless = (code) ->\r\n\r\n\tx = cieloPreProcess()\r\n\treturn code\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport cieloPreProcess = (code, hOptions) =>\r\n\r\n\treturn lLines.join(\"\\n\")\r\n\r\n# ---------------------------------------------------------------------------\r\n"
+    "# test2.coffee\r\n\r\nimport {assert, isString, OL} from '@jdeighan/llutils'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport func = (code) ->\r\n\r\n\tx = cieloPreProcess()\r\n\treturn code\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport cieloPreProcess = (code, hOptions) =>\r\n\r\n\treturn lLines.join(\"\\n\")\r\n\r\n# ---------------------------------------------------------------------------\r\n"
   ]
 }

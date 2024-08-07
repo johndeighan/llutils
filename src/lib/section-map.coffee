@@ -103,6 +103,7 @@ export class SectionMap
 			# --- a section's getBlock() applies any replacer
 			block = @section(desc).getBlock()
 		else if isSetName(desc)
+			debugger
 			lBlocks = for item in @hSets[desc]
 				if isArray(item)
 					@getBlock item[0]

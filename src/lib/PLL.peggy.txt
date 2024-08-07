@@ -72,6 +72,7 @@
 	    nTabs: lTabs === null ? 0 : lTabs.length
 	  };
 	};
+
 }}
 {
 init();

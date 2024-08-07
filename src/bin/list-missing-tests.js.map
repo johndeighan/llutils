@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "list-missing-tests.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\bin\\list-missing-tests.coffee"
+  ],
+  "names": [],
+  "mappings": "AAA2B;AAAA,IAAA,QAAA,EAAA,GAAA,EAAA,IAAA,EAAA,IAAA,EAAA,CAAA,EAAA;;AAE3B,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;EAEC,MAFD;CAAA,MAAA;;AAIA,OAAA;EACC,UADD;EACa,MADb;EACqB,MADrB;EAC6B,KAD7B;EACoC,IADpC;EAC0C,gBAD1C;CAAA,MAAA,uBAN2B;;;;AAa3B,MAAA,CAAO,UAAA,CAAW,GAAX,EAAgB,QAAhB,CAAP,EAAkC,yBAAlC;;AAEA;AAAA,KAAA,QAAA;GAAI,CAAC,IAAD;EACH,QAAA,GAAW,CAAA,OAAA,CAAA,CAAU,IAAV,CAAA,YAAA;EACX,IAAG,CAAC,MAAA,CAAO,QAAP,CAAJ;IACC,OAAO,CAAC,GAAR,CAAY,CAAA,KAAA,CAAA,CAAQ,QAAR,CAAA,CAAZ,EADD;;AAFD;;AAKA;AAAA,KAAA,SAAA;GAAI,CAAC,IAAD;EACH,QAAA,GAAW,CAAA,OAAA,CAAA,CAAU,IAAV,CAAA,YAAA;EACX,IAAG,CAAC,MAAA,CAAO,QAAP,CAAJ;IACC,OAAO,CAAC,GAAR,CAAY,CAAA,KAAA,CAAA,CAAQ,QAAR,CAAA,CAAZ,EADD;;AAFD",
+  "sourcesContent": [
+    "# list-missing-tests.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined,\r\n\tassert,\r\n\t} from '@jdeighan/llutils'\r\nimport {\r\n\tisProjRoot, mkpath, isFile, slurp, barf, allFilesMatching,\r\n\t} from '@jdeighan/llutils/fs'\r\n\r\n# ---------------------------------------------------------------------------\r\n# 1. Make sure we're in a project root directory\r\n\r\nassert isProjRoot('.', 'strict'), \"Not in package root dir\"\r\n\r\nfor {stub} from allFilesMatching('./src/lib/**/*.{coffee,peggy}')\r\n\tfilePath = \"./test/#{stub}.test.coffee\"\r\n\tif !isFile(filePath)\r\n\t\tconsole.log \"LIB: #{filePath}\"\r\n\r\nfor {stub} from allFilesMatching('./src/bin/**/*.coffee')\r\n\tfilePath = \"./test/#{stub}.test.coffee\"\r\n\tif !isFile(filePath)\r\n\t\tconsole.log \"BIN: #{filePath}\"\r\n"
+  ]
+}

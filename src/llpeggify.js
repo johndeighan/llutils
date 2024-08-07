@@ -27,6 +27,6 @@ import {
 } from '@jdeighan/llutils/file-processor';
 
 // ---------------------------------------------------------------------------
-procFiles('**/*.peggy', '.js', peggify);
+procFiles('**/*.peggy', peggify, '.js');
 
 //# sourceMappingURL=llpeggify.js.map

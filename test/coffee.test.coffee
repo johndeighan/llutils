@@ -13,20 +13,21 @@ Object.assign(global, lib2)
 
 succeeds () => brew('v = 5')
 fails () => brew('let v = 5')
-equal brew('v = 5').js, """
+
+matches brew('v = 5').code, """
 	var v;
 
 	v = 5;
 	"""
 
-equal brew('v = 5', {shebang: true}).js, """
+equal brew('v = 5', {shebang: true}).code, """
 	#!/usr/bin/env node
 	var v;
 
 	v = 5;
 	"""
 
-equal brew('v = 5', {shebang: 'abc'}).js, """
+equal brew('v = 5', {shebang: 'abc'}).code, """
 	abc
 	var v;
 
@@ -113,21 +114,20 @@ fails () => toAST('let v = 5')
 
 # ---------------------------------------------------------------------------
 
-filePath = "test/brew/test.coffee"
-code = slurp filePath
+filePath = "test/coffee/test.coffee"
+coffeeCode = slurp filePath
 
-truthy isString(code)
+truthy isString(coffeeCode)
 
 blocks = new TextBlockList()
-blocks.addBlock filePath, code
+blocks.addBlock filePath, coffeeCode
 
-{orgCode, js} = brew code
-truthy (orgCode == code)
+{code} = brew coffeeCode
 
-blocks.addBlock 'JavaScript', js
+blocks.addBlock 'JavaScript', code
 
 equal blocks.asString('format=box'), '''
-	┌────────  test/brew/test.coffee  ─────────┐
+	┌───────  test/coffee/test.coffee  ────────┐
 	│ import {undef} from '@jdeighan/llutils'  │
 	│                                          │
 	│ hAST = {                                 │
@@ -154,5 +154,6 @@ equal blocks.asString('format=box'), '''
 	│ equal(extract(hAST, `type="program"`), { │
 	│   name: 'John'                           │
 	│ });                                      │
+	│                                          │
 	└──────────────────────────────────────────┘
 	'''

@@ -14,11 +14,10 @@ import {
 	slurpJSON, slurpPkgJSON, fileExt, withExt, mkpath,
 	allFilesMatching, readTextFile, newerDestFileExists,
 	} from '@jdeighan/llutils/fs'
-import {brew} from '@jdeighan/llutils/llcoffee'
-import {bless, cieloPreProcess} from '@jdeighan/llutils/cielo'
 import {peggify} from '@jdeighan/llutils/peggy'
-import {sveltify} from '@jdeighan/llutils/svelte-utils'
-import {procFiles} from '@jdeighan/llutils/file-processor'
+import {
+	procFiles, brew, cieloPreProcess, sveltify,
+	} from '@jdeighan/llutils/file-processor'
 
 hFileTypes = {
 	'.coffee': {
@@ -90,7 +89,7 @@ for ext in keys(hFileTypes)
 	n = 0
 
 	# --- possible options: force, debug, logOnly, echo
-	n = procFiles "#{root}/**/*#{ext}", outExt, lFuncs
+	n = procFiles "#{root}/**/*#{ext}", lFuncs, outExt
 	hFileTypes[ext].numProcessed = n
 
 # ---------------------------------------------------------------------------
@@ -169,6 +168,6 @@ if watch
 		{lFuncs, outExt} = hFileTypes[ext]
 		switch eventType
 			when 'add','change'
-				procFiles path, outExt, lFuncs
+				procFiles path, lFuncs, outExt
 			when 'unlink'
 				execCmd "rm #{withExt(path, outExt)}"

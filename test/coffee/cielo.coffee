@@ -8,38 +8,14 @@ import {indented, splitLine} from '@jdeighan/llutils/indent'
 import {
 	barf, isFile, withExt, readTextFile,
 	} from '@jdeighan/llutils/fs'
-import {brew} from '@jdeighan/llutils/llcoffee'
+import {brew, cieloPreProcess} from '@jdeighan/llutils/file-processor'
 import {LineFetcher} from '@jdeighan/llutils/fetcher'
 import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
 
 # ---------------------------------------------------------------------------
 
-export bless = (code, hMetaData={}) ->
+export func = (code, hMetaData={}) ->
 
 	assert isString(code), "code: #{OL(code)}"
 	hMetaData.preprocess = cieloPreProcess
 	return brew code, hMetaData
-
-# ---------------------------------------------------------------------------
-
-export cieloPreProcess = (code, hOptions) =>
-
-	{debug} = getOptions hOptions, {
-		debug: false
-		}
-
-	if debug
-		console.log "IN cieloPreProcess()"
-	lLines = []
-	src = new LineFetcher(code)
-	while src.moreLines()
-		[level, str] = splitLine(src.fetch())
-		if (level == 0) && (str == '__END__')
-			break
-		if debug
-			console.log "GOT: #{OL(str)} at level #{level}"
-		str = replaceHereDocs(level, str, src)
-		lLines.push indented(str, level)
-	return lLines.join("\n")
-
-# ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@ import {
 } from '@jdeighan/llutils';
 
 // ---------------------------------------------------------------------------
-export var bless = function(code) {
+export var func = function(code) {
   var x;
   x = cieloPreProcess();
   return code;

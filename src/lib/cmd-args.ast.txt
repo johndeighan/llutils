@@ -3,7 +3,7 @@
    "imports": [],
    "topLevelInitializer": {
       "type": "top_level_initializer",
-      "code": "\n\tvar check, hOptions, parse__arg__1, parse__arg__2, parse__cmdArgs__1, parse__stringVal__1, parse__stringVal__2, parse__stringVal__3;\n\n\timport {\n\t  undef,\n\t  defined,\n\t  notdefined,\n\t  pass,\n\t  isEmpty,\n\t  hasKey,\n\t  keys,\n\t  OL,\n\t  words,\n\t  add_s,\n\t  assert,\n\t  croak,\n\t  getOptions,\n\t  cmdArgStr,\n\t  isString,\n\t  isFunction,\n\t  isBoolean,\n\t  isArray,\n\t  isHash\n\t} from '@jdeighan/llutils';\n\n\timport {\n\t  DUMP\n\t} from '@jdeighan/llutils/dump';\n\n\timport {\n\t  getTracer\n\t} from '@jdeighan/llutils/tracer';\n\n\thOptions = {};\n\n\texport var getArgs = (hDesc = undef, hOptions = {}) => {\n\t  var argStr, args, err, hResult, tracer;\n\t  ({args, tracer} = getOptions(hOptions, {\n\t    args: undef,\n\t    tracer: 'none'\n\t  }));\n\t  argStr = cmdArgStr(args);\n\t  hOptions.tracer = getTracer(tracer);\n\t  try {\n\t    hResult = peg$parse(argStr, hOptions);\n\t  } catch (error) {\n\t    err = error;\n\t    console.log(`ERROR parsing ${OL(argStr)}: ${err.message}`);\n\t    process.exit();\n\t  }\n\t  if (defined(hDesc)) {\n\t    check(hResult, hDesc);\n\t  }\n\t  return hResult;\n\t};\n\n\tcheck = (hResult, hDesc) => {\n\t  var err, h, i, key, lNonOptions, len, max, min, n, ref, type, value;\n\t  h = hDesc._;\n\t  if (defined(h)) {\n\t    min = h.min || h.exactly || 0;\n\t    max = h.max || h.exactly || 2e308;\n\t    lNonOptions = hResult._;\n\t    if (defined(lNonOptions)) {\n\t      assert(isArray(lNonOptions), `Not an array: ${OL(lNonOptions)}`);\n\t      n = lNonOptions.length;\n\t    } else {\n\t      n = 0;\n\t    }\n\t    assert(n >= min, `There must be at least ${min} non-option${add_s(min)}`);\n\t    assert(n <= max, `There can be at most ${max} non-option${add_s(max)}`);\n\t  }\n\t  ref = keys(hResult);\n\t  for (i = 0, len = ref.length; i < len; i++) {\n\t    key = ref[i];\n\t    if (key !== '_') {\n\t      type = hDesc[key];\n\t      value = hResult[key];\n\t      switch (typeof type) {\n\t        case 'string':\n\t          switch (type) {\n\t            case 'string':\n\t              pass();\n\t              break;\n\t            case 'boolean':\n\t              assert(isBoolean(value), `Bad boolean: ${OL(value)}, key = ${OL(key)}`);\n\t              break;\n\t            case 'number':\n\t              try {\n\t                hResult[key] = parseFloat(value);\n\t              } catch (error) {\n\t                err = error;\n\t                croak(`Bad number: ${OL(value)}, key = ${OL(key)}`);\n\t              }\n\t              break;\n\t            case 'integer':\n\t              try {\n\t                hResult[key] = parseInt(value, 10);\n\t              } catch (error) {\n\t                err = error;\n\t                croak(`Bad integer: ${OL(value)}, key = ${OL(key)}`);\n\t              }\n\t              break;\n\t            default:\n\t              croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);\n\t          }\n\t          break;\n\t        case 'object':\n\t          if (type instanceof RegExp) {\n\t            assert(isString(value), `value not a string: ${OL(value)}`);\n\t            assert(value.match(type), `value ${OL(value)} does not match regexp`);\n\t          } else {\n\t            croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);\n\t          }\n\t          break;\n\t        default:\n\t          croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);\n\t      }\n\t    }\n\t  }\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__cmdArgs__1 = (lArgs) => {\n\t  var arg, i, lNonOptions, len;\n\t  hOptions = {};\n\t  lNonOptions = [];\n\t  for (i = 0, len = lArgs.length; i < len; i++) {\n\t    arg = lArgs[i];\n\t    if (isHash(arg)) {\n\t      Object.assign(hOptions, arg);\n\t    } else if (isArray(arg)) {\n\t      lNonOptions.push(...arg);\n\t    } else {\n\t      croak(`Bad return from arg: ${OL(arg)}`);\n\t    }\n\t  }\n\t  hOptions._ = lNonOptions;\n\t  return hOptions;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__arg__1 = (lChars, value) => {\n\t  var ch, i, key, len;\n\t  if (isEmpty(value)) {\n\t    hOptions = {};\n\t    for (i = 0, len = lChars.length; i < len; i++) {\n\t      ch = lChars[i];\n\t      hOptions[ch] = true;\n\t    }\n\t    return hOptions;\n\t  } else {\n\t    key = lChars.join('');\n\t    return {\n\t      [key]: value\n\t    };\n\t  }\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__arg__2 = (val) => {\n\t  return [val];\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__stringVal__1 = (str) => {\n\t  return str;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__stringVal__2 = (str) => {\n\t  return str;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__stringVal__3 = (str) => {\n\t  return str;\n\t};\n",
+      "code": "\n\tvar check, hOptions, parse__arg__1, parse__arg__2, parse__cmdArgs__1, parse__stringVal__1, parse__stringVal__2, parse__stringVal__3;\n\n\timport {\n\t  undef,\n\t  defined,\n\t  notdefined,\n\t  pass,\n\t  isEmpty,\n\t  hasKey,\n\t  keys,\n\t  OL,\n\t  words,\n\t  add_s,\n\t  assert,\n\t  croak,\n\t  getOptions,\n\t  cmdArgStr,\n\t  isString,\n\t  isFunction,\n\t  isBoolean,\n\t  isArray,\n\t  isHash\n\t} from '@jdeighan/llutils';\n\n\timport {\n\t  DUMP\n\t} from '@jdeighan/llutils/dump';\n\n\timport {\n\t  getTracer\n\t} from '@jdeighan/llutils/tracer';\n\n\thOptions = {};\n\n\texport var getArgs = (hDesc = undef, hOptions = {}) => {\n\t  var argStr, args, err, hResult, tracer;\n\t  ({args, tracer} = getOptions(hOptions, {\n\t    args: undef,\n\t    tracer: 'none'\n\t  }));\n\t  argStr = cmdArgStr(args);\n\t  hOptions.tracer = getTracer(tracer);\n\t  try {\n\t    hResult = peg$parse(argStr, hOptions);\n\t  } catch (error) {\n\t    err = error;\n\t    console.log(`ERROR parsing ${OL(argStr)}: ${err.message}`);\n\t    process.exit();\n\t  }\n\t  if (defined(hDesc)) {\n\t    check(hResult, hDesc);\n\t  }\n\t  return hResult;\n\t};\n\n\tcheck = (hResult, hDesc) => {\n\t  var err, h, i, key, lNonOptions, len, max, min, n, ref, type, value;\n\t  h = hDesc._;\n\t  if (defined(h)) {\n\t    min = h.min || h.exactly || 0;\n\t    max = h.max || h.exactly || 2e308;\n\t    lNonOptions = hResult._;\n\t    if (defined(lNonOptions)) {\n\t      assert(isArray(lNonOptions), `Not an array: ${OL(lNonOptions)}`);\n\t      n = lNonOptions.length;\n\t    } else {\n\t      n = 0;\n\t    }\n\t    assert(n >= min, `There must be at least ${min} non-option${add_s(min)}`);\n\t    assert(n <= max, `There can be at most ${max} non-option${add_s(max)}`);\n\t  }\n\t  ref = keys(hResult);\n\t  for (i = 0, len = ref.length; i < len; i++) {\n\t    key = ref[i];\n\t    if (key !== '_') {\n\t      type = hDesc[key];\n\t      value = hResult[key];\n\t      switch (typeof type) {\n\t        case 'string':\n\t          switch (type) {\n\t            case 'string':\n\t              pass();\n\t              break;\n\t            case 'boolean':\n\t              assert(isBoolean(value), `Bad boolean: ${OL(value)}, key = ${OL(key)}`);\n\t              break;\n\t            case 'number':\n\t              try {\n\t                hResult[key] = parseFloat(value);\n\t              } catch (error) {\n\t                err = error;\n\t                croak(`Bad number: ${OL(value)}, key = ${OL(key)}`);\n\t              }\n\t              break;\n\t            case 'integer':\n\t              try {\n\t                hResult[key] = parseInt(value, 10);\n\t              } catch (error) {\n\t                err = error;\n\t                croak(`Bad integer: ${OL(value)}, key = ${OL(key)}`);\n\t              }\n\t              break;\n\t            default:\n\t              croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);\n\t          }\n\t          break;\n\t        case 'object':\n\t          if (type instanceof RegExp) {\n\t            assert(isString(value), `value not a string: ${OL(value)}`);\n\t            assert(value.match(type), `value ${OL(value)} does not match regexp`);\n\t          } else {\n\t            croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);\n\t          }\n\t          break;\n\t        default:\n\t          croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);\n\t      }\n\t    }\n\t  }\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__cmdArgs__1 = (lArgs) => {\n\t  var arg, i, lNonOptions, len;\n\t  hOptions = {};\n\t  lNonOptions = [];\n\t  for (i = 0, len = lArgs.length; i < len; i++) {\n\t    arg = lArgs[i];\n\t    if (isHash(arg)) {\n\t      Object.assign(hOptions, arg);\n\t    } else if (isArray(arg)) {\n\t      lNonOptions.push(...arg);\n\t    } else {\n\t      croak(`Bad return from arg: ${OL(arg)}`);\n\t    }\n\t  }\n\t  hOptions._ = lNonOptions;\n\t  return hOptions;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__arg__1 = (lChars, value) => {\n\t  var ch, i, key, len;\n\t  if (isEmpty(value)) {\n\t    hOptions = {};\n\t    for (i = 0, len = lChars.length; i < len; i++) {\n\t      ch = lChars[i];\n\t      hOptions[ch] = true;\n\t    }\n\t    return hOptions;\n\t  } else {\n\t    key = lChars.join('');\n\t    return {\n\t      [key]: value\n\t    };\n\t  }\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__arg__2 = (val) => {\n\t  return [val];\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__stringVal__1 = (str) => {\n\t  return str;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__stringVal__2 = (str) => {\n\t  return str;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__stringVal__3 = (str) => {\n\t  return str;\n\t};\n\n",
       "codeLocation": {
          "source": "src/lib/cmd-args.peggy",
          "start": {
@@ -12,8 +12,8 @@
             "column": 3
          },
          "end": {
-            "offset": 4596,
-            "line": 179,
+            "offset": 4597,
+            "line": 180,
             "column": 1
          }
       },
@@ -25,8 +25,8 @@
             "column": 1
          },
          "end": {
-            "offset": 4599,
-            "line": 180,
+            "offset": 4600,
+            "line": 181,
             "column": 1
          }
       }
@@ -39,13 +39,13 @@
          "nameLocation": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4600,
-               "line": 181,
+               "offset": 4601,
+               "line": 182,
                "column": 1
             },
             "end": {
-               "offset": 4607,
-               "line": 181,
+               "offset": 4608,
+               "line": 182,
                "column": 8
             }
          },
@@ -57,13 +57,13 @@
                "labelLocation": {
                   "source": "src/lib/cmd-args.peggy",
                   "start": {
-                     "offset": 4612,
-                     "line": 183,
+                     "offset": 4613,
+                     "line": 184,
                      "column": 4
                   },
                   "end": {
-                     "offset": 4617,
-                     "line": 183,
+                     "offset": 4618,
+                     "line": 184,
                      "column": 9
                   }
                },
@@ -83,13 +83,13 @@
                      "location": {
                         "source": "src/lib/cmd-args.peggy",
                         "start": {
-                           "offset": 4619,
-                           "line": 183,
+                           "offset": 4620,
+                           "line": 184,
                            "column": 11
                         },
                         "end": {
-                           "offset": 4622,
-                           "line": 183,
+                           "offset": 4623,
+                           "line": 184,
                            "column": 14
                         }
                      },
@@ -101,13 +101,13 @@
                      "location": {
                         "source": "src/lib/cmd-args.peggy",
                         "start": {
-                           "offset": 4628,
-                           "line": 183,
+                           "offset": 4629,
+                           "line": 184,
                            "column": 20
                         },
                         "end": {
-                           "offset": 4629,
-                           "line": 183,
+                           "offset": 4630,
+                           "line": 184,
                            "column": 21
                         }
                      },
@@ -116,13 +116,13 @@
                   "location": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4619,
-                        "line": 183,
+                        "offset": 4620,
+                        "line": 184,
                         "column": 11
                      },
                      "end": {
-                        "offset": 4630,
-                        "line": 183,
+                        "offset": 4631,
+                        "line": 184,
                         "column": 22
                      }
                   },
@@ -131,13 +131,13 @@
                "location": {
                   "source": "src/lib/cmd-args.peggy",
                   "start": {
-                     "offset": 4612,
-                     "line": 183,
+                     "offset": 4613,
+                     "line": 184,
                      "column": 4
                   },
                   "end": {
-                     "offset": 4630,
-                     "line": 183,
+                     "offset": 4631,
+                     "line": 184,
                      "column": 22
                   }
                },
@@ -147,26 +147,26 @@
             "codeLocation": {
                "source": "src/lib/cmd-args.peggy",
                "start": {
-                  "offset": 4634,
-                  "line": 184,
+                  "offset": 4635,
+                  "line": 185,
                   "column": 4
                },
                "end": {
-                  "offset": 4668,
-                  "line": 184,
+                  "offset": 4669,
+                  "line": 185,
                   "column": 38
                }
             },
             "location": {
                "source": "src/lib/cmd-args.peggy",
                "start": {
-                  "offset": 4612,
-                  "line": 183,
+                  "offset": 4613,
+                  "line": 184,
                   "column": 4
                },
                "end": {
-                  "offset": 4669,
-                  "line": 184,
+                  "offset": 4670,
+                  "line": 185,
                   "column": 39
                }
             },
@@ -175,13 +175,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4600,
-               "line": 181,
+               "offset": 4601,
+               "line": 182,
                "column": 1
             },
             "end": {
-               "offset": 4670,
-               "line": 185,
+               "offset": 4671,
+               "line": 186,
                "column": 1
             }
          },
@@ -252,13 +252,13 @@
          "nameLocation": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4671,
-               "line": 186,
+               "offset": 4672,
+               "line": 187,
                "column": 1
             },
             "end": {
-               "offset": 4674,
-               "line": 186,
+               "offset": 4675,
+               "line": 187,
                "column": 4
             }
          },
@@ -277,13 +277,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4679,
-                                 "line": 188,
+                                 "offset": 4680,
+                                 "line": 189,
                                  "column": 4
                               },
                               "end": {
-                                 "offset": 4682,
-                                 "line": 188,
+                                 "offset": 4683,
+                                 "line": 189,
                                  "column": 7
                               }
                            },
@@ -295,13 +295,13 @@
                            "labelLocation": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4683,
-                                 "line": 188,
+                                 "offset": 4684,
+                                 "line": 189,
                                  "column": 8
                               },
                               "end": {
-                                 "offset": 4689,
-                                 "line": 188,
+                                 "offset": 4690,
+                                 "line": 189,
                                  "column": 14
                               }
                            },
@@ -324,13 +324,13 @@
                                  "location": {
                                     "source": "src/lib/cmd-args.peggy",
                                     "start": {
-                                       "offset": 4690,
-                                       "line": 188,
+                                       "offset": 4691,
+                                       "line": 189,
                                        "column": 15
                                     },
                                     "end": {
-                                       "offset": 4698,
-                                       "line": 188,
+                                       "offset": 4699,
+                                       "line": 189,
                                        "column": 23
                                     }
                                  },
@@ -339,13 +339,13 @@
                               "location": {
                                  "source": "src/lib/cmd-args.peggy",
                                  "start": {
-                                    "offset": 4690,
-                                    "line": 188,
+                                    "offset": 4691,
+                                    "line": 189,
                                     "column": 15
                                  },
                                  "end": {
-                                    "offset": 4699,
-                                    "line": 188,
+                                    "offset": 4700,
+                                    "line": 189,
                                     "column": 24
                                  }
                               },
@@ -354,13 +354,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4683,
-                                 "line": 188,
+                                 "offset": 4684,
+                                 "line": 189,
                                  "column": 8
                               },
                               "end": {
-                                 "offset": 4699,
-                                 "line": 188,
+                                 "offset": 4700,
+                                 "line": 189,
                                  "column": 24
                               }
                            },
@@ -372,13 +372,13 @@
                            "labelLocation": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4700,
-                                 "line": 188,
+                                 "offset": 4701,
+                                 "line": 189,
                                  "column": 25
                               },
                               "end": {
-                                 "offset": 4705,
-                                 "line": 188,
+                                 "offset": 4706,
+                                 "line": 189,
                                  "column": 30
                               }
                            },
@@ -396,13 +396,13 @@
                                           "location": {
                                              "source": "src/lib/cmd-args.peggy",
                                              "start": {
-                                                "offset": 4707,
-                                                "line": 188,
+                                                "offset": 4708,
+                                                "line": 189,
                                                 "column": 32
                                              },
                                              "end": {
-                                                "offset": 4710,
-                                                "line": 188,
+                                                "offset": 4711,
+                                                "line": 189,
                                                 "column": 35
                                              }
                                           },
@@ -414,13 +414,13 @@
                                           "labelLocation": {
                                              "source": "src/lib/cmd-args.peggy",
                                              "start": {
-                                                "offset": 4711,
-                                                "line": 188,
+                                                "offset": 4712,
+                                                "line": 189,
                                                 "column": 36
                                              },
                                              "end": {
-                                                "offset": 4712,
-                                                "line": 188,
+                                                "offset": 4713,
+                                                "line": 189,
                                                 "column": 37
                                              }
                                           },
@@ -431,13 +431,13 @@
                                              "location": {
                                                 "source": "src/lib/cmd-args.peggy",
                                                 "start": {
-                                                   "offset": 4712,
-                                                   "line": 188,
+                                                   "offset": 4713,
+                                                   "line": 189,
                                                    "column": 37
                                                 },
                                                 "end": {
-                                                   "offset": 4721,
-                                                   "line": 188,
+                                                   "offset": 4722,
+                                                   "line": 189,
                                                    "column": 46
                                                 }
                                              },
@@ -446,13 +446,13 @@
                                           "location": {
                                              "source": "src/lib/cmd-args.peggy",
                                              "start": {
-                                                "offset": 4711,
-                                                "line": 188,
+                                                "offset": 4712,
+                                                "line": 189,
                                                 "column": 36
                                              },
                                              "end": {
-                                                "offset": 4721,
-                                                "line": 188,
+                                                "offset": 4722,
+                                                "line": 189,
                                                 "column": 46
                                              }
                                           },
@@ -462,13 +462,13 @@
                                     "location": {
                                        "source": "src/lib/cmd-args.peggy",
                                        "start": {
-                                          "offset": 4707,
-                                          "line": 188,
+                                          "offset": 4708,
+                                          "line": 189,
                                           "column": 32
                                        },
                                        "end": {
-                                          "offset": 4721,
-                                          "line": 188,
+                                          "offset": 4722,
+                                          "line": 189,
                                           "column": 46
                                        }
                                     },
@@ -477,13 +477,13 @@
                                  "location": {
                                     "source": "src/lib/cmd-args.peggy",
                                     "start": {
-                                       "offset": 4706,
-                                       "line": 188,
+                                       "offset": 4707,
+                                       "line": 189,
                                        "column": 31
                                     },
                                     "end": {
-                                       "offset": 4722,
-                                       "line": 188,
+                                       "offset": 4723,
+                                       "line": 189,
                                        "column": 47
                                     }
                                  },
@@ -492,13 +492,13 @@
                               "location": {
                                  "source": "src/lib/cmd-args.peggy",
                                  "start": {
-                                    "offset": 4706,
-                                    "line": 188,
+                                    "offset": 4707,
+                                    "line": 189,
                                     "column": 31
                                  },
                                  "end": {
-                                    "offset": 4723,
-                                    "line": 188,
+                                    "offset": 4724,
+                                    "line": 189,
                                     "column": 48
                                  }
                               },
@@ -507,13 +507,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4700,
-                                 "line": 188,
+                                 "offset": 4701,
+                                 "line": 189,
                                  "column": 25
                               },
                               "end": {
-                                 "offset": 4723,
-                                 "line": 188,
+                                 "offset": 4724,
+                                 "line": 189,
                                  "column": 48
                               }
                            },
@@ -523,13 +523,13 @@
                      "location": {
                         "source": "src/lib/cmd-args.peggy",
                         "start": {
-                           "offset": 4679,
-                           "line": 188,
+                           "offset": 4680,
+                           "line": 189,
                            "column": 4
                         },
                         "end": {
-                           "offset": 4723,
-                           "line": 188,
+                           "offset": 4724,
+                           "line": 189,
                            "column": 48
                         }
                      },
@@ -539,26 +539,26 @@
                   "codeLocation": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4727,
-                        "line": 189,
+                        "offset": 4728,
+                        "line": 190,
                         "column": 4
                      },
                      "end": {
-                        "offset": 4765,
-                        "line": 189,
+                        "offset": 4766,
+                        "line": 190,
                         "column": 42
                      }
                   },
                   "location": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4679,
-                        "line": 188,
+                        "offset": 4680,
+                        "line": 189,
                         "column": 4
                      },
                      "end": {
-                        "offset": 4766,
-                        "line": 189,
+                        "offset": 4767,
+                        "line": 190,
                         "column": 43
                      }
                   },
@@ -572,13 +572,13 @@
                      "labelLocation": {
                         "source": "src/lib/cmd-args.peggy",
                         "start": {
-                           "offset": 4771,
-                           "line": 191,
+                           "offset": 4772,
+                           "line": 192,
                            "column": 4
                         },
                         "end": {
-                           "offset": 4774,
-                           "line": 191,
+                           "offset": 4775,
+                           "line": 192,
                            "column": 7
                         }
                      },
@@ -588,13 +588,13 @@
                         "location": {
                            "source": "src/lib/cmd-args.peggy",
                            "start": {
-                              "offset": 4775,
-                              "line": 191,
+                              "offset": 4776,
+                              "line": 192,
                               "column": 8
                            },
                            "end": {
-                              "offset": 4784,
-                              "line": 191,
+                              "offset": 4785,
+                              "line": 192,
                               "column": 17
                            }
                         },
@@ -603,13 +603,13 @@
                      "location": {
                         "source": "src/lib/cmd-args.peggy",
                         "start": {
-                           "offset": 4771,
-                           "line": 191,
+                           "offset": 4772,
+                           "line": 192,
                            "column": 4
                         },
                         "end": {
-                           "offset": 4784,
-                           "line": 191,
+                           "offset": 4785,
+                           "line": 192,
                            "column": 17
                         }
                      },
@@ -619,26 +619,26 @@
                   "codeLocation": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4788,
-                        "line": 192,
+                        "offset": 4789,
+                        "line": 193,
                         "column": 4
                      },
                      "end": {
-                        "offset": 4816,
-                        "line": 192,
+                        "offset": 4817,
+                        "line": 193,
                         "column": 32
                      }
                   },
                   "location": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4771,
-                        "line": 191,
+                        "offset": 4772,
+                        "line": 192,
                         "column": 4
                      },
                      "end": {
-                        "offset": 4817,
-                        "line": 192,
+                        "offset": 4818,
+                        "line": 193,
                         "column": 33
                      }
                   },
@@ -648,13 +648,13 @@
             "location": {
                "source": "src/lib/cmd-args.peggy",
                "start": {
-                  "offset": 4679,
-                  "line": 188,
+                  "offset": 4680,
+                  "line": 189,
                   "column": 4
                },
                "end": {
-                  "offset": 4817,
-                  "line": 192,
+                  "offset": 4818,
+                  "line": 193,
                   "column": 33
                }
             },
@@ -663,13 +663,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4671,
-               "line": 186,
+               "offset": 4672,
+               "line": 187,
                "column": 1
             },
             "end": {
-               "offset": 4818,
-               "line": 193,
+               "offset": 4819,
+               "line": 194,
                "column": 1
             }
          },
@@ -863,13 +863,13 @@
          "nameLocation": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4819,
-               "line": 194,
+               "offset": 4820,
+               "line": 195,
                "column": 1
             },
             "end": {
-               "offset": 4828,
-               "line": 194,
+               "offset": 4829,
+               "line": 195,
                "column": 10
             }
          },
@@ -888,13 +888,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4833,
-                                 "line": 196,
+                                 "offset": 4834,
+                                 "line": 197,
                                  "column": 4
                               },
                               "end": {
-                                 "offset": 4836,
-                                 "line": 196,
+                                 "offset": 4837,
+                                 "line": 197,
                                  "column": 7
                               }
                            },
@@ -906,13 +906,13 @@
                            "labelLocation": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4838,
-                                 "line": 196,
+                                 "offset": 4839,
+                                 "line": 197,
                                  "column": 9
                               },
                               "end": {
-                                 "offset": 4841,
-                                 "line": 196,
+                                 "offset": 4842,
+                                 "line": 197,
                                  "column": 12
                               }
                            },
@@ -930,13 +930,13 @@
                                     "location": {
                                        "source": "src/lib/cmd-args.peggy",
                                        "start": {
-                                          "offset": 4845,
-                                          "line": 196,
+                                          "offset": 4846,
+                                          "line": 197,
                                           "column": 16
                                        },
                                        "end": {
-                                          "offset": 4849,
-                                          "line": 196,
+                                          "offset": 4850,
+                                          "line": 197,
                                           "column": 20
                                        }
                                     },
@@ -945,13 +945,13 @@
                                  "location": {
                                     "source": "src/lib/cmd-args.peggy",
                                     "start": {
-                                       "offset": 4845,
-                                       "line": 196,
+                                       "offset": 4846,
+                                       "line": 197,
                                        "column": 16
                                     },
                                     "end": {
-                                       "offset": 4850,
-                                       "line": 196,
+                                       "offset": 4851,
+                                       "line": 197,
                                        "column": 21
                                     }
                                  },
@@ -960,13 +960,13 @@
                               "location": {
                                  "source": "src/lib/cmd-args.peggy",
                                  "start": {
-                                    "offset": 4843,
-                                    "line": 196,
+                                    "offset": 4844,
+                                    "line": 197,
                                     "column": 14
                                  },
                                  "end": {
-                                    "offset": 4850,
-                                    "line": 196,
+                                    "offset": 4851,
+                                    "line": 197,
                                     "column": 21
                                  }
                               },
@@ -975,13 +975,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4838,
-                                 "line": 196,
+                                 "offset": 4839,
+                                 "line": 197,
                                  "column": 9
                               },
                               "end": {
-                                 "offset": 4850,
-                                 "line": 196,
+                                 "offset": 4851,
+                                 "line": 197,
                                  "column": 21
                               }
                            },
@@ -994,13 +994,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4852,
-                                 "line": 196,
+                                 "offset": 4853,
+                                 "line": 197,
                                  "column": 23
                               },
                               "end": {
-                                 "offset": 4855,
-                                 "line": 196,
+                                 "offset": 4856,
+                                 "line": 197,
                                  "column": 26
                               }
                            },
@@ -1010,13 +1010,13 @@
                      "location": {
                         "source": "src/lib/cmd-args.peggy",
                         "start": {
-                           "offset": 4833,
-                           "line": 196,
+                           "offset": 4834,
+                           "line": 197,
                            "column": 4
                         },
                         "end": {
-                           "offset": 4855,
-                           "line": 196,
+                           "offset": 4856,
+                           "line": 197,
                            "column": 26
                         }
                      },
@@ -1026,26 +1026,26 @@
                   "codeLocation": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4859,
-                        "line": 197,
+                        "offset": 4860,
+                        "line": 198,
                         "column": 4
                      },
                      "end": {
-                        "offset": 4893,
-                        "line": 197,
+                        "offset": 4894,
+                        "line": 198,
                         "column": 38
                      }
                   },
                   "location": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4833,
-                        "line": 196,
+                        "offset": 4834,
+                        "line": 197,
                         "column": 4
                      },
                      "end": {
-                        "offset": 4894,
-                        "line": 197,
+                        "offset": 4895,
+                        "line": 198,
                         "column": 39
                      }
                   },
@@ -1063,13 +1063,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4899,
-                                 "line": 199,
+                                 "offset": 4900,
+                                 "line": 200,
                                  "column": 4
                               },
                               "end": {
-                                 "offset": 4902,
-                                 "line": 199,
+                                 "offset": 4903,
+                                 "line": 200,
                                  "column": 7
                               }
                            },
@@ -1081,13 +1081,13 @@
                            "labelLocation": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4904,
-                                 "line": 199,
+                                 "offset": 4905,
+                                 "line": 200,
                                  "column": 9
                               },
                               "end": {
-                                 "offset": 4907,
-                                 "line": 199,
+                                 "offset": 4908,
+                                 "line": 200,
                                  "column": 12
                               }
                            },
@@ -1105,13 +1105,13 @@
                                     "location": {
                                        "source": "src/lib/cmd-args.peggy",
                                        "start": {
-                                          "offset": 4911,
-                                          "line": 199,
+                                          "offset": 4912,
+                                          "line": 200,
                                           "column": 16
                                        },
                                        "end": {
-                                          "offset": 4915,
-                                          "line": 199,
+                                          "offset": 4916,
+                                          "line": 200,
                                           "column": 20
                                        }
                                     },
@@ -1120,13 +1120,13 @@
                                  "location": {
                                     "source": "src/lib/cmd-args.peggy",
                                     "start": {
-                                       "offset": 4911,
-                                       "line": 199,
+                                       "offset": 4912,
+                                       "line": 200,
                                        "column": 16
                                     },
                                     "end": {
-                                       "offset": 4916,
-                                       "line": 199,
+                                       "offset": 4917,
+                                       "line": 200,
                                        "column": 21
                                     }
                                  },
@@ -1135,13 +1135,13 @@
                               "location": {
                                  "source": "src/lib/cmd-args.peggy",
                                  "start": {
-                                    "offset": 4909,
-                                    "line": 199,
+                                    "offset": 4910,
+                                    "line": 200,
                                     "column": 14
                                  },
                                  "end": {
-                                    "offset": 4916,
-                                    "line": 199,
+                                    "offset": 4917,
+                                    "line": 200,
                                     "column": 21
                                  }
                               },
@@ -1150,13 +1150,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4904,
-                                 "line": 199,
+                                 "offset": 4905,
+                                 "line": 200,
                                  "column": 9
                               },
                               "end": {
-                                 "offset": 4916,
-                                 "line": 199,
+                                 "offset": 4917,
+                                 "line": 200,
                                  "column": 21
                               }
                            },
@@ -1169,13 +1169,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4918,
-                                 "line": 199,
+                                 "offset": 4919,
+                                 "line": 200,
                                  "column": 23
                               },
                               "end": {
-                                 "offset": 4921,
-                                 "line": 199,
+                                 "offset": 4922,
+                                 "line": 200,
                                  "column": 26
                               }
                            },
@@ -1185,13 +1185,13 @@
                      "location": {
                         "source": "src/lib/cmd-args.peggy",
                         "start": {
-                           "offset": 4899,
-                           "line": 199,
+                           "offset": 4900,
+                           "line": 200,
                            "column": 4
                         },
                         "end": {
-                           "offset": 4921,
-                           "line": 199,
+                           "offset": 4922,
+                           "line": 200,
                            "column": 26
                         }
                      },
@@ -1201,26 +1201,26 @@
                   "codeLocation": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4925,
-                        "line": 200,
+                        "offset": 4926,
+                        "line": 201,
                         "column": 4
                      },
                      "end": {
-                        "offset": 4959,
-                        "line": 200,
+                        "offset": 4960,
+                        "line": 201,
                         "column": 38
                      }
                   },
                   "location": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4899,
-                        "line": 199,
+                        "offset": 4900,
+                        "line": 200,
                         "column": 4
                      },
                      "end": {
-                        "offset": 4960,
-                        "line": 200,
+                        "offset": 4961,
+                        "line": 201,
                         "column": 39
                      }
                   },
@@ -1240,13 +1240,13 @@
                               "location": {
                                  "source": "src/lib/cmd-args.peggy",
                                  "start": {
-                                    "offset": 4966,
-                                    "line": 202,
+                                    "offset": 4967,
+                                    "line": 203,
                                     "column": 5
                                  },
                                  "end": {
-                                    "offset": 4969,
-                                    "line": 202,
+                                    "offset": 4970,
+                                    "line": 203,
                                     "column": 8
                                  }
                               },
@@ -1255,13 +1255,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4965,
-                                 "line": 202,
+                                 "offset": 4966,
+                                 "line": 203,
                                  "column": 4
                               },
                               "end": {
-                                 "offset": 4969,
-                                 "line": 202,
+                                 "offset": 4970,
+                                 "line": 203,
                                  "column": 8
                               }
                            },
@@ -1273,13 +1273,13 @@
                            "labelLocation": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4970,
-                                 "line": 202,
+                                 "offset": 4971,
+                                 "line": 203,
                                  "column": 9
                               },
                               "end": {
-                                 "offset": 4973,
-                                 "line": 202,
+                                 "offset": 4974,
+                                 "line": 203,
                                  "column": 12
                               }
                            },
@@ -1298,13 +1298,13 @@
                                     "location": {
                                        "source": "src/lib/cmd-args.peggy",
                                        "start": {
-                                          "offset": 4977,
-                                          "line": 202,
+                                          "offset": 4978,
+                                          "line": 203,
                                           "column": 16
                                        },
                                        "end": {
-                                          "offset": 4983,
-                                          "line": 202,
+                                          "offset": 4984,
+                                          "line": 203,
                                           "column": 22
                                        }
                                     },
@@ -1313,13 +1313,13 @@
                                  "location": {
                                     "source": "src/lib/cmd-args.peggy",
                                     "start": {
-                                       "offset": 4977,
-                                       "line": 202,
+                                       "offset": 4978,
+                                       "line": 203,
                                        "column": 16
                                     },
                                     "end": {
-                                       "offset": 4984,
-                                       "line": 202,
+                                       "offset": 4985,
+                                       "line": 203,
                                        "column": 23
                                     }
                                  },
@@ -1328,13 +1328,13 @@
                               "location": {
                                  "source": "src/lib/cmd-args.peggy",
                                  "start": {
-                                    "offset": 4975,
-                                    "line": 202,
+                                    "offset": 4976,
+                                    "line": 203,
                                     "column": 14
                                  },
                                  "end": {
-                                    "offset": 4984,
-                                    "line": 202,
+                                    "offset": 4985,
+                                    "line": 203,
                                     "column": 23
                                  }
                               },
@@ -1343,13 +1343,13 @@
                            "location": {
                               "source": "src/lib/cmd-args.peggy",
                               "start": {
-                                 "offset": 4970,
-                                 "line": 202,
+                                 "offset": 4971,
+                                 "line": 203,
                                  "column": 9
                               },
                               "end": {
-                                 "offset": 4984,
-                                 "line": 202,
+                                 "offset": 4985,
+                                 "line": 203,
                                  "column": 23
                               }
                            },
@@ -1359,13 +1359,13 @@
                      "location": {
                         "source": "src/lib/cmd-args.peggy",
                         "start": {
-                           "offset": 4965,
-                           "line": 202,
+                           "offset": 4966,
+                           "line": 203,
                            "column": 4
                         },
                         "end": {
-                           "offset": 4984,
-                           "line": 202,
+                           "offset": 4985,
+                           "line": 203,
                            "column": 23
                         }
                      },
@@ -1375,26 +1375,26 @@
                   "codeLocation": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4988,
-                        "line": 203,
+                        "offset": 4989,
+                        "line": 204,
                         "column": 4
                      },
                      "end": {
-                        "offset": 5022,
-                        "line": 203,
+                        "offset": 5023,
+                        "line": 204,
                         "column": 38
                      }
                   },
                   "location": {
                      "source": "src/lib/cmd-args.peggy",
                      "start": {
-                        "offset": 4965,
-                        "line": 202,
+                        "offset": 4966,
+                        "line": 203,
                         "column": 4
                      },
                      "end": {
-                        "offset": 5023,
-                        "line": 203,
+                        "offset": 5024,
+                        "line": 204,
                         "column": 39
                      }
                   },
@@ -1404,13 +1404,13 @@
             "location": {
                "source": "src/lib/cmd-args.peggy",
                "start": {
-                  "offset": 4833,
-                  "line": 196,
+                  "offset": 4834,
+                  "line": 197,
                   "column": 4
                },
                "end": {
-                  "offset": 5023,
-                  "line": 203,
+                  "offset": 5024,
+                  "line": 204,
                   "column": 39
                }
             },
@@ -1419,13 +1419,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4819,
-               "line": 194,
+               "offset": 4820,
+               "line": 195,
                "column": 1
             },
             "end": {
-               "offset": 5024,
-               "line": 204,
+               "offset": 5025,
+               "line": 205,
                "column": 1
             }
          },
@@ -1746,13 +1746,13 @@
          "nameLocation": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 5025,
-               "line": 205,
+               "offset": 5026,
+               "line": 206,
                "column": 1
             },
             "end": {
-               "offset": 5026,
-               "line": 205,
+               "offset": 5027,
+               "line": 206,
                "column": 2
             }
          },
@@ -1769,13 +1769,13 @@
                "location": {
                   "source": "src/lib/cmd-args.peggy",
                   "start": {
-                     "offset": 5031,
-                     "line": 207,
+                     "offset": 5032,
+                     "line": 208,
                      "column": 4
                   },
                   "end": {
-                     "offset": 5036,
-                     "line": 207,
+                     "offset": 5037,
+                     "line": 208,
                      "column": 9
                   }
                },
@@ -1784,13 +1784,13 @@
             "location": {
                "source": "src/lib/cmd-args.peggy",
                "start": {
-                  "offset": 5031,
-                  "line": 207,
+                  "offset": 5032,
+                  "line": 208,
                   "column": 4
                },
                "end": {
-                  "offset": 5037,
-                  "line": 207,
+                  "offset": 5038,
+                  "line": 208,
                   "column": 10
                }
             },
@@ -1799,13 +1799,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 5025,
-               "line": 205,
+               "offset": 5026,
+               "line": 206,
                "column": 1
             },
             "end": {
-               "offset": 5037,
-               "line": 207,
+               "offset": 5038,
+               "line": 208,
                "column": 10
             }
          },
@@ -1858,8 +1858,8 @@
          "column": 1
       },
       "end": {
-         "offset": 5037,
-         "line": 207,
+         "offset": 5038,
+         "line": 208,
          "column": 10
       }
    },
@@ -2002,13 +2002,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4634,
-               "line": 184,
+               "offset": 4635,
+               "line": 185,
                "column": 4
             },
             "end": {
-               "offset": 4668,
-               "line": 184,
+               "offset": 4669,
+               "line": 185,
                "column": 38
             }
          }
@@ -2023,13 +2023,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4727,
-               "line": 189,
+               "offset": 4728,
+               "line": 190,
                "column": 4
             },
             "end": {
-               "offset": 4765,
-               "line": 189,
+               "offset": 4766,
+               "line": 190,
                "column": 42
             }
          }
@@ -2043,13 +2043,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4788,
-               "line": 192,
+               "offset": 4789,
+               "line": 193,
                "column": 4
             },
             "end": {
-               "offset": 4816,
-               "line": 192,
+               "offset": 4817,
+               "line": 193,
                "column": 32
             }
          }
@@ -2063,13 +2063,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4859,
-               "line": 197,
+               "offset": 4860,
+               "line": 198,
                "column": 4
             },
             "end": {
-               "offset": 4893,
-               "line": 197,
+               "offset": 4894,
+               "line": 198,
                "column": 38
             }
          }
@@ -2083,13 +2083,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4925,
-               "line": 200,
+               "offset": 4926,
+               "line": 201,
                "column": 4
             },
             "end": {
-               "offset": 4959,
-               "line": 200,
+               "offset": 4960,
+               "line": 201,
                "column": 38
             }
          }
@@ -2103,13 +2103,13 @@
          "location": {
             "source": "src/lib/cmd-args.peggy",
             "start": {
-               "offset": 4988,
-               "line": 203,
+               "offset": 4989,
+               "line": 204,
                "column": 4
             },
             "end": {
-               "offset": 5022,
-               "line": 203,
+               "offset": 5023,
+               "line": 204,
                "column": 38
             }
          }
@@ -2119,195 +2119,208 @@
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4619,
-            "line": 183,
+            "offset": 4620,
+            "line": 184,
             "column": 11
          },
          "end": {
-            "offset": 4622,
-            "line": 183,
+            "offset": 4623,
+            "line": 184,
             "column": 14
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4619,
-            "line": 183,
+            "offset": 4620,
+            "line": 184,
             "column": 11
          },
          "end": {
-            "offset": 4622,
-            "line": 183,
+            "offset": 4623,
+            "line": 184,
             "column": 14
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4628,
-            "line": 183,
+            "offset": 4629,
+            "line": 184,
             "column": 20
          },
          "end": {
-            "offset": 4629,
-            "line": 183,
+            "offset": 4630,
+            "line": 184,
             "column": 21
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4619,
-            "line": 183,
+            "offset": 4620,
+            "line": 184,
             "column": 11
          },
          "end": {
-            "offset": 4630,
-            "line": 183,
+            "offset": 4631,
+            "line": 184,
             "column": 22
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4612,
-            "line": 183,
+            "offset": 4613,
+            "line": 184,
             "column": 4
          },
          "end": {
-            "offset": 4617,
-            "line": 183,
+            "offset": 4618,
+            "line": 184,
             "column": 9
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4612,
-            "line": 183,
+            "offset": 4613,
+            "line": 184,
             "column": 4
          },
          "end": {
-            "offset": 4630,
-            "line": 183,
+            "offset": 4631,
+            "line": 184,
             "column": 22
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4612,
-            "line": 183,
+            "offset": 4613,
+            "line": 184,
             "column": 4
          },
          "end": {
-            "offset": 4669,
-            "line": 184,
+            "offset": 4670,
+            "line": 185,
             "column": 39
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4679,
-            "line": 188,
+            "offset": 4680,
+            "line": 189,
             "column": 4
          },
          "end": {
-            "offset": 4682,
-            "line": 188,
+            "offset": 4683,
+            "line": 189,
             "column": 7
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4690,
-            "line": 188,
+            "offset": 4691,
+            "line": 189,
             "column": 15
          },
          "end": {
-            "offset": 4698,
-            "line": 188,
+            "offset": 4699,
+            "line": 189,
             "column": 23
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4690,
-            "line": 188,
+            "offset": 4691,
+            "line": 189,
             "column": 15
          },
          "end": {
-            "offset": 4699,
-            "line": 188,
+            "offset": 4700,
+            "line": 189,
             "column": 24
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4683,
-            "line": 188,
+            "offset": 4684,
+            "line": 189,
             "column": 8
          },
          "end": {
-            "offset": 4689,
-            "line": 188,
+            "offset": 4690,
+            "line": 189,
             "column": 14
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4683,
-            "line": 188,
+            "offset": 4684,
+            "line": 189,
             "column": 8
          },
          "end": {
-            "offset": 4699,
-            "line": 188,
+            "offset": 4700,
+            "line": 189,
             "column": 24
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4707,
-            "line": 188,
+            "offset": 4708,
+            "line": 189,
             "column": 32
          },
          "end": {
-            "offset": 4710,
-            "line": 188,
+            "offset": 4711,
+            "line": 189,
             "column": 35
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4712,
-            "line": 188,
+            "offset": 4713,
+            "line": 189,
             "column": 37
          },
          "end": {
-            "offset": 4721,
-            "line": 188,
+            "offset": 4722,
+            "line": 189,
             "column": 46
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4711,
-            "line": 188,
+            "offset": 4712,
+            "line": 189,
             "column": 36
          },
          "end": {
-            "offset": 4721,
-            "line": 188,
+            "offset": 4722,
+            "line": 189,
+            "column": 46
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4708,
+            "line": 189,
+            "column": 32
+         },
+         "end": {
+            "offset": 4722,
+            "line": 189,
             "column": 46
          }
       },
@@ -2315,545 +2328,532 @@
          "source": "src/lib/cmd-args.peggy",
          "start": {
             "offset": 4707,
-            "line": 188,
-            "column": 32
-         },
-         "end": {
-            "offset": 4721,
-            "line": 188,
-            "column": 46
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4706,
-            "line": 188,
+            "line": 189,
             "column": 31
          },
          "end": {
-            "offset": 4722,
-            "line": 188,
+            "offset": 4723,
+            "line": 189,
             "column": 47
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4706,
-            "line": 188,
+            "offset": 4707,
+            "line": 189,
             "column": 31
          },
          "end": {
-            "offset": 4723,
-            "line": 188,
+            "offset": 4724,
+            "line": 189,
             "column": 48
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4700,
-            "line": 188,
+            "offset": 4701,
+            "line": 189,
             "column": 25
          },
          "end": {
-            "offset": 4705,
-            "line": 188,
+            "offset": 4706,
+            "line": 189,
             "column": 30
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4700,
-            "line": 188,
+            "offset": 4701,
+            "line": 189,
             "column": 25
          },
          "end": {
-            "offset": 4723,
-            "line": 188,
-            "column": 48
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4679,
-            "line": 188,
-            "column": 4
-         },
-         "end": {
-            "offset": 4723,
-            "line": 188,
-            "column": 48
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4679,
-            "line": 188,
-            "column": 4
-         },
-         "end": {
-            "offset": 4766,
+            "offset": 4724,
             "line": 189,
+            "column": 48
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4680,
+            "line": 189,
+            "column": 4
+         },
+         "end": {
+            "offset": 4724,
+            "line": 189,
+            "column": 48
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4680,
+            "line": 189,
+            "column": 4
+         },
+         "end": {
+            "offset": 4767,
+            "line": 190,
             "column": 43
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4775,
-            "line": 191,
+            "offset": 4776,
+            "line": 192,
             "column": 8
          },
          "end": {
-            "offset": 4784,
-            "line": 191,
+            "offset": 4785,
+            "line": 192,
             "column": 17
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4771,
-            "line": 191,
+            "offset": 4772,
+            "line": 192,
             "column": 4
          },
          "end": {
-            "offset": 4774,
-            "line": 191,
+            "offset": 4775,
+            "line": 192,
             "column": 7
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4771,
-            "line": 191,
+            "offset": 4772,
+            "line": 192,
             "column": 4
          },
          "end": {
-            "offset": 4784,
-            "line": 191,
+            "offset": 4785,
+            "line": 192,
             "column": 17
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4771,
-            "line": 191,
+            "offset": 4772,
+            "line": 192,
             "column": 4
          },
          "end": {
-            "offset": 4817,
-            "line": 192,
+            "offset": 4818,
+            "line": 193,
             "column": 33
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4679,
-            "line": 188,
+            "offset": 4680,
+            "line": 189,
             "column": 4
          },
          "end": {
-            "offset": 4817,
-            "line": 192,
+            "offset": 4818,
+            "line": 193,
             "column": 33
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4833,
-            "line": 196,
-            "column": 4
-         },
-         "end": {
-            "offset": 4836,
-            "line": 196,
-            "column": 7
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4845,
-            "line": 196,
-            "column": 16
-         },
-         "end": {
-            "offset": 4849,
-            "line": 196,
-            "column": 20
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4845,
-            "line": 196,
-            "column": 16
-         },
-         "end": {
-            "offset": 4850,
-            "line": 196,
-            "column": 21
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4843,
-            "line": 196,
-            "column": 14
-         },
-         "end": {
-            "offset": 4850,
-            "line": 196,
-            "column": 21
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4838,
-            "line": 196,
-            "column": 9
-         },
-         "end": {
-            "offset": 4841,
-            "line": 196,
-            "column": 12
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4838,
-            "line": 196,
-            "column": 9
-         },
-         "end": {
-            "offset": 4850,
-            "line": 196,
-            "column": 21
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4852,
-            "line": 196,
-            "column": 23
-         },
-         "end": {
-            "offset": 4855,
-            "line": 196,
-            "column": 26
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4833,
-            "line": 196,
-            "column": 4
-         },
-         "end": {
-            "offset": 4855,
-            "line": 196,
-            "column": 26
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4833,
-            "line": 196,
-            "column": 4
-         },
-         "end": {
-            "offset": 4894,
+            "offset": 4834,
             "line": 197,
-            "column": 39
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4899,
-            "line": 199,
             "column": 4
          },
          "end": {
-            "offset": 4902,
-            "line": 199,
+            "offset": 4837,
+            "line": 197,
             "column": 7
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4911,
-            "line": 199,
+            "offset": 4846,
+            "line": 197,
             "column": 16
          },
          "end": {
-            "offset": 4915,
-            "line": 199,
+            "offset": 4850,
+            "line": 197,
             "column": 20
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4911,
-            "line": 199,
+            "offset": 4846,
+            "line": 197,
             "column": 16
          },
          "end": {
-            "offset": 4916,
-            "line": 199,
+            "offset": 4851,
+            "line": 197,
             "column": 21
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4909,
-            "line": 199,
+            "offset": 4844,
+            "line": 197,
             "column": 14
          },
          "end": {
-            "offset": 4916,
-            "line": 199,
+            "offset": 4851,
+            "line": 197,
             "column": 21
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4904,
-            "line": 199,
+            "offset": 4839,
+            "line": 197,
             "column": 9
          },
          "end": {
-            "offset": 4907,
-            "line": 199,
+            "offset": 4842,
+            "line": 197,
             "column": 12
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4904,
-            "line": 199,
+            "offset": 4839,
+            "line": 197,
             "column": 9
          },
          "end": {
-            "offset": 4916,
-            "line": 199,
+            "offset": 4851,
+            "line": 197,
             "column": 21
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4918,
-            "line": 199,
+            "offset": 4853,
+            "line": 197,
             "column": 23
          },
          "end": {
-            "offset": 4921,
-            "line": 199,
+            "offset": 4856,
+            "line": 197,
             "column": 26
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4899,
-            "line": 199,
+            "offset": 4834,
+            "line": 197,
             "column": 4
          },
          "end": {
-            "offset": 4921,
-            "line": 199,
+            "offset": 4856,
+            "line": 197,
             "column": 26
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4899,
-            "line": 199,
+            "offset": 4834,
+            "line": 197,
             "column": 4
          },
          "end": {
-            "offset": 4960,
-            "line": 200,
+            "offset": 4895,
+            "line": 198,
             "column": 39
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4900,
+            "line": 200,
+            "column": 4
+         },
+         "end": {
+            "offset": 4903,
+            "line": 200,
+            "column": 7
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4912,
+            "line": 200,
+            "column": 16
+         },
+         "end": {
+            "offset": 4916,
+            "line": 200,
+            "column": 20
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4912,
+            "line": 200,
+            "column": 16
+         },
+         "end": {
+            "offset": 4917,
+            "line": 200,
+            "column": 21
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4910,
+            "line": 200,
+            "column": 14
+         },
+         "end": {
+            "offset": 4917,
+            "line": 200,
+            "column": 21
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4905,
+            "line": 200,
+            "column": 9
+         },
+         "end": {
+            "offset": 4908,
+            "line": 200,
+            "column": 12
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4905,
+            "line": 200,
+            "column": 9
+         },
+         "end": {
+            "offset": 4917,
+            "line": 200,
+            "column": 21
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4919,
+            "line": 200,
+            "column": 23
+         },
+         "end": {
+            "offset": 4922,
+            "line": 200,
+            "column": 26
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4900,
+            "line": 200,
+            "column": 4
+         },
+         "end": {
+            "offset": 4922,
+            "line": 200,
+            "column": 26
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4900,
+            "line": 200,
+            "column": 4
+         },
+         "end": {
+            "offset": 4961,
+            "line": 201,
+            "column": 39
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 4967,
+            "line": 203,
+            "column": 5
+         },
+         "end": {
+            "offset": 4970,
+            "line": 203,
+            "column": 8
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
             "offset": 4966,
-            "line": 202,
-            "column": 5
-         },
-         "end": {
-            "offset": 4969,
-            "line": 202,
-            "column": 8
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 4965,
-            "line": 202,
+            "line": 203,
             "column": 4
          },
          "end": {
-            "offset": 4969,
-            "line": 202,
+            "offset": 4970,
+            "line": 203,
             "column": 8
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4977,
-            "line": 202,
+            "offset": 4978,
+            "line": 203,
             "column": 16
          },
          "end": {
-            "offset": 4983,
-            "line": 202,
+            "offset": 4984,
+            "line": 203,
             "column": 22
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4977,
-            "line": 202,
+            "offset": 4978,
+            "line": 203,
             "column": 16
          },
          "end": {
-            "offset": 4984,
-            "line": 202,
+            "offset": 4985,
+            "line": 203,
             "column": 23
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4975,
-            "line": 202,
+            "offset": 4976,
+            "line": 203,
             "column": 14
          },
          "end": {
-            "offset": 4984,
-            "line": 202,
+            "offset": 4985,
+            "line": 203,
             "column": 23
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4970,
-            "line": 202,
+            "offset": 4971,
+            "line": 203,
             "column": 9
          },
          "end": {
-            "offset": 4973,
-            "line": 202,
+            "offset": 4974,
+            "line": 203,
             "column": 12
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4970,
-            "line": 202,
+            "offset": 4971,
+            "line": 203,
             "column": 9
          },
          "end": {
-            "offset": 4984,
-            "line": 202,
+            "offset": 4985,
+            "line": 203,
             "column": 23
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4965,
-            "line": 202,
+            "offset": 4966,
+            "line": 203,
             "column": 4
          },
          "end": {
-            "offset": 4984,
-            "line": 202,
+            "offset": 4985,
+            "line": 203,
             "column": 23
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4965,
-            "line": 202,
+            "offset": 4966,
+            "line": 203,
             "column": 4
          },
          "end": {
-            "offset": 5023,
-            "line": 203,
+            "offset": 5024,
+            "line": 204,
             "column": 39
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 4833,
-            "line": 196,
+            "offset": 4834,
+            "line": 197,
             "column": 4
          },
          "end": {
-            "offset": 5023,
-            "line": 203,
+            "offset": 5024,
+            "line": 204,
             "column": 39
          }
       },
       {
          "source": "src/lib/cmd-args.peggy",
          "start": {
-            "offset": 5031,
-            "line": 207,
-            "column": 4
-         },
-         "end": {
-            "offset": 5036,
-            "line": 207,
-            "column": 9
-         }
-      },
-      {
-         "source": "src/lib/cmd-args.peggy",
-         "start": {
-            "offset": 5031,
-            "line": 207,
+            "offset": 5032,
+            "line": 208,
             "column": 4
          },
          "end": {
             "offset": 5037,
-            "line": 207,
+            "line": 208,
+            "column": 9
+         }
+      },
+      {
+         "source": "src/lib/cmd-args.peggy",
+         "start": {
+            "offset": 5032,
+            "line": 208,
+            "column": 4
+         },
+         "end": {
+            "offset": 5038,
+            "line": 208,
             "column": 10
          }
       }

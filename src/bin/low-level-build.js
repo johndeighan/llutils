@@ -43,24 +43,14 @@ import {
 } from '@jdeighan/llutils/fs';
 
 import {
-  brew
-} from '@jdeighan/llutils/llcoffee';
-
-import {
-  bless,
-  cieloPreProcess
-} from '@jdeighan/llutils/cielo';
-
-import {
   peggify
 } from '@jdeighan/llutils/peggy';
 
 import {
+  procFiles,
+  brew,
+  cieloPreProcess,
   sveltify
-} from '@jdeighan/llutils/svelte-utils';
-
-import {
-  procFiles
 } from '@jdeighan/llutils/file-processor';
 
 hFileTypes = {
@@ -139,7 +129,7 @@ for (i = 0, len = ref.length; i < len; i++) {
   };
   n = 0;
   // --- possible options: force, debug, logOnly, echo
-  n = procFiles(`${root}/**/*${ext}`, outExt, lFuncs);
+  n = procFiles(`${root}/**/*${ext}`, lFuncs, outExt);
   hFileTypes[ext].numProcessed = n;
 }
 
@@ -227,7 +217,7 @@ if (watch) {
     switch (eventType) {
       case 'add':
       case 'change':
-        return procFiles(path, outExt, lFuncs);
+        return procFiles(path, lFuncs, outExt);
       case 'unlink':
         return execCmd(`rm ${withExt(path, outExt)}`);
     }

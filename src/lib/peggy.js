@@ -62,7 +62,7 @@ import {
 
 import {
   brew
-} from '@jdeighan/llutils/llcoffee';
+} from '@jdeighan/llutils/file-processor';
 
 import {
   PLLFetcher
@@ -111,7 +111,7 @@ export var getSource = (filePath) => {
 };
 
 // ---------------------------------------------------------------------------
-// --- Only creates the parser
+// --- Only creates the parser as a *.js file
 export var peggify = (code, hMetaData = {}) => {
   var allCode, allowedStartRules, byteCodeWriter, debug, debugAllCode, debugPreProcess, dumpAST, err, filePath, hMD, hOptions, i, include, input, j, jsCode, len, len1, map, opDumper, path, peggyCode, source, sourceMap, sourceNode, text, trace, type;
   assert(isString(code), `code not a string: ${typeof code}`);
@@ -283,12 +283,16 @@ export var meSplitter = (str) => {
 
 // ---------------------------------------------------------------------------
 export var PreProcessPeggy = (code, hMetaData) => {
+  debugger;
   var argStr, ch, coffeeCode, debug, funcName, getMatchExpr, hRules, headerSection, initSection, lVars, level, line, matchExpr, name, peggyCode, rulesSection, sm, src, type;
   assert(isString(code), `not a string: ${typeof code}`);
   ({type, debug} = getOptions(hMetaData, {
     type: 'coffee',
     debug: false
   }));
+  if (notdefined(type)) {
+    return code;
+  }
   src = new PLLFetcher(code);
   if (debug) {
     src.dump('ALL CODE');
@@ -301,16 +305,16 @@ export var PreProcessPeggy = (code, hMetaData) => {
     
     // --- 'header' will be CoffeeScript code
     header: (block) => {
-      var err, js, sourceMap;
+      var err, sourceMap;
       try {
-        ({js, sourceMap} = hCodeConverters[type](block));
+        ({code, sourceMap} = hCodeConverters[type](block));
       } catch (error) {
         err = error;
         console.log(`ERROR: Unable to convert ${OL(type)} code to JS`);
         console.log(err);
-        js = '';
+        code = '';
       }
-      return ['{{', indented(js), '}}'].join("\n");
+      return ['{{', indented(code), '}}'].join("\n");
     },
     // --- 'init' section will already be JavaScript
     init: (block) => {
@@ -413,7 +417,7 @@ ${block}
 };
 
 // ---------------------------------------------------------------------------
-// --- a converter should return {js: jsCode, sourceMap: srcMap}
+// --- a converter should return {code: jsCode, sourceMap: srcMap}
 export var addCodeConverter = (name, func) => {
   assert(isString(name, {
     nonEmpty: true
@@ -436,7 +440,7 @@ export var getParser = async(filePath, hOptions = {}) => {
   }
   assert(isFile(fullPath), `No such file: ${OL(filePath)}`);
   assert(fileExt(fullPath) === '.peggy', `Not a peggy file: ${OL(filePath)}`);
-  procFiles(fullPath, '.js', [peggify]);
+  procFiles(fullPath, peggify, '.js');
   jsFilePath = withExt(filePath, '.js');
   if (debug) {
     console.log(`JS file = ${OL(jsFilePath)}`);

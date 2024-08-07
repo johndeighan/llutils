@@ -37,7 +37,6 @@ export var sveltify = (code, hMetaData = {}) => {
     code = str + "\n" + code;
   }
   hResult = compile(code, hMetaData);
-  //	console.dir hResult
   hResult.code = hResult.js.code;
   return hResult;
 };

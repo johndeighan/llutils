@@ -144,7 +144,7 @@ like parsePath('./test/fs/file.test.txt'), {
 # ---------------------------------------------------------------------------
 #symbol "pathTo(fileName)"
 
-equal mkpath(pathTo('cielo.coffee')), mkpath("src/lib/cielo.coffee")
+equal mkpath(pathTo('llutils.coffee')), mkpath("src/lib/llutils.coffee")
 
 # ---------------------------------------------------------------------------
 #symbol "allPathsTo(fileName)"

@@ -12,4 +12,4 @@ import {procFiles} from '@jdeighan/llutils/file-processor'
 
 # ---------------------------------------------------------------------------
 
-procFiles '**/*.peggy', '.js', peggify
+procFiles '**/*.peggy', peggify, '.js'

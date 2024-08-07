@@ -79,6 +79,7 @@
 	};
 
 
+
 	var init, parse__identifier__1, parse__program__1, parse__stmt__1, parse__stmt__2;
 
 	import {
@@ -145,6 +146,7 @@
 	parse__identifier__1 = (str) => {
 	  return str;
 	};
+
 
 function peg$subclass(child, parent) {
   function C() { this.constructor = child; }

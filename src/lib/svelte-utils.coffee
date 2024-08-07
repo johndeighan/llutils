@@ -23,7 +23,6 @@ export sveltify = (code, hMetaData={}) =>
 		str = "<svelte:options customElement=#{OL(elem)}/>"
 		code = str + "\n" + code
 	hResult = compile code, hMetaData
-#	console.dir hResult
 	hResult.code = hResult.js.code
 	return hResult
 
