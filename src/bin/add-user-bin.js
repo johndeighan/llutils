@@ -2,7 +2,7 @@
 // add-user-bin.coffee
 
 // --- Add a new binary executable file to an existing project
-var i, lLibs, len, lib, node;
+var bin, i, lBins, len, node;
 
 import {
   isEmpty
@@ -22,20 +22,25 @@ import {
 
 ({
   // ---------------------------------------------------------------------------
-  // --- If libs aren't specified on the command line,
+  // --- If bins aren't specified on the command line,
   //     they are prompted for
-  _: lLibs
-} = getArgs());
+  _: lBins
+} = getArgs({
+  _: {
+    min: 0,
+    max: 2e308
+  }
+}));
 
 node = new NodeEnv();
 
-if (isEmpty(lLibs)) {
-  lLibs = (await promptForNames('New binary name (Enter to end)'));
+if (isEmpty(lBins)) {
+  lBins = (await promptForNames('New binary name (Enter to end)'));
 }
 
-for (i = 0, len = lLibs.length; i < len; i++) {
-  lib = lLibs[i];
-  node.addUserBin(lib);
+for (i = 0, len = lBins.length; i < len; i++) {
+  bin = lBins[i];
+  node.addUserBin(bin);
 }
 
 node.write_pkg_json();

@@ -25,7 +25,12 @@ import {
   // --- If libs aren't specified on the command line,
   //     they are prompted for
   _: lLibs
-} = getArgs());
+} = getArgs({
+  _: {
+    min: 0,
+    max: 2e308
+  }
+}));
 
 node = new NodeEnv();
 

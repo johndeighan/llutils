@@ -5,9 +5,10 @@
 import chokidar from 'chokidar'
 
 import {
-	undef, defined, notdefined, assert, npmLogLevel, hasKey, keys,
-	isEmpty, nonEmpty, add_s, OL, execCmd, gen2block,
+	undef, defined, notdefined, assert, hasKey, keys,
+	isEmpty, nonEmpty, add_s, OL, gen2block, tla,
 	} from '@jdeighan/llutils'
+import {execCmd, npmLogLevel} from '@jdeighan/llutils/exec-utils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
 	isProjRoot, barfJSON, barfPkgJSON, isFile, barf,
@@ -65,10 +66,10 @@ assert isProjRoot('.', 'strict'), "Not in package root dir"
 		min: 0
 		max: 1
 		}
-	e: 'boolean'
-	f: 'boolean'
-	w: 'boolean'
-	root: 'string'
+	e: {type: 'boolean'}
+	f: {type: 'boolean'}
+	w: {type: 'boolean'}
+	root: {type: 'string'}
 	}
 
 if notdefined(root)
@@ -95,23 +96,6 @@ for ext in keys(hFileTypes)
 # ---------------------------------------------------------------------------
 
 hBin = {}    # --- keys to add in package.json / bin
-
-# ---------------------------------------------------------------------------
-# --- generate a 3 letter acronym if file stub is <str>-<str>-<str>
-
-tla = (stub) =>
-
-	if lMatches = stub.match(///^
-			([a-z])(?:[a-z]*)
-			\-
-			([a-z])(?:[a-z]*)
-			\-
-			([a-z])(?:[a-z]*)
-			$///)
-		[_, a, b, c] = lMatches
-		return a + b + c
-	else
-		return undef
 
 # ---------------------------------------------------------------------------
 # 4. For every *.js file in the 'src/bin' directory

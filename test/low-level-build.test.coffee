@@ -1,8 +1,9 @@
 # low-level-build.test.coffee
 
 import {
-	undef, defined, notdefined, execCmd,
+	undef, defined, notdefined,
 	} from '@jdeighan/llutils'
+import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {deleteFilesMatching} from '@jdeighan/llutils/fs'
 import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)

@@ -1,25 +1,16 @@
   // llutils.coffee
-var deepEqual, execAsync, module, warnOnly,
+var deepEqual, module, warnOnly,
   hasProp = {}.hasOwnProperty;
 
 import assertLib from 'node:assert';
-
-import {
-  exec,
-  execSync
-} from 'node:child_process';
-
-import {
-  promisify
-} from 'node:util';
-
-execAsync = promisify(exec);
 
 import YAML from 'yaml';
 
 module = (await import('deep-equal'));
 
 deepEqual = module.default;
+
+import pathLib from 'node:path';
 
 export const undef = void 0;
 
@@ -623,44 +614,6 @@ export var nonEmpty = (x) => {
 };
 
 // ---------------------------------------------------------------------------
-export var execCmd = (cmdLine, hOptions = {}) => {
-  var result;
-  // --- may throw an exception
-  hOptions = getOptions(hOptions, {
-    encoding: 'utf8',
-    windowsHide: true
-  });
-  result = execSync(cmdLine, hOptions);
-  assert(defined(result), "undef return from execSync()");
-  result = result.toString();
-  assert(defined(result), "undef return from execSync()");
-  return result;
-};
-
-// ---------------------------------------------------------------------------
-export var execAndLogCmd = (cmdLine, hOptions = {}) => {
-  var result;
-  // --- may throw an exception
-  hOptions = getOptions(hOptions, {
-    encoding: 'utf8',
-    windowsHide: true
-  });
-  result = execSync(cmdLine, hOptions).toString();
-  console.log(result);
-  return result;
-};
-
-// ---------------------------------------------------------------------------
-export var execCmdAsync = (cmdLine, hOptions = {}) => {
-  // --- may throw an exception
-  hOptions = getOptions(hOptions, {
-    encoding: 'utf8',
-    windowsHide: true
-  });
-  return execAsync(cmdLine, hOptions);
-};
-
-// ---------------------------------------------------------------------------
 export var chomp = (str) => {
   var len;
   // --- Remove trailing \n if present
@@ -717,13 +670,6 @@ export var removeKeys = (item, lKeys) => {
 };
 
 // ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-export var npmLogLevel = () => {
-  var result;
-  result = execCmd('npm config get loglevel');
-  return chomp(result);
-};
-
 // ---------------------------------------------------------------------------
 export var blockToArray = (block) => {
   assert(isString(block), `block is: ${typeof block}`);
@@ -1095,6 +1041,14 @@ export var sortedArrayOfHashes = (lHashes, key) => {
 };
 
 // ---------------------------------------------------------------------------
+export var cmdScriptName = () => {
+  var short, stub;
+  stub = pathLib.parse(process.argv[1]).name;
+  short = tla(stub);
+  return short || stub;
+};
+
+// ---------------------------------------------------------------------------
 export var cmdArgStr = (lArgs = undef) => {
   if (isString(lArgs)) {
     return lArgs;
@@ -1121,6 +1075,18 @@ export var cmdArgStr = (lArgs = undef) => {
       return str;
     }
   }).join(' ');
+};
+
+// ---------------------------------------------------------------------------
+// --- generate a 3 letter acronym if file stub is <str>-<str>-<str>
+export var tla = (stub) => {
+  var _, a, b, c, lMatches;
+  if (lMatches = stub.match(/^([a-z])(?:[a-z]*)\-([a-z])(?:[a-z]*)\-([a-z])(?:[a-z]*)$/)) {
+    [_, a, b, c] = lMatches;
+    return a + b + c;
+  } else {
+    return undef;
+  }
 };
 
 // ---------------------------------------------------------------------------

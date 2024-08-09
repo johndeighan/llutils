@@ -12,7 +12,6 @@ import {
   defined,
   notdefined,
   OL,
-  execCmdAsync,
   stripCR,
   isString,
   sortArrayOfHashes,
@@ -20,6 +19,10 @@ import {
   croak,
   LOG
 } from '@jdeighan/llutils';
+
+import {
+  execCmdAsync
+} from '@jdeighan/llutils/exec-utils';
 
 import {
   DUMP
@@ -43,8 +46,12 @@ hCmdArgs = getArgs({
   _: {
     min: 1 // --- file paths or globs
   },
-  cmd: 'string', // --- internal '<file>' will be replaced with file path
-  d: 'boolean'
+  cmd: {
+    type: 'string' // --- '<file>' will be replaced with file path
+  },
+  d: {
+    type: 'boolean'
+  }
 });
 
 ({
@@ -71,7 +78,7 @@ handleFile = (filePath) => {
     hRec.cmd = cmdStr.replaceAll('<file>', filePath);
     if (!debug) {
       try {
-        // --- execCmd() returns a promise
+        // --- execCmdAsync() returns a promise
         hRec.promise = execCmdAsync(hRec.cmd);
       } catch (error) {
         err = error;

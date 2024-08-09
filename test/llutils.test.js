@@ -1,5 +1,5 @@
 // llutils.test.coffee
-var Dummy, NewClass, b, c, f, g, h, hAST, hAST2, hash, i, l, logLevel, n, o, p, r, s, str;
+var Dummy, NewClass, b, c, f, g, h, hAST, hAST2, hash, i, l, n, o, p, r, s, str;
 
 import * as lib from '@jdeighan/llutils';
 
@@ -449,10 +449,6 @@ falsy(nonEmpty([]));
 falsy(nonEmpty({}));
 
 // ---------------------------------------------------------------------------
-//symbol "execCmd(str)"    # --- execute a command
-equal(execCmd('echo this'), "this\r\n");
-
-// ---------------------------------------------------------------------------
 //symbol "chomp(str)"    # --- remove trailing \r and/or \n
 equal(chomp("abc\n"), "abc");
 
@@ -579,12 +575,6 @@ equal(removeKeys(hAST2, ['start', 'end']), {
   sourceType: 'script',
   type: 'Program'
 });
-
-// ---------------------------------------------------------------------------
-//symbol "npmLogLevel()"    # --- get NPM log level
-logLevel = npmLogLevel();
-
-truthy((logLevel === 'silent') || (logLevel === 'warn'));
 
 // ---------------------------------------------------------------------------
 //symbol "blockToArray(block)"    # --- split string on \r?\n
@@ -991,5 +981,9 @@ truthy(setsAreEqual(new Set([1, 2, 3]), new Set([1, 3, 2])));
 falsy(setsAreEqual(new Set([1, 2, 3]), new Set([1, 2, 4])));
 
 falsy(setsAreEqual(new Set([1, 2, 3]), new Set([1, 2, 3, 4])));
+
+// ---------------------------------------------------------------------------
+//symbol tla(stub)
+equal(tla('low-level-build'), 'llb');
 
 //# sourceMappingURL=llutils.test.js.map

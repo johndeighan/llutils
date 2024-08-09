@@ -4,9 +4,12 @@ var bin, root, str;
 import {
   undef,
   defined,
-  notdefined,
-  execCmd
+  notdefined
 } from '@jdeighan/llutils';
+
+import {
+  execCmd
+} from '@jdeighan/llutils/exec-utils';
 
 import {
   deleteFilesMatching

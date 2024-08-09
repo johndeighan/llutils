@@ -10,9 +10,12 @@ import {
   OL,
   getOptions,
   assert,
-  execCmd,
   words
 } from '@jdeighan/llutils';
+
+import {
+  execCmd
+} from '@jdeighan/llutils/exec-utils';
 
 import {
   BOX
@@ -31,32 +34,34 @@ import {
   touch
 } from '@jdeighan/llutils/fs';
 
-lValidTypes = words('electron codemirror parcel vite none');
+lValidTypes = ['electron', 'codemirror', 'parcel', 'vite', 'none'];
 
 type = 'none';
 
 // ---------------------------------------------------------------------------
-export var checkIfInstalled = (cmd) => {
-  var err, output;
-  try {
-    output = execCmd(`${cmd} --version`);
-    return output;
-  } catch (error) {
-    err = error;
-    console.log(`ERROR ${cmd} is not installed`);
-    return process.exit();
+export var checkIfInstalled = (...lCmds) => {
+  var cmd, err, i, len, output;
+  for (i = 0, len = lCmds.length; i < len; i++) {
+    cmd = lCmds[i];
+    try {
+      output = execCmd(`${cmd} --version`);
+      return output;
+    } catch (error) {
+      err = error;
+      console.log(`ERROR ${cmd} is not installed`);
+      process.exit();
+    }
   }
 };
 
 // ---------------------------------------------------------------------------
 export var setProjType = (t) => {
-  if (t === 'vite') {
-    console.log("Type 'vite' not implemented yet");
-    process.exit();
+  if (t === 'website') {
+    type = 'parcel'; // default web site type
   }
   assert(defined(t), "type is undef");
+  assert(lValidTypes.includes(t), `Bad type: ${OL(t)}`);
   type = t;
-  assert(lValidTypes.includes(type), `Bad type: ${OL(type)}`);
 };
 
 // ---------------------------------------------------------------------------
@@ -64,16 +69,12 @@ export var setProjType = (t) => {
 //     when type is 'codemirror'
 export var isOfType = (t) => {
   switch (t) {
-    case 'parcel':
-      return type === 'parcel';
     case 'electron':
       return (type === 'electron') || (type === 'codemirror');
-    case 'codemirror':
-      return type === 'codemirror';
     case 'website':
       return (type === 'parcel') || (type === 'vite');
     default:
-      return false;
+      return type === t;
   }
 };
 
@@ -192,18 +193,21 @@ export var promptForNames = async(prompt, valFunc = undef) => {
 };
 
 // ---------------------------------------------------------------------------
-export var typeSpecificSetup = (node) => {
+export var typeSpecificSetup = (nodeEnv) => {
   if (isOfType('website')) {
-    setUpWebSite(node);
+    setUpWebSite(nodeEnv);
   }
   if (isOfType('parcel')) {
-    setUpParcel(node);
+    setUpParcel(nodeEnv);
+  }
+  if (isOfType('vite')) {
+    setUpVite(nodeEnv);
   }
   if (isOfType('electron')) {
-    setUpElectron(node);
+    setUpElectron(nodeEnv);
   }
   if (isOfType('codemirror')) {
-    setUpCodeMirror(node);
+    setUpCodeMirror(nodeEnv);
   }
 };
 
@@ -216,7 +220,7 @@ export var setUpWebSite = (node) => {
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>Parcel App</title>
+		<title>Web Site</title>
 	</head>
 	<body>
 		<h1>Hello, World!</h1>
@@ -228,16 +232,30 @@ export var setUpWebSite = (node) => {
 export var setUpParcel = (node) => {
   node.addDevDependency('parcel');
   node.setField('source', 'src/index.html');
-  node.addScript('dev', 'run-p "llb -w" parcel');
-  node.addScript('build', 'run-p llb "parcel build"');
+  node.addScript('dev', 'concurrently "llb -w" "parcel"');
+  node.addScript('build', 'llb && parcel build');
 };
 
 // ---------------------------------------------------------------------------
 export var setUpVite = (node) => {
   node.addDevDependency('vite');
+  node.addDevDependency('vite-plugin-top-level-await');
   node.setField('source', 'src/index.html');
-  node.addScript('dev', 'llb -w && vite');
+  node.addScript('dev', 'concurrently "llb -w" "vite -c src/vite.config.js src"');
   node.addScript('build', 'llb && vite build');
+  barf(`import topLevelAwait from "vite-plugin-top-level-await";
+
+export default {
+	build: {
+		target: 'esnext'
+		},
+	plugins: [
+		topLevelAwait({
+			promiseExportName: "__tla",
+			promiseImportName: i => \`__tla_\${i}\`
+			})
+		]
+	}`, "./src/vite.config.js");
 };
 
 // ---------------------------------------------------------------------------

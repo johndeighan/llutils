@@ -37,9 +37,9 @@ hDesc = {
 		min: 1
 		max: 3
 		}
-	a: 'boolean'
-	b: 'boolean'
-	cd: 'string'
+	a: {type: 'boolean'}
+	b: {type: 'boolean'}
+	cd: {type: 'string'}
 	}
 
 equal getArgs(hDesc, {args: '-ab -cd=why letmein'}), {

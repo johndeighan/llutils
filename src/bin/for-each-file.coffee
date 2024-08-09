@@ -6,9 +6,10 @@
 #        that would be executed
 
 import {
-	undef, defined, notdefined, OL, execCmdAsync, stripCR,
+	undef, defined, notdefined, OL, stripCR,
 	isString, sortArrayOfHashes, assert, croak, LOG,
 	} from '@jdeighan/llutils'
+import {execCmdAsync} from '@jdeighan/llutils/exec-utils'
 import {DUMP} from '@jdeighan/llutils/dump'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
@@ -23,8 +24,10 @@ hCmdArgs = getArgs {
 	_: {
 		min: 1   # --- file paths or globs
 		}
-	cmd: 'string'   # --- internal '<file>' will be replaced with file path
-	d: 'boolean'
+	cmd: {
+		type: 'string'   # --- '<file>' will be replaced with file path
+		}
+	d: {type: 'boolean'}
 	}
 
 {_: lGlobs, cmd: cmdStr, d: debug} = hCmdArgs
@@ -50,7 +53,7 @@ handleFile = (filePath) =>
 		hRec.cmd = cmdStr.replaceAll('<file>', filePath)
 		if ! debug
 			try
-				# --- execCmd() returns a promise
+				# --- execCmdAsync() returns a promise
 				hRec.promise = execCmdAsync(hRec.cmd)
 
 			catch err

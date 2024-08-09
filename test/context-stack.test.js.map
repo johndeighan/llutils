@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "context-stack.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\context-stack.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAA2B;AAAA,IAAA,KAAA,EAAA,MAAA,EAAA,KAAA,EAAA;;AAE3B,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;CAAA,MAAA;;AAGA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EAR2B;;;AAY3B,KAAA,GAAQ;EACP,CAAA,EAAG,EADI;EAEP,CAAA,EAAG;AAFI;;AAKR,MAAA,GAAS;EACR,CAAA,EAAG,CADK;EAER,CAAA,EAAG;AAFK;;AAKT,KAAA,GAAQ;EAAC;IAAC,GAAA,EAAK;EAAN,CAAD;EAAW;IAAC,GAAA,EAAK;EAAN,CAAX;;;AAER,KAAA,GAAQ,IAAI,YAAJ,CAAiB,KAAjB;;AACR,KAAA,CAAM,KAAK,CAAC,WAAN,CAAA,CAAN,EAA2B,MAA3B;;AACA,KAAA,CAAM,KAAK,CAAC,OAAN,CAAA,CAAN,EAAuB,KAAvB;;AAEA,KAAK,CAAC,GAAN,CAAU,MAAV;;AACA,KAAA,CAAM,KAAK,CAAC,WAAN,CAAA,CAAN,EAA2B,MAA3B;;AAEA,KAAK,CAAC,GAAN,CAAU,KAAV;;AACA,KAAA,CAAM,KAAK,CAAC,WAAN,CAAA,CAAN,EAA2B,OAA3B;;AAEA,KAAK,CAAC,GAAN,CAAA;;AACA,KAAA,CAAM,KAAK,CAAC,WAAN,CAAA,CAAN,EAA2B,MAA3B;;AACA,KAAA,CAAM,KAAK,CAAC,OAAN,CAAA,CAAN,EAAuB,MAAvB;;AAEA,KAAK,CAAC,GAAN,CAAA;;AACA,KAAA,CAAM,KAAK,CAAC,WAAN,CAAA,CAAN,EAA2B,MAA3B;;AACA,KAAA,CAAM,KAAK,CAAC,OAAN,CAAA,CAAN,EAAuB,KAAvB",
+  "sourcesContent": [
+    "# context-stack.test.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined,\r\n\t} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/context-stack'\r\nObject.assign(global, lib)\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nhVars = {\r\n\ta: 42\r\n\tb: 13\r\n\t}\r\n\r\nhVars2 = {\r\n\tx: 1\r\n\ty: 2\r\n\t}\r\n\r\nlVars = [{abc: 3}, {def: 4}]\r\n\r\nstack = new ContextStack(hVars)\r\nequal stack.currentType(), 'hash'\r\nequal stack.current(), hVars\r\n\r\nstack.add hVars2\r\nequal stack.currentType(), 'hash'\r\n\r\nstack.add lVars\r\nequal stack.currentType(), 'array'\r\n\r\nstack.pop()\r\nequal stack.currentType(), 'hash'\r\nequal stack.current(), hVars2\r\n\r\nstack.pop()\r\nequal stack.currentType(), 'hash'\r\nequal stack.current(), hVars\r\n"
+  ]
+}

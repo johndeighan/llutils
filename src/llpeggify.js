@@ -8,8 +8,7 @@ import {
 import {
   undef,
   defined,
-  OL,
-  execCmd
+  OL
 } from '@jdeighan/llutils';
 
 import {

@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "proj-utils.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\proj-utils.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAwB;AAExB,OAAA;EAAQ,KAAR;CAAA,MAAA;;AACA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EANwB;;;AAUxB,QAAA,CAAS,CAAA,CAAA,GAAA;SAAM,gBAAA,CAAiB,MAAjB;AAAN,CAAT;;AACA,QAAA,CAAS,CAAA,CAAA,GAAA;SAAM,gBAAA,CAAiB,KAAjB;AAAN,CAAT;;AAEA,WAAA,CAAY,QAAZ;;AACA,MAAA,CAAO,QAAA,CAAS,QAAT,CAAP;;AACA,MAAA,CAAO,QAAA,CAAS,SAAT,CAAP",
+  "sourcesContent": [
+    "# proj-utils.test.coffee\r\n\r\nimport {undef} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/proj-utils'\r\nObject.assign(global, lib)\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nsucceeds () => checkIfInstalled('node')\r\nsucceeds () => checkIfInstalled('npm')\r\n\r\nsetProjType('parcel')\r\ntruthy isOfType('parcel')\r\ntruthy isOfType('website')\r\n\r\n"
+  ]
+}

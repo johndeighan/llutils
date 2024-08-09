@@ -322,11 +322,6 @@ falsy nonEmpty([])
 falsy nonEmpty({})
 
 # ---------------------------------------------------------------------------
-#symbol "execCmd(str)"    # --- execute a command
-
-equal execCmd('echo this'), "this\r\n"
-
-# ---------------------------------------------------------------------------
 #symbol "chomp(str)"    # --- remove trailing \r and/or \n
 
 equal chomp("abc\n"), "abc"
@@ -412,12 +407,6 @@ equal(
 	sourceType: 'script',
 	type: 'Program',
 	})
-
-# ---------------------------------------------------------------------------
-#symbol "npmLogLevel()"    # --- get NPM log level
-
-logLevel = npmLogLevel()
-truthy (logLevel == 'silent') || (logLevel == 'warn')
 
 # ---------------------------------------------------------------------------
 #symbol "blockToArray(block)"    # --- split string on \r?\n
@@ -784,3 +773,8 @@ equal cleanHash({a:1, b:undef, c:[], d:{}, e:'   '}), {a:1}
 truthy setsAreEqual(new Set([1,2,3]), new Set([1,3,2]))
 falsy  setsAreEqual(new Set([1,2,3]), new Set([1,2,4]))
 falsy  setsAreEqual(new Set([1,2,3]), new Set([1,2,3,4]))
+
+# ---------------------------------------------------------------------------
+#symbol tla(stub)
+
+equal tla('low-level-build'), 'llb'

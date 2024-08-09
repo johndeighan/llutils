@@ -5,8 +5,9 @@ import test from 'ava'
 import {
 	undef, defined, notdefined, rtrim, isEmpty, nonEmpty, OL,
 	isString, isNumber, isArray, isClass, isFunction, isRegExp, isInteger,
-	assert, croak, blockToArray, untabify, execCmd,
+	assert, croak, blockToArray, untabify,
 	} from '@jdeighan/llutils'
+import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {isFile, slurp, fileExt} from '@jdeighan/llutils/fs'
 import {getMyOutsideCaller} from '@jdeighan/llutils/v8-stack'
 import {toNICE} from '@jdeighan/llutils/to-nice'

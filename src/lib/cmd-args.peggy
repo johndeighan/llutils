@@ -10,8 +10,8 @@ GLOBAL
 	import {
 		undef, defined, notdefined, pass, isEmpty,
 		hasKey, keys, OL, words, add_s,
-		assert, croak, getOptions, cmdArgStr,
-		isString, isFunction, isBoolean, isArray, isHash,
+		assert, croak, getOptions, cmdScriptName, cmdArgStr,
+		isString, isFunction, isBoolean, isArray, isHash, isRegExp,
 		} from '@jdeighan/llutils'
 	import {DUMP} from '@jdeighan/llutils/dump'
 	import {getTracer} from '@jdeighan/llutils/tracer'
@@ -46,6 +46,9 @@ GLOBAL
 		catch err
 			console.log "ERROR parsing #{OL(argStr)}: #{err.message}"
 			process.exit()
+		if (hResult.h == true)
+			showHelp hDesc
+			process.exit()
 		if defined(hDesc)
 			check hResult, hDesc
 		return hResult
@@ -54,13 +57,50 @@ GLOBAL
 
 	check = (hResult, hDesc) =>
 
-		# --- Check number of non-options
+		assert isHash(hResult), "check(): hResult not a hash: #{OL(hResult)}"
+		assert isHash(hDesc),   "check(): hDesc not a hash: #{OL(hDesc)}"
+
+		# --- Check options
+		for key in keys(hResult).filter((x) => x != '_')
+			{type, desc, msg} = hDesc[key]
+			if isString(type)
+				value = hResult[key]
+				switch type
+					when 'string'
+						pass()
+					when 'boolean'
+						assert isBoolean(value),
+								"Bad boolean: #{OL(value)}, key = #{OL(key)}"
+					when 'number'
+						try
+							hResult[key] = parseFloat(value)
+						catch err
+							croak "Bad number: #{OL(value)}, key = #{OL(key)}"
+					when 'integer'
+						try
+							hResult[key] = parseInt(value, 10)
+						catch err
+							croak "Bad integer: #{OL(value)}, key = #{OL(key)}"
+					else
+						croak "Invalid type: #{OL(desc)}, key = #{OL(key)}"
+			else if isRegExp(type)
+				value = hResult[key]
+				assert isString(value),
+						"value not a string: #{OL(value)}"
+				assert value.match(type),
+						"value #{OL(value)} does not match regexp"
+			else if isFunction(type)
+				type()     # --- call the function
+			else if defined(type)
+				croak "Bad type: #{OL(type)}"
+
+		# --- Check non-options
 		#     hDesc._ may have keys:
 		#        min
 		#        max
 		#        exactly
-		h = hDesc._
-		if defined(h)
+
+		if defined(h = hDesc._)
 			min = h.min || h.exactly || 0
 			max = h.max || h.exactly || Infinity
 
@@ -78,40 +118,59 @@ GLOBAL
 					"There can be at most #{max} non-option#{add_s(max)}"
 
 		# --- Check types of all options
-		for key in keys(hResult)
-			if (key != '_')
-				type = hDesc[key]
-				value = hResult[key]
-				switch (typeof type)
-					when 'string'
-						switch type
-							when 'string'
-								pass()
-							when 'boolean'
-								assert isBoolean(value),
-										"Bad boolean: #{OL(value)}, key = #{OL(key)}"
-							when 'number'
-								try
-									hResult[key] = parseFloat(value)
-								catch err
-									croak "Bad number: #{OL(value)}, key = #{OL(key)}"
-							when 'integer'
-								try
-									hResult[key] = parseInt(value, 10)
-								catch err
-									croak "Bad integer: #{OL(value)}, key = #{OL(key)}"
-							else
-								croak "Invalid type: #{OL(type)}, key = #{OL(key)}"
-					when 'object'
-						if (type instanceof RegExp)
-							assert isString(value),
-									"value not a string: #{OL(value)}"
-							assert value.match(type),
-									"value #{OL(value)} does not match regexp"
-						else
-							croak "Invalid type: #{OL(type)}, key = #{OL(key)}"
-					else
-						croak "Invalid type: #{OL(type)}, key = #{OL(key)}"
+		#     typeof hDesc[key] can be:
+		#        string - 'string','boolean','number,'integer'
+		#        function
+		#        object
+
+		return
+
+	# ..........................................................
+
+	showHelp = (hDesc) =>
+
+		assert isHash(hDesc), "showHelp(): not a hash: #{OL(hDesc)}"
+
+		usageStr = cmdScriptName()
+
+		# --- Build lists of flags and non-flags
+		lFlags = []
+		lNonFlags = []
+		for key in keys(hDesc).filter (k) => (k != '_')
+			if (key.length == 1) && (hDesc[key].type == 'boolean')
+				lFlags.push key
+			else
+				lNonFlags.push key
+
+		if (lFlags.length > 0)
+			usageStr += " -#{lFlags.join('')}"
+		for key in lNonFlags
+			{type, desc} = hDesc[key]
+			label = desc || 'type'
+			usageStr += " -#{key}=<#{desc || type}>"
+
+		if defined(_ = hDesc._)
+			{exactly, min, max, desc} = _
+			if defined(desc)
+				usageStr += " #{desc}"
+			else
+				if defined(exactly)
+					strIter = "{#{exactly}}"
+				else
+					strIter = "{"
+					if defined(min)
+						strIter += min
+					strIter += ','
+					if defined(max) && (max < 1000)
+						strIter += max
+					strIter += '}'
+				usageStr += " <string>#{strIter}"
+
+		console.log "USAGE: #{usageStr}"
+		for key in keys(hDesc).filter (k) => (k != '_')
+			{msg} = hDesc[key]
+			if msg
+				console.log "   -#{key} - #{msg}"
 		return
 
 cmdArgs

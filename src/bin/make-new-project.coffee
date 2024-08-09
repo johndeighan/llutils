@@ -14,8 +14,9 @@
 
 import {
 	undef, defined, notdefined, OL, nonEmpty,
-	assert, words, execCmd,
+	assert, words,
 	} from '@jdeighan/llutils'
+import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
 	setProjType, promptForProjType, makeProjDir,
@@ -23,24 +24,29 @@ import {
 	} from '@jdeighan/llutils/proj-utils'
 import {NodeEnv} from '@jdeighan/llutils/node-env'
 
-console.log "Starting make-new-project"
 
 # ---------------------------------------------------------------------------
 
 main = () =>
-	checkIfInstalled 'node'
-	checkIfInstalled 'pnpm'
-	{
-		_: lNonOptions,
-		c: clear,
-		type
-		} = getArgs {
+	checkIfInstalled 'node', 'pnpm'
+	hArgs = getArgs {
 		_: {
 			exactly: 1
+			desc: "<dirname>"
 			}
-		c: 'boolean'
-		type: 'string'
+		c: {
+			type: 'boolean'
+			msg: 'clear out directory if it exists'
+			}
+		type: {
+			type: 'string'
+			desc: 'type of project'
+			msg: 'website|parcel|vite|electron|codemirror|none'
+			}
 		}
+	{_: lNonOptions, c: clear, type} = hArgs
+
+	console.log "Starting make-new-project "
 
 	if defined(type)
 		setProjType(type)
@@ -56,8 +62,9 @@ main = () =>
 
 	node = new NodeEnv('fixPkgJson')
 	node.addDependency '@jdeighan/llutils'
-	node.addDevDependency 'npm-run-all'
+	node.addDevDependency 'concurrently'
 	node.setField 'description', "A #{type} app"
+	node.setField 'packageManager', 'pnpm@9.7.0'
 	node.addFile 'README.md'
 	node.addFile '.gitignore'
 	node.addFile '.npmrc'
@@ -83,7 +90,7 @@ main = () =>
 		Please run:
 		   cd ../#{dirname}
 		   pnpm install
-		   parcel
+		   npm run dev
 		"""
 
 # ---------------------------------------------------------------------------

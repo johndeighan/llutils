@@ -11,8 +11,7 @@ import {
   assert,
   croak,
   OL,
-  getOptions,
-  execCmd
+  getOptions
 } from '@jdeighan/llutils';
 
 import {
@@ -248,6 +247,8 @@ getVersion = (pkg) => {
   switch (pkg) {
     case 'coffeescript':
       return "^2.7.0";
+    case 'concurrently':
+      return "^8.2.2";
     case 'ava':
       return "^6.1.3";
     case 'svelte':

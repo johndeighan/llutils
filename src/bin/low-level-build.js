@@ -2,7 +2,7 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var contents, doLog, echo, ext, fileFilter, firstLine, force, glob, hBin, hFileTypes, hJson, hOptions, i, j, key, lFuncs, lNonOptions, len, len1, n, outExt, reader, ref, ref1, ref2, relPath, root, shebang, short_name, stub, tla, value, watch, x;
+var contents, doLog, echo, ext, fileFilter, firstLine, force, glob, hBin, hFileTypes, hJson, hOptions, i, j, key, lFuncs, lNonOptions, len, len1, n, outExt, reader, ref, ref1, ref2, relPath, root, shebang, short_name, stub, value, watch, x;
 
 import chokidar from 'chokidar';
 
@@ -11,16 +11,20 @@ import {
   defined,
   notdefined,
   assert,
-  npmLogLevel,
   hasKey,
   keys,
   isEmpty,
   nonEmpty,
   add_s,
   OL,
-  execCmd,
-  gen2block
+  gen2block,
+  tla
 } from '@jdeighan/llutils';
+
+import {
+  execCmd,
+  npmLogLevel
+} from '@jdeighan/llutils/exec-utils';
 
 import {
   getArgs
@@ -100,10 +104,18 @@ assert(isProjRoot('.', 'strict'), "Not in package root dir");
     min: 0,
     max: 1
   },
-  e: 'boolean',
-  f: 'boolean',
-  w: 'boolean',
-  root: 'string'
+  e: {
+    type: 'boolean'
+  },
+  f: {
+    type: 'boolean'
+  },
+  w: {
+    type: 'boolean'
+  },
+  root: {
+    type: 'string'
+  }
 }));
 
 if (notdefined(root)) {
@@ -136,20 +148,8 @@ for (i = 0, len = ref.length; i < len; i++) {
 // ---------------------------------------------------------------------------
 hBin = {}; // --- keys to add in package.json / bin
 
-
-// ---------------------------------------------------------------------------
-// --- generate a 3 letter acronym if file stub is <str>-<str>-<str>
-tla = (stub) => {
-  var _, a, b, c, lMatches;
-  if (lMatches = stub.match(/^([a-z])(?:[a-z]*)\-([a-z])(?:[a-z]*)\-([a-z])(?:[a-z]*)$/)) {
-    [_, a, b, c] = lMatches;
-    return a + b + c;
-  } else {
-    return undef;
-  }
-};
-
 ref1 = allFilesMatching('./src/bin/**/*.js');
+
 // ---------------------------------------------------------------------------
 // 4. For every *.js file in the 'src/bin' directory
 //       - add a shebang line if not present

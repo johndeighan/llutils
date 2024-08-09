@@ -4,38 +4,45 @@ import prompts from 'prompts'
 
 import {
 	undef, defined, notdefined, OL, getOptions,
-	assert, execCmd, words,
+	assert, words,
 	} from '@jdeighan/llutils'
+import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {BOX} from '@jdeighan/llutils/dump'
 import {
 	mkpath, isDir, mkDir, slurp, barf, clearDir,
 	slurpJSON, barfJSON, barfPkgJSON, touch,
 	} from '@jdeighan/llutils/fs'
 
-lValidTypes = words('electron codemirror parcel vite none')
+lValidTypes = [
+	'electron'
+	'codemirror'
+	'parcel'
+	'vite'
+	'none'
+	]
 type = 'none'
 
 # ---------------------------------------------------------------------------
 
-export checkIfInstalled = (cmd) =>
+export checkIfInstalled = (...lCmds) =>
 
-	try
-		output = execCmd "#{cmd} --version"
-		return output
-	catch err
-		console.log "ERROR #{cmd} is not installed"
-		process.exit()
+	for cmd in lCmds
+		try
+			output = execCmd "#{cmd} --version"
+			return output
+		catch err
+			console.log "ERROR #{cmd} is not installed"
+			process.exit()
 
 # ---------------------------------------------------------------------------
 
 export setProjType = (t) =>
 
-	if (t == 'vite')
-		console.log "Type 'vite' not implemented yet"
-		process.exit()
+	if (t == 'website')
+		type = 'parcel'    # default web site type
 	assert defined(t), "type is undef"
+	assert lValidTypes.includes(t), "Bad type: #{OL(t)}"
 	type = t
-	assert lValidTypes.includes(type), "Bad type: #{OL(type)}"
 	return
 
 # ---------------------------------------------------------------------------
@@ -45,16 +52,12 @@ export setProjType = (t) =>
 export isOfType = (t) =>
 
 	switch t
-		when 'parcel'
-			return (type == 'parcel')
 		when 'electron'
 			return (type == 'electron') || (type == 'codemirror')
-		when 'codemirror'
-			return (type == 'codemirror')
 		when 'website'
 			return (type == 'parcel') || (type == 'vite')
 		else
-			return false
+			return (type == t)
 
 # ---------------------------------------------------------------------------
 
@@ -178,16 +181,18 @@ export promptForNames = (prompt, valFunc=undef) =>
 
 # ---------------------------------------------------------------------------
 
-export typeSpecificSetup = (node) =>
+export typeSpecificSetup = (nodeEnv) =>
 
 	if isOfType('website')
-		setUpWebSite(node)
+		setUpWebSite(nodeEnv)
 	if isOfType('parcel')
-		setUpParcel(node)
+		setUpParcel(nodeEnv)
+	if isOfType('vite')
+		setUpVite(nodeEnv)
 	if isOfType('electron')
-		setUpElectron(node)
+		setUpElectron(nodeEnv)
 	if isOfType('codemirror')
-		setUpCodeMirror(node)
+		setUpCodeMirror(nodeEnv)
 	return
 
 # ---------------------------------------------------------------------------
@@ -203,7 +208,7 @@ export setUpWebSite = (node) =>
 		<html lang="en">
 			<head>
 				<meta charset="utf-8">
-				<title>Parcel App</title>
+				<title>Web Site</title>
 			</head>
 			<body>
 				<h1>Hello, World!</h1>
@@ -217,9 +222,9 @@ export setUpWebSite = (node) =>
 export setUpParcel = (node) =>
 
 	node.addDevDependency 'parcel'
-	node.setField 'source', 'src/index.html'
-	node.addScript 'dev',   'run-p "llb -w" parcel'
-	node.addScript 'build', 'run-p llb "parcel build"'
+	node.setField  'source', 'src/index.html'
+	node.addScript 'dev',    'concurrently "llb -w" "parcel"'
+	node.addScript 'build',  'llb && parcel build'
 	return
 
 # ---------------------------------------------------------------------------
@@ -227,9 +232,25 @@ export setUpParcel = (node) =>
 export setUpVite = (node) =>
 
 	node.addDevDependency 'vite'
-	node.setField 'source', 'src/index.html'
-	node.addScript 'dev',   'llb -w && vite'
-	node.addScript 'build', 'llb && vite build'
+	node.addDevDependency 'vite-plugin-top-level-await'
+	node.setField  'source', 'src/index.html'
+	node.addScript 'dev',    'concurrently "llb -w" "vite -c src/vite.config.js src"'
+	node.addScript 'build',  'llb && vite build'
+	barf """
+		import topLevelAwait from "vite-plugin-top-level-await";
+
+		export default {
+			build: {
+				target: 'esnext'
+				},
+			plugins: [
+				topLevelAwait({
+					promiseExportName: "__tla",
+					promiseImportName: i => `__tla_${i}`
+					})
+				]
+			}
+		""", "./src/vite.config.js"
 	return
 
 # ---------------------------------------------------------------------------

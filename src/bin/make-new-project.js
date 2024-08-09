@@ -21,9 +21,12 @@ import {
   OL,
   nonEmpty,
   assert,
-  words,
-  execCmd
+  words
 } from '@jdeighan/llutils';
+
+import {
+  execCmd
+} from '@jdeighan/llutils/exec-utils';
 
 import {
   getArgs
@@ -41,24 +44,31 @@ import {
   NodeEnv
 } from '@jdeighan/llutils/node-env';
 
-console.log("Starting make-new-project");
-
 // ---------------------------------------------------------------------------
 main = async() => {
-  var clear, dirname, env_dev_installs, env_installs, i, j, lNonOptions, len, len1, node, pkg, ref, ref1, type;
-  checkIfInstalled('node');
-  checkIfInstalled('pnpm');
+  var clear, dirname, env_dev_installs, env_installs, hArgs, i, j, lNonOptions, len, len1, node, pkg, ref, ref1, type;
+  checkIfInstalled('node', 'pnpm');
+  hArgs = getArgs({
+    _: {
+      exactly: 1,
+      desc: "<dirname>"
+    },
+    c: {
+      type: 'boolean',
+      msg: 'clear out directory if it exists'
+    },
+    type: {
+      type: 'string',
+      desc: 'type of project',
+      msg: 'website|parcel|vite|electron|codemirror|none'
+    }
+  });
   ({
     _: lNonOptions,
     c: clear,
     type
-  } = getArgs({
-    _: {
-      exactly: 1
-    },
-    c: 'boolean',
-    type: 'string'
-  }));
+  } = hArgs);
+  console.log("Starting make-new-project ");
   if (defined(type)) {
     setProjType(type);
   } else {
@@ -71,8 +81,9 @@ main = async() => {
   execCmd("npm init -y");
   node = new NodeEnv('fixPkgJson');
   node.addDependency('@jdeighan/llutils');
-  node.addDevDependency('npm-run-all');
+  node.addDevDependency('concurrently');
   node.setField('description', `A ${type} app`);
+  node.setField('packageManager', 'pnpm@9.7.0');
   node.addFile('README.md');
   node.addFile('.gitignore');
   node.addFile('.npmrc');
@@ -100,7 +111,7 @@ main = async() => {
   return console.log(`Please run:
    cd ../${dirname}
    pnpm install
-   parcel`);
+   npm run dev`);
 };
 
 // ---------------------------------------------------------------------------

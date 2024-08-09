@@ -38,6 +38,7 @@
 		"./proj-utils": "./src/lib/proj-utils.js",
 		"./node-env": "./src/lib/node-env.js",
 		"./file-processor": "./src/lib/file-processor.js",
+		"./exec-utils": "./src/lib/exec-utils.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {

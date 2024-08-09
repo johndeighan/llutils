@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // list-missing-tests.coffee
-var filePath, ref, ref1, stub, x, y;
+var filePath, hArgs, ref, ref1, stub, x, y;
 
 import {
   undef,
@@ -18,8 +18,18 @@ import {
   allFilesMatching
 } from '@jdeighan/llutils/fs';
 
+import {
+  getArgs
+} from '@jdeighan/llutils/cmd-args';
+
 // ---------------------------------------------------------------------------
 // 1. Make sure we're in a project root directory
+hArgs = getArgs({
+  _: {
+    exactly: 0
+  }
+});
+
 assert(isProjRoot('.', 'strict'), "Not in package root dir");
 
 ref = allFilesMatching('./src/lib/**/*.{coffee,peggy}');

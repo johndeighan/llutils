@@ -11,7 +11,12 @@ import {NodeEnv} from '@jdeighan/llutils/node-env'
 # --- If elements aren't specified on the command line,
 #     they are prompted for
 
-{_: lElems} = getArgs()
+{_: lElems} = getArgs {
+	_: {
+		min: 0
+		max: Infinity
+		}
+	}
 
 node = new NodeEnv()
 if isEmpty(lElems)

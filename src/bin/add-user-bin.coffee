@@ -8,15 +8,20 @@ import {promptForNames} from '@jdeighan/llutils/proj-utils'
 import {NodeEnv} from '@jdeighan/llutils/node-env'
 
 # ---------------------------------------------------------------------------
-# --- If libs aren't specified on the command line,
+# --- If bins aren't specified on the command line,
 #     they are prompted for
 
-{_: lLibs} = getArgs()
+{_: lBins} = getArgs {
+	_: {
+		min: 0
+		max: Infinity
+		}
+	}
 
 node = new NodeEnv()
-if isEmpty(lLibs)
-	lLibs = await promptForNames('New binary name (Enter to end)')
+if isEmpty(lBins)
+	lBins = await promptForNames('New binary name (Enter to end)')
 
-for lib in lLibs
-	node.addUserBin lib
+for bin in lBins
+	node.addUserBin bin
 node.write_pkg_json()

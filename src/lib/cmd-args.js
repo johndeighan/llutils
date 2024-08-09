@@ -4,7 +4,7 @@
 
 
 
-	var check, hOptions, parse__arg__1, parse__arg__2, parse__cmdArgs__1, parse__stringVal__1, parse__stringVal__2, parse__stringVal__3;
+	var check, hOptions, parse__arg__1, parse__arg__2, parse__cmdArgs__1, parse__stringVal__1, parse__stringVal__2, parse__stringVal__3, showHelp;
 
 	import {
 	  undef,
@@ -20,12 +20,14 @@
 	  assert,
 	  croak,
 	  getOptions,
+	  cmdScriptName,
 	  cmdArgStr,
 	  isString,
 	  isFunction,
 	  isBoolean,
 	  isArray,
-	  isHash
+	  isHash,
+	  isRegExp
 	} from '@jdeighan/llutils';
 
 	import {
@@ -53,6 +55,10 @@
 	    console.log(`ERROR parsing ${OL(argStr)}: ${err.message}`);
 	    process.exit();
 	  }
+	  if (hResult.h === true) {
+	    showHelp(hDesc);
+	    process.exit();
+	  }
 	  if (defined(hDesc)) {
 	    check(hResult, hDesc);
 	  }
@@ -60,9 +66,54 @@
 	};
 
 	check = (hResult, hDesc) => {
-	  var err, h, i, key, lNonOptions, len, max, min, n, ref, type, value;
-	  h = hDesc._;
-	  if (defined(h)) {
+	  var desc, err, h, i, key, lNonOptions, len, max, min, msg, n, ref, type, value;
+	  assert(isHash(hResult), `check(): hResult not a hash: ${OL(hResult)}`);
+	  assert(isHash(hDesc), `check(): hDesc not a hash: ${OL(hDesc)}`);
+	  ref = keys(hResult).filter((x) => {
+	    return x !== '_';
+	  });
+	  for (i = 0, len = ref.length; i < len; i++) {
+	    key = ref[i];
+	    ({type, desc, msg} = hDesc[key]);
+	    if (isString(type)) {
+	      value = hResult[key];
+	      switch (type) {
+	        case 'string':
+	          pass();
+	          break;
+	        case 'boolean':
+	          assert(isBoolean(value), `Bad boolean: ${OL(value)}, key = ${OL(key)}`);
+	          break;
+	        case 'number':
+	          try {
+	            hResult[key] = parseFloat(value);
+	          } catch (error) {
+	            err = error;
+	            croak(`Bad number: ${OL(value)}, key = ${OL(key)}`);
+	          }
+	          break;
+	        case 'integer':
+	          try {
+	            hResult[key] = parseInt(value, 10);
+	          } catch (error) {
+	            err = error;
+	            croak(`Bad integer: ${OL(value)}, key = ${OL(key)}`);
+	          }
+	          break;
+	        default:
+	          croak(`Invalid type: ${OL(desc)}, key = ${OL(key)}`);
+	      }
+	    } else if (isRegExp(type)) {
+	      value = hResult[key];
+	      assert(isString(value), `value not a string: ${OL(value)}`);
+	      assert(value.match(type), `value ${OL(value)} does not match regexp`);
+	    } else if (isFunction(type)) {
+	      type(); // --- call the function
+	    } else if (defined(type)) {
+	      croak(`Bad type: ${OL(type)}`);
+	    }
+	  }
+	  if (defined(h = hDesc._)) {
 	    min = h.min || h.exactly || 0;
 	    max = h.max || h.exactly || 2e308;
 	    lNonOptions = hResult._;
@@ -75,52 +126,64 @@
 	    assert(n >= min, `There must be at least ${min} non-option${add_s(min)}`);
 	    assert(n <= max, `There can be at most ${max} non-option${add_s(max)}`);
 	  }
-	  ref = keys(hResult);
+	};
+
+	showHelp = (hDesc) => {
+	  var _, desc, exactly, i, j, key, l, lFlags, lNonFlags, label, len, len1, len2, max, min, msg, ref, ref1, strIter, type, usageStr;
+	  assert(isHash(hDesc), `showHelp(): not a hash: ${OL(hDesc)}`);
+	  usageStr = cmdScriptName();
+	  lFlags = [];
+	  lNonFlags = [];
+	  ref = keys(hDesc).filter((k) => {
+	    return k !== '_';
+	  });
 	  for (i = 0, len = ref.length; i < len; i++) {
 	    key = ref[i];
-	    if (key !== '_') {
-	      type = hDesc[key];
-	      value = hResult[key];
-	      switch (typeof type) {
-	        case 'string':
-	          switch (type) {
-	            case 'string':
-	              pass();
-	              break;
-	            case 'boolean':
-	              assert(isBoolean(value), `Bad boolean: ${OL(value)}, key = ${OL(key)}`);
-	              break;
-	            case 'number':
-	              try {
-	                hResult[key] = parseFloat(value);
-	              } catch (error) {
-	                err = error;
-	                croak(`Bad number: ${OL(value)}, key = ${OL(key)}`);
-	              }
-	              break;
-	            case 'integer':
-	              try {
-	                hResult[key] = parseInt(value, 10);
-	              } catch (error) {
-	                err = error;
-	                croak(`Bad integer: ${OL(value)}, key = ${OL(key)}`);
-	              }
-	              break;
-	            default:
-	              croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);
-	          }
-	          break;
-	        case 'object':
-	          if (type instanceof RegExp) {
-	            assert(isString(value), `value not a string: ${OL(value)}`);
-	            assert(value.match(type), `value ${OL(value)} does not match regexp`);
-	          } else {
-	            croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);
-	          }
-	          break;
-	        default:
-	          croak(`Invalid type: ${OL(type)}, key = ${OL(key)}`);
+	    if ((key.length === 1) && (hDesc[key].type === 'boolean')) {
+	      lFlags.push(key);
+	    } else {
+	      lNonFlags.push(key);
+	    }
+	  }
+	  if (lFlags.length > 0) {
+	    usageStr += ` -${lFlags.join('')}`;
+	  }
+	  for (j = 0, len1 = lNonFlags.length; j < len1; j++) {
+	    key = lNonFlags[j];
+	    ({type, desc} = hDesc[key]);
+	    label = desc || 'type';
+	    usageStr += ` -${key}=<${desc || type}>`;
+	  }
+	  if (defined(_ = hDesc._)) {
+	    ({exactly, min, max, desc} = _);
+	    if (defined(desc)) {
+	      usageStr += ` ${desc}`;
+	    } else {
+	      if (defined(exactly)) {
+	        strIter = `{${exactly}}`;
+	      } else {
+	        strIter = "{";
+	        if (defined(min)) {
+	          strIter += min;
+	        }
+	        strIter += ',';
+	        if (defined(max) && (max < 1000)) {
+	          strIter += max;
+	        }
+	        strIter += '}';
 	      }
+	      usageStr += ` <string>${strIter}`;
+	    }
+	  }
+	  console.log(`USAGE: ${usageStr}`);
+	  ref1 = keys(hDesc).filter((k) => {
+	    return k !== '_';
+	  });
+	  for (l = 0, len2 = ref1.length; l < len2; l++) {
+	    key = ref1[l];
+	    ({msg} = hDesc[key]);
+	    if (msg) {
+	      console.log(`   -${key} - ${msg}`);
 	    }
 	  }
 	};

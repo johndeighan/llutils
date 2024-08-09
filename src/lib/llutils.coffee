@@ -1,12 +1,10 @@
 # llutils.coffee
 
 import assertLib from 'node:assert'
-import {exec, execSync} from 'node:child_process'
-import {promisify} from 'node:util'
-execAsync = promisify(exec)
 import YAML from 'yaml'
 module = await import('deep-equal')
 deepEqual = module.default
+import pathLib from 'node:path'
 
 `export const undef = void 0`
 
@@ -531,45 +529,6 @@ export nonEmpty = (x) =>
 
 # ---------------------------------------------------------------------------
 
-export execCmd = (cmdLine, hOptions={}) =>
-	# --- may throw an exception
-
-	hOptions = getOptions hOptions, {
-		encoding: 'utf8'
-		windowsHide: true
-		}
-	result = execSync(cmdLine, hOptions)
-	assert defined(result), "undef return from execSync()"
-	result = result.toString()
-	assert defined(result), "undef return from execSync()"
-	return result
-
-# ---------------------------------------------------------------------------
-
-export execAndLogCmd = (cmdLine, hOptions={}) =>
-	# --- may throw an exception
-
-	hOptions = getOptions hOptions, {
-		encoding: 'utf8'
-		windowsHide: true
-		}
-	result = execSync(cmdLine, hOptions).toString()
-	console.log result
-	return result
-
-# ---------------------------------------------------------------------------
-
-export execCmdAsync = (cmdLine, hOptions={}) =>
-	# --- may throw an exception
-
-	hOptions = getOptions hOptions, {
-		encoding: 'utf8'
-		windowsHide: true
-		}
-	return execAsync(cmdLine, hOptions)
-
-# ---------------------------------------------------------------------------
-
 export chomp = (str) =>
 	# --- Remove trailing \n if present
 
@@ -616,13 +575,6 @@ export removeKeys = (item, lKeys) =>
 	return item
 
 # ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
-
-export npmLogLevel = () =>
-
-	result = execCmd('npm config get loglevel')
-	return chomp(result)
-
 # ---------------------------------------------------------------------------
 
 export blockToArray = (block) =>
@@ -981,6 +933,14 @@ export sortedArrayOfHashes = (lHashes, key) =>
 
 # ---------------------------------------------------------------------------
 
+export cmdScriptName = () =>
+
+	stub = pathLib.parse(process.argv[1]).name
+	short = tla(stub)
+	return short || stub
+
+# ---------------------------------------------------------------------------
+
 export cmdArgStr = (lArgs=undef) =>
 
 	if isString(lArgs)
@@ -1006,6 +966,23 @@ export cmdArgStr = (lArgs=undef) =>
 		else
 			return str
 		).join(' ')
+
+# ---------------------------------------------------------------------------
+# --- generate a 3 letter acronym if file stub is <str>-<str>-<str>
+
+export tla = (stub) =>
+
+	if lMatches = stub.match(///^
+			([a-z])(?:[a-z]*)
+			\-
+			([a-z])(?:[a-z]*)
+			\-
+			([a-z])(?:[a-z]*)
+			$///)
+		[_, a, b, c] = lMatches
+		return a + b + c
+	else
+		return undef
 
 # ---------------------------------------------------------------------------
 

@@ -2,7 +2,7 @@
 
 import {
 	undef, defined, notdefined, isEmpty, nonEmpty, hasKey,
-	assert, croak, OL, getOptions, execCmd,
+	assert, croak, OL, getOptions,
 	} from '@jdeighan/llutils'
 import {
 	slurpPkgJSON, slurpJSON, barfJSON, barfPkgJSON,
@@ -266,6 +266,8 @@ getVersion = (pkg) =>
 	switch pkg
 		when 'coffeescript'
 			return "^2.7.0"
+		when 'concurrently'
+			return "^8.2.2"
 		when 'ava'
 			return "^6.1.3"
 		when 'svelte'
