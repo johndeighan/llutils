@@ -257,8 +257,12 @@ getVersion = (pkg) => {
       return "^5.0.0";
     case 'parcel':
       return "^2.12.0";
+    case 'vite':
+      return "^5.4.0";
+    case 'vite-plugin-top-level-await':
+      return "^1.4.3";
     default:
-      return 'latest';
+      return '*';
   }
 };
 

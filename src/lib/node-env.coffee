@@ -276,6 +276,10 @@ getVersion = (pkg) =>
 			return "^5.0.0"
 		when 'parcel'
 			return "^2.12.0"
+		when 'vite'
+			return "^5.4.0"
+		when 'vite-plugin-top-level-await'
+			return "^1.4.3"
 		else
-			return 'latest'
+			return '*'
 
