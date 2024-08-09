@@ -3,12 +3,13 @@
 import pathLib from 'node:path'
 import {pathToFileURL} from 'node:url'
 import peggy from 'peggy'
+import eq from 'deep-equal'
 
 import {
 	undef, defined, notdefined, gen2block, hasKey, isEmpty, nonEmpty,
 	isString, isHash, isArray, isFunction, isInteger,
 	blockToArray, arrayToBlock, escapeStr, getOptions,
-	assert, croak, OL, js2uri, ML, keys, pass, eq,
+	assert, croak, OL, js2uri, ML, keys, pass,
 	matchPos, splitStr,
 	} from '@jdeighan/llutils'
 import {DUMP} from '@jdeighan/llutils/dump'

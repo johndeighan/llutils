@@ -9,6 +9,8 @@ import {
 
 import peggy from 'peggy';
 
+import eq from 'deep-equal';
+
 import {
   undef,
   defined,
@@ -33,7 +35,6 @@ import {
   ML,
   keys,
   pass,
-  eq,
   matchPos,
   splitStr
 } from '@jdeighan/llutils';

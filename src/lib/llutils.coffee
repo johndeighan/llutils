@@ -1,18 +1,11 @@
 # llutils.coffee
 
-import assertLib from 'node:assert'
 import YAML from 'yaml'
 module = await import('deep-equal')
 deepEqual = module.default
 import pathLib from 'node:path'
 
 `export const undef = void 0`
-
-# ---------------------------------------------------------------------------
-
-export eq = (x, y) =>
-
-	return deepEqual(x, y, {strict: true})
 
 # ---------------------------------------------------------------------------
 
@@ -68,11 +61,11 @@ export warnOnError = (flag=true) => warnOnly = flag
 
 export assert = (cond, msg) =>
 
-	if warnOnly
-		if !cond
+	if !cond
+		if warnOnly
 			console.log "ERROR: #{msg}"
-	else
-		assertLib.ok cond, msg
+		else
+			throw new Error(msg)
 	return true
 
 # ---------------------------------------------------------------------------
@@ -562,7 +555,7 @@ export hasKey = (h, key) =>
 
 export removeKeys = (item, lKeys) =>
 
-	assertLib.ok isArray(lKeys), "not an array"
+	assert isArray(lKeys), "not an array"
 	if isArray(item)
 		for subitem in item
 			removeKeys subitem, lKeys

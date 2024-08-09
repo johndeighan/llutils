@@ -2,8 +2,6 @@
 var deepEqual, module, warnOnly,
   hasProp = {}.hasOwnProperty;
 
-import assertLib from 'node:assert';
-
 import YAML from 'yaml';
 
 module = (await import('deep-equal'));
@@ -13,13 +11,6 @@ deepEqual = module.default;
 import pathLib from 'node:path';
 
 export const undef = void 0;
-
-// ---------------------------------------------------------------------------
-export var eq = (x, y) => {
-  return deepEqual(x, y, {
-    strict: true
-  });
-};
 
 // ---------------------------------------------------------------------------
 export var dclone = (x) => {
@@ -77,12 +68,12 @@ export var warnOnError = (flag = true) => {
 
 // ---------------------------------------------------------------------------
 export var assert = (cond, msg) => {
-  if (warnOnly) {
-    if (!cond) {
+  if (!cond) {
+    if (warnOnly) {
       console.log(`ERROR: ${msg}`);
+    } else {
+      throw new Error(msg);
     }
-  } else {
-    assertLib.ok(cond, msg);
   }
   return true;
 };
@@ -648,7 +639,7 @@ export var hasKey = (h, key) => {
 // --- item can be a hash or array
 export var removeKeys = (item, lKeys) => {
   var j, k, key, len1, len2, prop, subitem, value;
-  assertLib.ok(isArray(lKeys), "not an array");
+  assert(isArray(lKeys), "not an array");
   if (isArray(item)) {
     for (j = 0, len1 = item.length; j < len1; j++) {
       subitem = item[j];

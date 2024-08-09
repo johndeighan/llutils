@@ -1,6 +1,8 @@
 // llutils.test.coffee
 var Dummy, NewClass, b, c, f, g, h, hAST, hAST2, hash, i, l, n, o, p, r, s, str;
 
+import eq from 'deep-equal';
+
 import * as lib from '@jdeighan/llutils';
 
 Object.assign(global, lib);

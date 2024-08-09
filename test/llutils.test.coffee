@@ -1,5 +1,6 @@
 # llutils.test.coffee
 
+import eq from 'deep-equal'
 import * as lib from '@jdeighan/llutils'
 Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'
