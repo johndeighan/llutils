@@ -280,7 +280,7 @@ export setUpVite = (node) =>
 export setUpElectron = (node) =>
 
 	node.setField 'main', 'src/main.js'
-	node.addScript 'start', 'pnpm run build && electron .'
+	node.addScript 'start', 'npm run build && electron .'
 
 	console.log "Installing (dev) \"electron\""
 	node.addDevDependency 'electron'

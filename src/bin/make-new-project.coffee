@@ -28,7 +28,7 @@ import {NodeEnv} from '@jdeighan/llutils/node-env'
 # ---------------------------------------------------------------------------
 
 main = () =>
-	checkIfInstalled 'node', 'pnpm'
+	checkIfInstalled 'node', 'yarn'
 	hArgs = getArgs {
 		_: {
 			exactly: 1
@@ -64,7 +64,7 @@ main = () =>
 	node.addDependency '@jdeighan/llutils'
 	node.addDevDependency 'concurrently'
 	node.setField 'description', "A #{type} app"
-	node.setField 'packageManager', 'pnpm@9.7.0'
+	node.setField 'packageManager', 'yarn@1.22.22'
 	node.addFile 'README.md'
 	node.addFile '.gitignore'
 	node.addFile '.npmrc'
@@ -89,7 +89,7 @@ main = () =>
 	console.log """
 		Please run:
 		   cd ../#{dirname}
-		   pnpm install
+		   yarn
 		   npm run dev
 		"""
 
