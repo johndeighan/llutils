@@ -4,8 +4,7 @@
 
 import {isEmpty} from '@jdeighan/llutils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
-import {promptForNames} from '@jdeighan/llutils/proj-utils'
-import {NodeEnv} from '@jdeighan/llutils/node-env'
+import {promptForNames, NodeEnv} from '@jdeighan/llutils/proj-utils'
 
 # ---------------------------------------------------------------------------
 # --- If bins aren't specified on the command line,

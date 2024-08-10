@@ -14,12 +14,9 @@ import {
 
 import {
   promptForNames,
-  importCustomElement
-} from '@jdeighan/llutils/proj-utils';
-
-import {
+  importCustomElement,
   NodeEnv
-} from '@jdeighan/llutils/node-env';
+} from '@jdeighan/llutils/proj-utils';
 
 ({
   // ---------------------------------------------------------------------------

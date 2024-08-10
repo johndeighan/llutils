@@ -1,4 +1,6 @@
-  // proj-utils.test.coffee
+// proj-utils.test.coffee
+var env;
+
 import {
   undef
 } from '@jdeighan/llutils';
@@ -25,5 +27,23 @@ setProjType('parcel');
 truthy(isOfType('parcel'));
 
 truthy(isOfType('website'));
+
+env = new NodeEnv('!echo');
+
+equal(env.name(), "@jdeighan/llutils");
+
+equal(env.getField('license'), 'MIT');
+
+env.setField('dummy', 'dummy');
+
+equal(env.getField('dummy'), 'dummy');
+
+truthy(env.hasDep('chokidar'));
+
+truthy(env.hasDevDep('npm-run-all'));
+
+truthy(env.isInstalled('chokidar'));
+
+truthy(env.isInstalled('npm-run-all'));
 
 //# sourceMappingURL=proj-utils.test.js.map

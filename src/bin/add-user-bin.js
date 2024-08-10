@@ -13,12 +13,9 @@ import {
 } from '@jdeighan/llutils/cmd-args';
 
 import {
-  promptForNames
-} from '@jdeighan/llutils/proj-utils';
-
-import {
+  promptForNames,
   NodeEnv
-} from '@jdeighan/llutils/node-env';
+} from '@jdeighan/llutils/proj-utils';
 
 ({
   // ---------------------------------------------------------------------------

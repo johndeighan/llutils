@@ -5,9 +5,8 @@
 import {isEmpty} from '@jdeighan/llutils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
-	promptForNames, importCustomElement,
+	promptForNames, importCustomElement, NodeEnv,
 	} from '@jdeighan/llutils/proj-utils'
-import {NodeEnv} from '@jdeighan/llutils/node-env'
 
 # ---------------------------------------------------------------------------
 # --- If elements aren't specified on the command line,

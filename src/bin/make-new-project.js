@@ -37,12 +37,9 @@ import {
   promptForProjType,
   makeProjDir,
   typeSpecificSetup,
-  checkIfInstalled
-} from '@jdeighan/llutils/proj-utils';
-
-import {
+  checkIfInstalled,
   NodeEnv
-} from '@jdeighan/llutils/node-env';
+} from '@jdeighan/llutils/proj-utils';
 
 // ---------------------------------------------------------------------------
 main = async() => {

@@ -20,10 +20,8 @@ import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
 	setProjType, promptForProjType, makeProjDir,
-	typeSpecificSetup, checkIfInstalled,
+	typeSpecificSetup, checkIfInstalled, NodeEnv,
 	} from '@jdeighan/llutils/proj-utils'
-import {NodeEnv} from '@jdeighan/llutils/node-env'
-
 
 # ---------------------------------------------------------------------------
 
