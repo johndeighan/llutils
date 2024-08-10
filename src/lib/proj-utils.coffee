@@ -10,7 +10,7 @@ import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {BOX} from '@jdeighan/llutils/dump'
 import {
 	mkpath, isDir, mkDir, slurp, barf, clearDir,
-	slurpJSON, barfJSON, barfPkgJSON, touch,
+	slurpJSON, barfJSON, barfPkgJSON, touch, insertLinesAfter,
 	} from '@jdeighan/llutils/fs'
 
 lValidTypes = [
@@ -226,6 +226,17 @@ export setUpWebSite = (node) =>
 		import {escapeStr} from '@jdeighan/llutils'
 		console.log escapeStr("\t\tabc\r\n")
 		""", "./src/index.coffee"
+	return
+
+# ---------------------------------------------------------------------------
+
+export importCustomElement = (name) =>
+
+	insertLinesAfter(
+		"./src/index.coffee",
+		/Custom Elements/,
+		"import ./#{name}"
+		)
 	return
 
 # ---------------------------------------------------------------------------

@@ -4,7 +4,9 @@
 
 import {isEmpty} from '@jdeighan/llutils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
-import {promptForNames} from '@jdeighan/llutils/proj-utils'
+import {
+	promptForNames, importCustomElement,
+	} from '@jdeighan/llutils/proj-utils'
 import {NodeEnv} from '@jdeighan/llutils/node-env'
 
 # ---------------------------------------------------------------------------
@@ -18,7 +20,7 @@ import {NodeEnv} from '@jdeighan/llutils/node-env'
 		}
 	}
 
-node = new NodeEnv()
+nodeEnv = new NodeEnv()
 if isEmpty(lElems)
 	lElems = await promptForNames(
 		'New element name (Enter to end)',
@@ -31,5 +33,6 @@ if isEmpty(lElems)
 		)
 
 for elem in lElems
-	node.addUserElement elem
-node.write_pkg_json()
+	nodeEnv.addUserElement elem
+	importCustomElement(elem)
+nodeEnv.write_pkg_json()

@@ -2,7 +2,7 @@
 // add-user-element.coffee
 
 // --- Add a new binary executable file to an existing project
-var elem, i, lElems, len, node;
+var elem, i, lElems, len, nodeEnv;
 
 import {
   isEmpty
@@ -13,7 +13,8 @@ import {
 } from '@jdeighan/llutils/cmd-args';
 
 import {
-  promptForNames
+  promptForNames,
+  importCustomElement
 } from '@jdeighan/llutils/proj-utils';
 
 import {
@@ -32,7 +33,7 @@ import {
   }
 }));
 
-node = new NodeEnv();
+nodeEnv = new NodeEnv();
 
 if (isEmpty(lElems)) {
   lElems = (await promptForNames('New element name (Enter to end)', ((name) => {
@@ -46,9 +47,10 @@ if (isEmpty(lElems)) {
 
 for (i = 0, len = lElems.length; i < len; i++) {
   elem = lElems[i];
-  node.addUserElement(elem);
+  nodeEnv.addUserElement(elem);
+  importCustomElement(elem);
 }
 
-node.write_pkg_json();
+nodeEnv.write_pkg_json();
 
 //# sourceMappingURL=add-user-element.js.map

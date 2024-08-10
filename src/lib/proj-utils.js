@@ -31,7 +31,8 @@ import {
   slurpJSON,
   barfJSON,
   barfPkgJSON,
-  touch
+  touch,
+  insertLinesAfter
 } from '@jdeighan/llutils/fs';
 
 lValidTypes = ['electron', 'codemirror', 'parcel', 'vite', 'none'];
@@ -234,6 +235,11 @@ export var setUpWebSite = (node) => {
 
 import {escapeStr} from '@jdeighan/llutils'
 console.log escapeStr("\t\tabc\r\n")`, "./src/index.coffee");
+};
+
+// ---------------------------------------------------------------------------
+export var importCustomElement = (name) => {
+  insertLinesAfter("./src/index.coffee", /Custom Elements/, `import ./${name}`);
 };
 
 // ---------------------------------------------------------------------------
