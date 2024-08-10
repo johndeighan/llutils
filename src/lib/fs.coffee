@@ -5,11 +5,12 @@ import urlLib from 'url'
 import fs from 'node:fs'
 import {globSync as glob} from 'glob'
 import NReadLines from 'n-readlines'
+import {temporaryFile} from 'tempy'
 
 import {
 	undef, defined, notdefined, words, OL, keys, hasKey,
 	assert, croak, arrayToBlock, getOptions, sliceBlock,
-	isString, isHash, gen2block,
+	isString, isHash, gen2block, toTAML,
 	} from '@jdeighan/llutils'
 import {
 	isMetaDataStart, convertMetaData,
@@ -196,14 +197,6 @@ export mkDir = (dirPath, hOptions={}) =>
 
 # ---------------------------------------------------------------------------
 
-export touch = (filePath) =>
-
-	fd = fs.openSync(filePath, 'a')
-	fs.closeSync(fd)
-	return
-
-# ---------------------------------------------------------------------------
-
 export isFile = (filePath) =>
 
 	if ! fs.existsSync(filePath)
@@ -212,6 +205,14 @@ export isFile = (filePath) =>
 		return getFileStats(filePath).isFile()
 	catch
 		return false
+
+# ---------------------------------------------------------------------------
+
+export touch = (filePath) =>
+
+	fd = fs.openSync(filePath, 'a')
+	fs.closeSync(fd)
+	return
 
 # ---------------------------------------------------------------------------
 # --- returns one of:
@@ -531,12 +532,12 @@ export readTextFile = (filePath, hOptions={}) =>
 	firstLine = getLine()
 	if notdefined(firstLine)
 		return {
-			hMetaData: {filePath}
+			hMetaData: undef
 			reader: () -> return undef
 			nLines: 0
 			}
 	lMetaLines = undef
-	hMetaData = {}
+	hMetaData = undef
 
 	# --- Get metadata if present
 	if isMetaDataStart(firstLine)
@@ -547,10 +548,6 @@ export readTextFile = (filePath, hOptions={}) =>
 			line = getLine()
 		block = arrayToBlock(lMetaLines)
 		hMetaData = convertMetaData(firstLine, block)
-
-	# --- add filePath to hMetaData if not present
-	if !hasKey(hMetaData, 'filePath')
-		hMetaData.filePath = filePath
 
 	# --- generator that allows reading contents
 	reader = () ->
@@ -582,6 +579,54 @@ export readTextFile = (filePath, hOptions={}) =>
 			reader
 			nLines
 			}
+
+# ---------------------------------------------------------------------------
+
+export class TextFileWriter
+
+	constructor: (@filePath=undef) ->
+
+		if !@filePath
+			@filePath = temporaryFile()
+		@writer = fs.createWriteStream(@filePath, {flags: 'w'})
+
+	write: (str) ->
+
+		@writer.write str
+		return
+
+	writeln: (str) ->
+
+		@writer.write "#{str}\n"
+		return
+
+	close: (filePath=undef) ->
+
+		@writer.end(() => fs.renameSync(@filePath, filePath))
+		@writer = undef
+		return
+
+# ---------------------------------------------------------------------------
+
+export insertLinesAfter = (filePath, regexp, lLines) =>
+
+	if isString(lLines)
+		lLines = [lLines]
+
+	written = false
+	{reader, hMetaData} = readTextFile(filePath)
+	writer = new TextFileWriter()
+	if defined(hMetaData)
+		writer.writeln toTAML(hMetaData)
+		writer.writeln('---')
+	for input from reader()
+		writer.writeln input
+		if !written && input.match(regexp)
+			for line in lLines
+				writer.writeln line
+			written = true
+	writer.close filePath
+	return
 
 # ---------------------------------------------------------------------------
 #    Get path to parent directory of a directory

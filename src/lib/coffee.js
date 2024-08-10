@@ -38,7 +38,6 @@ import {
 } from '@jdeighan/llutils/indent';
 
 import {
-  readTextFile,
   barf,
   withExt,
   isFile

@@ -1,7 +1,7 @@
 # fs.test.coffee
 
 import {
-	undef, gen2array, gen2block,
+	undef, gen2array, gen2block, sleep,
 	} from '@jdeighan/llutils'
 import * as lib from '@jdeighan/llutils/fs'
 Object.assign(global, lib)
@@ -97,7 +97,6 @@ like parsePath('./test/fs/file.test.txt'), {
 	equal hMetaData, {
 		fName: 'John'
 		lName: 'Deighan'
-		filePath: './test/fs/meta.txt'
 		}
 	equal typeof reader, 'function'
 	equal nLines, 4
@@ -151,3 +150,17 @@ equal mkpath(pathTo('llutils.coffee')), mkpath("src/lib/llutils.coffee")
 
 lPaths = Array.from(allPathsTo('.symbols'), (x) => relpath(x))
 equal lPaths, ['.symbols', '../.symbols']
+
+# ---------------------------------------------------------------------------
+#symbol "TextFileWriter"
+
+(() =>
+	writer = new TextFileWriter()
+	writer.writeln('abc')
+	writer.writeln('def')
+	writer.writeln('ghi')
+	writer.close('./test/fs/temp123.txt')
+
+	await sleep(2)
+	truthy isFile('./test/fs/temp123.txt')
+	)()

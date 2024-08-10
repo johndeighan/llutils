@@ -19,7 +19,7 @@ import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
 
 # ---------------------------------------------------------------------------
 # --- func must have the following signature:
-#        params: (code, hMetaData)
+#        params: (code, hMetaData, filePath)
 #        return value:
 #           either a string (e.g. code)
 #           or a hash with keys:
@@ -73,7 +73,7 @@ export procFiles = (pattern, lFuncs, outExt, hOptions={}) =>
 
 		lSourceMaps = []
 		for func in lFuncs
-			result = func code, hMetaData
+			result = func code, hMetaData, relPath
 			if isString(result)
 				code = result
 				lSourceMaps = undef
@@ -98,7 +98,7 @@ export procFiles = (pattern, lFuncs, outExt, hOptions={}) =>
 
 # ---------------------------------------------------------------------------
 
-export brew = (code, hMetaData={}) ->
+export brew = (code, hMetaData={}, filePath=undef) ->
 
 	# --- metadata can be used to add a shebang line
 	#     if true, use "#!/usr/bin/env node"
@@ -109,9 +109,7 @@ export brew = (code, hMetaData={}) ->
 
 	assert defined(code), "code: #{OL(code)}"
 	assert isString(code), "Not a string: #{OL(code)}"
-	{filePath, debug, shebang,
-		} = getOptions hMetaData, {
-		filePath: undef
+	{debug, shebang} = getOptions hMetaData, {
 		debug: false
 		shebang: undef
 		}
@@ -145,7 +143,7 @@ export brew = (code, hMetaData={}) ->
 
 # ---------------------------------------------------------------------------
 
-export cieloPreProcess = (code, hOptions) =>
+export cieloPreProcess = (code, hOptions={}, filePath=undef) =>
 
 	{debug} = getOptions hOptions, {
 		debug: false
@@ -167,10 +165,9 @@ export cieloPreProcess = (code, hOptions) =>
 
 # ---------------------------------------------------------------------------
 
-export sveltify = (code, hMetaData={}) =>
+export sveltify = (code, hMetaData={}, filePath=undef) =>
 
-	hMetaData.filename = hMetaData.filePath
-	delete hMetaData.filePath
+	hMetaData.filename = filePath
 	elem = hMetaData.customElement
 	if isString(elem, 'nonempty')
 		checkCustomElemName(elem)

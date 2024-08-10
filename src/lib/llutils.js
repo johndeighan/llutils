@@ -1214,4 +1214,11 @@ export var setsAreEqual = (a, b) => {
   });
 };
 
+// ---------------------------------------------------------------------------
+export var sleep = async(sec) => {
+  await new Promise((r) => {
+    return setTimeout(r, 1000 * sec);
+  });
+};
+
 //# sourceMappingURL=llutils.js.map

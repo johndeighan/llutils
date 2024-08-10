@@ -4,7 +4,8 @@ var lPaths;
 import {
   undef,
   gen2array,
-  gen2block
+  gen2block,
+  sleep
 } from '@jdeighan/llutils';
 
 import * as lib from '@jdeighan/llutils/fs';
@@ -96,8 +97,7 @@ like(parsePath('./test/fs/file.test.txt'), {
   iter = reader();
   equal(hMetaData, {
     fName: 'John',
-    lName: 'Deighan',
-    filePath: './test/fs/meta.txt'
+    lName: 'Deighan'
   });
   equal(typeof reader, 'function');
   equal(nLines, 4);
@@ -146,5 +146,18 @@ lPaths = Array.from(allPathsTo('.symbols'), (x) => {
 });
 
 equal(lPaths, ['.symbols', '../.symbols']);
+
+// ---------------------------------------------------------------------------
+//symbol "TextFileWriter"
+(async() => {
+  var writer;
+  writer = new TextFileWriter();
+  writer.writeln('abc');
+  writer.writeln('def');
+  writer.writeln('ghi');
+  writer.close('./test/fs/temp123.txt');
+  await sleep(2);
+  return truthy(isFile('./test/fs/temp123.txt'));
+})();
 
 //# sourceMappingURL=fs.test.js.map

@@ -14,6 +14,10 @@ import {
 import NReadLines from 'n-readlines';
 
 import {
+  temporaryFile
+} from 'tempy';
+
+import {
   undef,
   defined,
   notdefined,
@@ -28,7 +32,8 @@ import {
   sliceBlock,
   isString,
   isHash,
-  gen2block
+  gen2block,
+  toTAML
 } from '@jdeighan/llutils';
 
 import {
@@ -213,13 +218,6 @@ export var mkDir = (dirPath, hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
-export var touch = (filePath) => {
-  var fd;
-  fd = fs.openSync(filePath, 'a');
-  fs.closeSync(fd);
-};
-
-// ---------------------------------------------------------------------------
 export var isFile = (filePath) => {
   if (!fs.existsSync(filePath)) {
     return false;
@@ -229,6 +227,13 @@ export var isFile = (filePath) => {
   } catch (error) {
     return false;
   }
+};
+
+// ---------------------------------------------------------------------------
+export var touch = (filePath) => {
+  var fd;
+  fd = fs.openSync(filePath, 'a');
+  fs.closeSync(fd);
 };
 
 // ---------------------------------------------------------------------------
@@ -559,7 +564,7 @@ export var readTextFile = (filePath, hOptions = {}) => {
   firstLine = getLine();
   if (notdefined(firstLine)) {
     return {
-      hMetaData: {filePath},
+      hMetaData: undef,
       reader: function() {
         return undef;
       },
@@ -567,7 +572,7 @@ export var readTextFile = (filePath, hOptions = {}) => {
     };
   }
   lMetaLines = undef;
-  hMetaData = {};
+  hMetaData = undef;
   // --- Get metadata if present
   if (isMetaDataStart(firstLine)) {
     lMetaLines = [];
@@ -578,9 +583,6 @@ export var readTextFile = (filePath, hOptions = {}) => {
     }
     block = arrayToBlock(lMetaLines);
     hMetaData = convertMetaData(firstLine, block);
-  }
-  if (!hasKey(hMetaData, 'filePath')) {
-    hMetaData.filePath = filePath;
   }
   // --- generator that allows reading contents
   reader = function*() {
@@ -602,6 +604,62 @@ export var readTextFile = (filePath, hOptions = {}) => {
   } else {
     return {hMetaData, reader, nLines};
   }
+};
+
+// ---------------------------------------------------------------------------
+export var TextFileWriter = class TextFileWriter {
+  constructor(filePath1 = undef) {
+    this.filePath = filePath1;
+    if (!this.filePath) {
+      this.filePath = temporaryFile();
+    }
+    this.writer = fs.createWriteStream(this.filePath, {
+      flags: 'w'
+    });
+  }
+
+  write(str) {
+    this.writer.write(str);
+  }
+
+  writeln(str) {
+    this.writer.write(`${str}\n`);
+  }
+
+  close(filePath = undef) {
+    this.writer.end(() => {
+      return fs.renameSync(this.filePath, filePath);
+    });
+    this.writer = undef;
+  }
+
+};
+
+// ---------------------------------------------------------------------------
+export var insertLinesAfter = (filePath, regexp, lLines) => {
+  var hMetaData, i, input, len, line, reader, ref, writer, written;
+  if (isString(lLines)) {
+    lLines = [lLines];
+  }
+  written = false;
+  ({reader, hMetaData} = readTextFile(filePath));
+  writer = new TextFileWriter();
+  if (defined(hMetaData)) {
+    writer.writeln(toTAML(hMetaData));
+    writer.writeln('---');
+  }
+  ref = reader();
+  for (input of ref) {
+    writer.writeln(input);
+    if (!written && input.match(regexp)) {
+      for (i = 0, len = lLines.length; i < len; i++) {
+        line = lLines[i];
+        writer.writeln(line);
+      }
+      written = true;
+    }
+  }
+  writer.close(filePath);
 };
 
 // ---------------------------------------------------------------------------

@@ -1088,3 +1088,10 @@ export setsAreEqual = (a, b) =>
 	assert (b instanceof Set), "b is not a set"
 	return (a.size == b.size) \
 		&& [...a].every((val) => b.has(val))
+
+# ---------------------------------------------------------------------------
+
+export sleep = (sec) =>
+
+	await new Promise((r) => setTimeout(r, 1000 * sec))
+	return

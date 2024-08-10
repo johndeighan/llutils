@@ -50,7 +50,7 @@ import {
 
 // ---------------------------------------------------------------------------
 // --- func must have the following signature:
-//        params: (code, hMetaData)
+//        params: (code, hMetaData, filePath)
 //        return value:
 //           either a string (e.g. code)
 //           or a hash with keys:
@@ -112,7 +112,7 @@ export var procFiles = (pattern, lFuncs, outExt, hOptions = {}) => {
     lSourceMaps = [];
     for (j = 0, len1 = lFuncs.length; j < len1; j++) {
       func = lFuncs[j];
-      result = func(code, hMetaData);
+      result = func(code, hMetaData, relPath);
       if (isString(result)) {
         code = result;
         lSourceMaps = undef;
@@ -145,8 +145,8 @@ export var procFiles = (pattern, lFuncs, outExt, hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
-export var brew = function(code, hMetaData = {}) {
-  var debug, filePath, js, shebang, v3SourceMap;
+export var brew = function(code, hMetaData = {}, filePath = undef) {
+  var debug, js, shebang, v3SourceMap;
   // --- metadata can be used to add a shebang line
   //     if true, use "#!/usr/bin/env node"
   //     else use value of shebang key
@@ -155,8 +155,7 @@ export var brew = function(code, hMetaData = {}) {
   //     without it, no source map is produced
   assert(defined(code), `code: ${OL(code)}`);
   assert(isString(code), `Not a string: ${OL(code)}`);
-  ({filePath, debug, shebang} = getOptions(hMetaData, {
-    filePath: undef,
+  ({debug, shebang} = getOptions(hMetaData, {
     debug: false,
     shebang: undef
   }));
@@ -189,7 +188,7 @@ export var brew = function(code, hMetaData = {}) {
 };
 
 // ---------------------------------------------------------------------------
-export var cieloPreProcess = (code, hOptions) => {
+export var cieloPreProcess = (code, hOptions = {}, filePath = undef) => {
   var debug, lLines, level, src, str;
   ({debug} = getOptions(hOptions, {
     debug: false
@@ -214,10 +213,9 @@ export var cieloPreProcess = (code, hOptions) => {
 };
 
 // ---------------------------------------------------------------------------
-export var sveltify = (code, hMetaData = {}) => {
+export var sveltify = (code, hMetaData = {}, filePath = undef) => {
   var elem, hResult, str;
-  hMetaData.filename = hMetaData.filePath;
-  delete hMetaData.filePath;
+  hMetaData.filename = filePath;
   elem = hMetaData.customElement;
   if (isString(elem, 'nonempty')) {
     checkCustomElemName(elem);

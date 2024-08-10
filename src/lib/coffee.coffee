@@ -12,7 +12,7 @@ import {
 import {DUMP} from '@jdeighan/llutils/dump'
 import {indented, splitLine} from '@jdeighan/llutils/indent'
 import {
-	readTextFile, barf, withExt, isFile,
+	barf, withExt, isFile,
 	} from '@jdeighan/llutils/fs'
 import {LineFetcher} from '@jdeighan/llutils/fetcher'
 import {

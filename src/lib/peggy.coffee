@@ -55,14 +55,14 @@ export getSource = (filePath) =>
 # ---------------------------------------------------------------------------
 # --- Only creates the parser as a *.js file
 
-export peggify = (code, hMetaData={}) =>
+export peggify = (code, hMetaData={}, filePath=undef) =>
 
 	assert isString(code), "code not a string: #{typeof code}"
 
 	# --- type determines which preprocessor to use, if any
 	#        e.g. 'coffee'
 	{type, debug, trace, allowedStartRules, include,
-		opDumper, byteCodeWriter, dumpAST, filePath,
+		opDumper, byteCodeWriter, dumpAST,
 		} = getOptions hMetaData, {
 		type: undef    # --- no preprocessing
 		debug: false
@@ -72,7 +72,6 @@ export peggify = (code, hMetaData={}) =>
 		opDumper: undef
 		byteCodeWriter: undef
 		dumpAST: undef
-		filePath: undef
 		}
 
 	# --- debug can be set to 'preprocess' or 'allcode'
@@ -218,9 +217,8 @@ export meSplitter = (str) =>
 
 # ---------------------------------------------------------------------------
 
-export PreProcessPeggy = (code, hMetaData) =>
+export PreProcessPeggy = (code, hMetaData={}, filePath=undef) =>
 
-	debugger
 	assert isString(code), "not a string: #{typeof code}"
 	{type, debug} = getOptions hMetaData, {
 		type: 'coffee'

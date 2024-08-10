@@ -113,12 +113,12 @@ export var getSource = (filePath) => {
 
 // ---------------------------------------------------------------------------
 // --- Only creates the parser as a *.js file
-export var peggify = (code, hMetaData = {}) => {
-  var allCode, allowedStartRules, byteCodeWriter, debug, debugAllCode, debugPreProcess, dumpAST, err, filePath, hMD, hOptions, i, include, input, j, jsCode, len, len1, map, opDumper, path, peggyCode, source, sourceMap, sourceNode, text, trace, type;
+export var peggify = (code, hMetaData = {}, filePath = undef) => {
+  var allCode, allowedStartRules, byteCodeWriter, debug, debugAllCode, debugPreProcess, dumpAST, err, hMD, hOptions, i, include, input, j, jsCode, len, len1, map, opDumper, path, peggyCode, source, sourceMap, sourceNode, text, trace, type;
   assert(isString(code), `code not a string: ${typeof code}`);
   // --- type determines which preprocessor to use, if any
   //        e.g. 'coffee'
-  ({type, debug, trace, allowedStartRules, include, opDumper, byteCodeWriter, dumpAST, filePath} = getOptions(hMetaData, {
+  ({type, debug, trace, allowedStartRules, include, opDumper, byteCodeWriter, dumpAST} = getOptions(hMetaData, {
     type: undef, // --- no preprocessing
     debug: false,
     trace: true,
@@ -126,8 +126,7 @@ export var peggify = (code, hMetaData = {}) => {
     include: undef,
     opDumper: undef,
     byteCodeWriter: undef,
-    dumpAST: undef,
-    filePath: undef
+    dumpAST: undef
   }));
   // --- debug can be set to 'preprocess' or 'allcode'
   debugPreProcess = debugAllCode = false;
@@ -283,8 +282,7 @@ export var meSplitter = (str) => {
 };
 
 // ---------------------------------------------------------------------------
-export var PreProcessPeggy = (code, hMetaData) => {
-  debugger;
+export var PreProcessPeggy = (code, hMetaData = {}, filePath = undef) => {
   var argStr, ch, coffeeCode, debug, funcName, getMatchExpr, hRules, headerSection, initSection, lVars, level, line, matchExpr, name, peggyCode, rulesSection, sm, src, type;
   assert(isString(code), `not a string: ${typeof code}`);
   ({type, debug} = getOptions(hMetaData, {

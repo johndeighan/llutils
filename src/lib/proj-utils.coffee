@@ -212,9 +212,20 @@ export setUpWebSite = (node) =>
 			</head>
 			<body>
 				<h1>Hello, World!</h1>
+				<script type="module">
+					import './index.js';
+					<!-- Custom Elements --->
+				</script>
 			</body>
 		</html>
 		""", "./src/index.html"
+
+	barf """
+		# index.coffee
+
+		import {escapeStr} from '@jdeighan/llutils'
+		console.log escapeStr("\t\tabc\r\n")
+		""", "./src/index.coffee"
 	return
 
 # ---------------------------------------------------------------------------
