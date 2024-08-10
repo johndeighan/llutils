@@ -227,7 +227,7 @@ export var setUpWebSite = (node) => {
 		<h1>Hello, World!</h1>
 		<script type="module">
 			import './index.js';
-			<!-- Custom Elements --->
+			// --- Custom Element Imports
 		</script>
 	</body>
 </html>`, "./src/index.html");
@@ -239,14 +239,14 @@ console.log escapeStr("\t\tabc\r\n")`, "./src/index.coffee");
 
 // ---------------------------------------------------------------------------
 export var importCustomElement = (name) => {
-  insertLinesAfter("./src/index.coffee", /Custom Elements/, `import ./${name}`);
+  insertLinesAfter("./src/index.coffee", /--- Custom Element Imports/, `import ./${name}`);
 };
 
 // ---------------------------------------------------------------------------
 export var setUpParcel = (node) => {
   node.addDevDependency('parcel');
   node.setField('source', 'src/index.html');
-  node.addScript('dev', 'concurrently "llb -w" "parcel"');
+  node.addScript('dev', 'concurrently --kill-others "llb -w" "parcel"');
   node.addScript('build', 'llb && parcel build');
 };
 
@@ -255,7 +255,7 @@ export var setUpVite = (node) => {
   node.addDevDependency('vite');
   node.addDevDependency('vite-plugin-top-level-await');
   node.setField('source', 'src/index.html');
-  node.addScript('dev', 'concurrently "llb -w" "vite -c src/vite.config.js src"');
+  node.addScript('dev', 'concurrently --kill-others "llb -w" "vite -c src/vite.config.js src"');
   node.addScript('build', 'llb && vite build');
   barf(`import topLevelAwait from "vite-plugin-top-level-await";
 

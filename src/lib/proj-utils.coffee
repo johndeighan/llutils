@@ -214,7 +214,7 @@ export setUpWebSite = (node) =>
 				<h1>Hello, World!</h1>
 				<script type="module">
 					import './index.js';
-					<!-- Custom Elements --->
+					// --- Custom Element Imports
 				</script>
 			</body>
 		</html>
@@ -234,7 +234,7 @@ export importCustomElement = (name) =>
 
 	insertLinesAfter(
 		"./src/index.coffee",
-		/Custom Elements/,
+		/--- Custom Element Imports/,
 		"import ./#{name}"
 		)
 	return
@@ -245,7 +245,7 @@ export setUpParcel = (node) =>
 
 	node.addDevDependency 'parcel'
 	node.setField  'source', 'src/index.html'
-	node.addScript 'dev',    'concurrently "llb -w" "parcel"'
+	node.addScript 'dev',    'concurrently --kill-others "llb -w" "parcel"'
 	node.addScript 'build',  'llb && parcel build'
 	return
 
@@ -256,7 +256,7 @@ export setUpVite = (node) =>
 	node.addDevDependency 'vite'
 	node.addDevDependency 'vite-plugin-top-level-await'
 	node.setField  'source', 'src/index.html'
-	node.addScript 'dev',    'concurrently "llb -w" "vite -c src/vite.config.js src"'
+	node.addScript 'dev',    'concurrently --kill-others "llb -w" "vite -c src/vite.config.js src"'
 	node.addScript 'build',  'llb && vite build'
 	barf """
 		import topLevelAwait from "vite-plugin-top-level-await";
