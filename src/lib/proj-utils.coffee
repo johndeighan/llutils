@@ -14,9 +14,10 @@ import {
 	touch, insertLinesAfter,
 	} from '@jdeighan/llutils/fs'
 
-lValidTypes = [
+export lValidTypes = [
 	'electron'
 	'codemirror'
+	'elm'
 	'parcel'
 	'vite'
 	'none'
@@ -54,11 +55,12 @@ export isOfType = (t) =>
 
 	switch t
 		when 'electron'
-			return (type == 'electron') || (type == 'codemirror')
+			lMembers = ['electron','codemirror']
 		when 'website'
-			return (type == 'parcel') || (type == 'vite')
+			lMembers = ['parcel','vite']
 		else
-			return (type == t)
+			lMembers = [t]
+	return lMembers.includes(type)
 
 # ---------------------------------------------------------------------------
 
@@ -186,6 +188,8 @@ export typeSpecificSetup = (nodeEnv) =>
 
 	if isOfType('website')
 		setUpWebSite(nodeEnv)
+	if isOfType('elm')
+		setUpElm(nodeEnv)
 	if isOfType('parcel')
 		setUpParcel(nodeEnv)
 	if isOfType('vite')
@@ -198,10 +202,9 @@ export typeSpecificSetup = (nodeEnv) =>
 
 # ---------------------------------------------------------------------------
 
-export setUpWebSite = (node) =>
+setUpWebSite = (nodeEnv) =>
 
-	console.log "Installing svelte"
-	node.addDevDependency 'svelte'
+	nodeEnv.addDevDependency 'svelte'
 
 	console.log "Creating src/index.html"
 	barf """
@@ -242,23 +245,64 @@ export importCustomElement = (name) =>
 
 # ---------------------------------------------------------------------------
 
-export setUpParcel = (node) =>
+setUpElm = (nodeEnv) =>
 
-	node.addDevDependency 'parcel'
-	node.setField  'source', 'src/index.html'
-	node.addScript 'dev',    'concurrently --kill-others "llb -w" "parcel"'
-	node.addScript 'build',  'llb && parcel build'
+	checkIfInstalled 'elm'
+	# execCmd "echo y | elm init"
+
+	nodeEnv.addDevDependency 'svelte'
+
+	nodeEnv.addScript 'build',  "npm run build:coffee && elm make src/Main.elm --output=main.js"
+	nodeEnv.addScript 'dev',    "npm run build && elm reactor"
+
+	nodeEnv.addFile "./src/Main.elm", """
+		import Main exposing (..)
+		import Html exposing (text)
+
+		main =
+		  text "Hello!"
+		"""
+
+	nodeEnv.addFile "./src/index.html",  """
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="utf-8">
+			<title>Elm Web Site</title>
+			<script src="main.js"></script>
+		</head>
+
+		<body>
+			<div id="myapp"></div>
+			<script>
+				var app = Elm.Main.init({
+					node: document.getElementById('myapp')
+					});
+			</script>
+		</body>
+		</html>
+		"""
 	return
 
 # ---------------------------------------------------------------------------
 
-export setUpVite = (node) =>
+setUpParcel = (nodeEnv) =>
 
-	node.addDevDependency 'vite'
-	node.addDevDependency 'vite-plugin-top-level-await'
-	node.setField  'source', 'src/index.html'
-	node.addScript 'dev',    'concurrently --kill-others "llb -w" "vite -c src/vite.config.js src"'
-	node.addScript 'build',  'llb && vite build'
+	nodeEnv.addDevDependency 'parcel'
+	nodeEnv.setField  'source', 'src/index.html'
+	nodeEnv.addScript 'dev',    'concurrently --kill-others "llb -w" "parcel"'
+	nodeEnv.addScript 'build',  'llb && parcel build'
+	return
+
+# ---------------------------------------------------------------------------
+
+setUpVite = (nodeEnv) =>
+
+	nodeEnv.addDevDependency 'vite'
+	nodeEnv.addDevDependency 'vite-plugin-top-level-await'
+	nodeEnv.setField  'source', 'src/index.html'
+	nodeEnv.addScript 'dev',    'concurrently --kill-others "llb -w" "vite -c src/vite.config.js src"'
+	nodeEnv.addScript 'build',  'llb && vite build'
 	barf """
 		import topLevelAwait from "vite-plugin-top-level-await";
 
@@ -278,13 +322,13 @@ export setUpVite = (node) =>
 
 # ---------------------------------------------------------------------------
 
-export setUpElectron = (node) =>
+setUpElectron = (nodeEnv) =>
 
-	node.setField 'main', 'src/main.js'
-	node.addScript 'start', 'npm run build && electron .'
+	nodeEnv.setField 'main', 'src/main.js'
+	nodeEnv.addScript 'start', 'npm run build && electron .'
 
 	console.log "Installing (dev) \"electron\""
-	node.addDevDependency 'electron'
+	nodeEnv.addDevDependency 'electron'
 
 	console.log "Creating src/main.coffee"
 	barf """
@@ -362,7 +406,7 @@ export setUpElectron = (node) =>
 
 # ---------------------------------------------------------------------------
 
-export setUpCodeMirror = (node) =>
+setUpCodeMirror = (nodeEnv) =>
 
 	return
 
@@ -584,7 +628,11 @@ export class NodeEnv
 	addFile: (fileName, contents=undef) ->
 
 		if @echo
-			console.log "CREATE FILE #{OL(fileName)}"
+			console.log "ADD FILE #{OL(fileName)}"
+
+		if defined(contents)
+			barf contents, fileName
+			return
 
 		switch fileName
 

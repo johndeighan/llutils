@@ -1,5 +1,5 @@
 // proj-utils.coffee
-var getVersion, lValidTypes, make_dirs, type;
+var getVersion, make_dirs, setUpCodeMirror, setUpElectron, setUpElm, setUpParcel, setUpVite, setUpWebSite, type;
 
 import prompts from 'prompts';
 
@@ -40,7 +40,7 @@ import {
   insertLinesAfter
 } from '@jdeighan/llutils/fs';
 
-lValidTypes = ['electron', 'codemirror', 'parcel', 'vite', 'none'];
+export var lValidTypes = ['electron', 'codemirror', 'elm', 'parcel', 'vite', 'none'];
 
 type = 'none';
 
@@ -74,14 +74,18 @@ export var setProjType = (t) => {
 // --- For example, isType('electron') will return true
 //     when type is 'codemirror'
 export var isOfType = (t) => {
+  var lMembers;
   switch (t) {
     case 'electron':
-      return (type === 'electron') || (type === 'codemirror');
+      lMembers = ['electron', 'codemirror'];
+      break;
     case 'website':
-      return (type === 'parcel') || (type === 'vite');
+      lMembers = ['parcel', 'vite'];
+      break;
     default:
-      return type === t;
+      lMembers = [t];
   }
+  return lMembers.includes(type);
 };
 
 // ---------------------------------------------------------------------------
@@ -203,6 +207,9 @@ export var typeSpecificSetup = (nodeEnv) => {
   if (isOfType('website')) {
     setUpWebSite(nodeEnv);
   }
+  if (isOfType('elm')) {
+    setUpElm(nodeEnv);
+  }
   if (isOfType('parcel')) {
     setUpParcel(nodeEnv);
   }
@@ -218,9 +225,8 @@ export var typeSpecificSetup = (nodeEnv) => {
 };
 
 // ---------------------------------------------------------------------------
-export var setUpWebSite = (node) => {
-  console.log("Installing svelte");
-  node.addDevDependency('svelte');
+setUpWebSite = (nodeEnv) => {
+  nodeEnv.addDevDependency('svelte');
   console.log("Creating src/index.html");
   barf(`<!DOCTYPE html>
 <html lang="en">
@@ -248,20 +254,51 @@ export var importCustomElement = (name) => {
 };
 
 // ---------------------------------------------------------------------------
-export var setUpParcel = (node) => {
-  node.addDevDependency('parcel');
-  node.setField('source', 'src/index.html');
-  node.addScript('dev', 'concurrently --kill-others "llb -w" "parcel"');
-  node.addScript('build', 'llb && parcel build');
+setUpElm = (nodeEnv) => {
+  checkIfInstalled('elm');
+  // execCmd "echo y | elm init"
+  nodeEnv.addDevDependency('svelte');
+  nodeEnv.addScript('build', "npm run build:coffee && elm make src/Main.elm --output=main.js");
+  nodeEnv.addScript('dev', "npm run build && elm reactor");
+  nodeEnv.addFile("./src/Main.elm", `import Main exposing (..)
+import Html exposing (text)
+
+main =
+  text "Hello!"`);
+  nodeEnv.addFile("./src/index.html", `<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Elm Web Site</title>
+	<script src="main.js"></script>
+</head>
+
+<body>
+	<div id="myapp"></div>
+	<script>
+		var app = Elm.Main.init({
+			node: document.getElementById('myapp')
+			});
+	</script>
+</body>
+</html>`);
 };
 
 // ---------------------------------------------------------------------------
-export var setUpVite = (node) => {
-  node.addDevDependency('vite');
-  node.addDevDependency('vite-plugin-top-level-await');
-  node.setField('source', 'src/index.html');
-  node.addScript('dev', 'concurrently --kill-others "llb -w" "vite -c src/vite.config.js src"');
-  node.addScript('build', 'llb && vite build');
+setUpParcel = (nodeEnv) => {
+  nodeEnv.addDevDependency('parcel');
+  nodeEnv.setField('source', 'src/index.html');
+  nodeEnv.addScript('dev', 'concurrently --kill-others "llb -w" "parcel"');
+  nodeEnv.addScript('build', 'llb && parcel build');
+};
+
+// ---------------------------------------------------------------------------
+setUpVite = (nodeEnv) => {
+  nodeEnv.addDevDependency('vite');
+  nodeEnv.addDevDependency('vite-plugin-top-level-await');
+  nodeEnv.setField('source', 'src/index.html');
+  nodeEnv.addScript('dev', 'concurrently --kill-others "llb -w" "vite -c src/vite.config.js src"');
+  nodeEnv.addScript('build', 'llb && vite build');
   barf(`import topLevelAwait from "vite-plugin-top-level-await";
 
 export default {
@@ -278,11 +315,11 @@ export default {
 };
 
 // ---------------------------------------------------------------------------
-export var setUpElectron = (node) => {
-  node.setField('main', 'src/main.js');
-  node.addScript('start', 'npm run build && electron .');
+setUpElectron = (nodeEnv) => {
+  nodeEnv.setField('main', 'src/main.js');
+  nodeEnv.addScript('start', 'npm run build && electron .');
   console.log("Installing (dev) \"electron\"");
-  node.addDevDependency('electron');
+  nodeEnv.addDevDependency('electron');
   console.log("Creating src/main.coffee");
   barf(`import pathLib from 'node:path'
 import {app, BrowserWindow} from 'electron'
@@ -343,7 +380,7 @@ else
 };
 
 // ---------------------------------------------------------------------------
-export var setUpCodeMirror = (node) => {};
+setUpCodeMirror = (nodeEnv) => {};
 
 // ---------------------------------------------------------------------------
 // --- 1. Read in current package.json
@@ -547,7 +584,11 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
   // ..........................................................
   addFile(fileName, contents = undef) {
     if (this.echo) {
-      console.log(`CREATE FILE ${OL(fileName)}`);
+      console.log(`ADD FILE ${OL(fileName)}`);
+    }
+    if (defined(contents)) {
+      barf(contents, fileName);
+      return;
     }
     switch (fileName) {
       case 'README.md':

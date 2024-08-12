@@ -33,6 +33,7 @@ import {
 } from '@jdeighan/llutils/cmd-args';
 
 import {
+  lValidTypes,
   setProjType,
   promptForProjType,
   makeProjDir,
@@ -43,7 +44,7 @@ import {
 
 // ---------------------------------------------------------------------------
 main = async() => {
-  var clear, dirname, env_dev_installs, env_installs, hArgs, i, j, lNonOptions, len, len1, node, pkg, ref, ref1, type;
+  var clear, dirname, env_dev_installs, env_installs, hArgs, i, j, lNonOptions, len, len1, nodeEnv, pkg, ref, ref1, type;
   checkIfInstalled('node', 'yarn');
   hArgs = getArgs({
     _: {
@@ -57,7 +58,7 @@ main = async() => {
     type: {
       type: 'string',
       desc: 'type of project',
-      msg: 'website|parcel|vite|electron|codemirror|none'
+      msg: lValidTypes.join('|')
     }
   });
   ({
@@ -65,7 +66,7 @@ main = async() => {
     c: clear,
     type
   } = hArgs);
-  console.log("Starting make-new-project ");
+  console.log(`make-new-project ${type} in dir ${lNonOptions[0]}`);
   if (defined(type)) {
     setProjType(type);
   } else {
@@ -76,21 +77,21 @@ main = async() => {
   execCmd("git init");
   execCmd("git branch -m main");
   execCmd("npm init -y");
-  node = new NodeEnv('fixPkgJson');
-  node.addDependency('@jdeighan/llutils');
-  node.addDevDependency('concurrently');
-  node.setField('description', `A ${type} app`);
-  node.setField('packageManager', 'yarn@1.22.22');
-  node.addFile('README.md');
-  node.addFile('.gitignore');
-  node.addFile('.npmrc');
+  nodeEnv = new NodeEnv('fixPkgJson');
+  nodeEnv.addDependency('@jdeighan/llutils');
+  nodeEnv.addDevDependency('concurrently');
+  nodeEnv.setField('description', `A ${type} app`);
+  nodeEnv.setField('packageManager', 'yarn@1.22.22');
+  nodeEnv.addFile('README.md');
+  nodeEnv.addFile('.gitignore');
+  nodeEnv.addFile('.npmrc');
   // === Install libraries specified via env vars
   env_installs = process.env.PROJECT_INSTALLS;
   if (nonEmpty(env_installs)) {
     ref = words(env_installs);
     for (i = 0, len = ref.length; i < len; i++) {
       pkg = ref[i];
-      node.addDependency(pkg);
+      nodeEnv.addDependency(pkg);
     }
   }
   env_dev_installs = process.env.PROJECT_DEV_INSTALLS;
@@ -98,17 +99,25 @@ main = async() => {
     ref1 = words(env_dev_installs);
     for (j = 0, len1 = ref1.length; j < len1; j++) {
       pkg = ref1[j];
-      node.addDevDependency(pkg);
+      nodeEnv.addDevDependency(pkg);
     }
   }
-  node.addDevDependency('coffeescript');
-  node.addDevDependency('ava');
-  typeSpecificSetup(node);
-  node.write_pkg_json();
-  return console.log(`Please run:
-   cd ../${dirname}
-   yarn
-   npm run dev`);
+  nodeEnv.addDevDependency('coffeescript');
+  nodeEnv.addDevDependency('ava');
+  typeSpecificSetup(nodeEnv);
+  nodeEnv.write_pkg_json();
+  if (type === 'elm') {
+    return console.log(`Please run:
+	cd ../${dirname}
+	elm init
+	yarn
+	npm run dev`);
+  } else {
+    return console.log(`Please run:
+	cd ../${dirname}
+	yarn
+	npm run dev`);
+  }
 };
 
 // ---------------------------------------------------------------------------

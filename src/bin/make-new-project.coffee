@@ -19,7 +19,7 @@ import {
 import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
-	setProjType, promptForProjType, makeProjDir,
+	lValidTypes, setProjType, promptForProjType, makeProjDir,
 	typeSpecificSetup, checkIfInstalled, NodeEnv,
 	} from '@jdeighan/llutils/proj-utils'
 
@@ -39,12 +39,12 @@ main = () =>
 		type: {
 			type: 'string'
 			desc: 'type of project'
-			msg: 'website|parcel|vite|electron|codemirror|none'
+			msg: lValidTypes.join('|')
 			}
 		}
 	{_: lNonOptions, c: clear, type} = hArgs
 
-	console.log "Starting make-new-project "
+	console.log "make-new-project #{type} in dir #{lNonOptions[0]}"
 
 	if defined(type)
 		setProjType(type)
@@ -58,38 +58,47 @@ main = () =>
 	execCmd "git branch -m main"
 	execCmd "npm init -y"
 
-	node = new NodeEnv('fixPkgJson')
-	node.addDependency '@jdeighan/llutils'
-	node.addDevDependency 'concurrently'
-	node.setField 'description', "A #{type} app"
-	node.setField 'packageManager', 'yarn@1.22.22'
-	node.addFile 'README.md'
-	node.addFile '.gitignore'
-	node.addFile '.npmrc'
+	nodeEnv = new NodeEnv('fixPkgJson')
+	nodeEnv.addDependency '@jdeighan/llutils'
+	nodeEnv.addDevDependency 'concurrently'
+	nodeEnv.setField 'description', "A #{type} app"
+	nodeEnv.setField 'packageManager', 'yarn@1.22.22'
+	nodeEnv.addFile 'README.md'
+	nodeEnv.addFile '.gitignore'
+	nodeEnv.addFile '.npmrc'
 
 	# === Install libraries specified via env vars
 
 	env_installs = process.env.PROJECT_INSTALLS
 	if nonEmpty(env_installs)
 		for pkg in words(env_installs)
-			node.addDependency pkg
+			nodeEnv.addDependency pkg
 
 	env_dev_installs = process.env.PROJECT_DEV_INSTALLS
 	if nonEmpty(env_dev_installs)
 		for pkg in words(env_dev_installs)
-			node.addDevDependency pkg
+			nodeEnv.addDevDependency pkg
 
-	node.addDevDependency 'coffeescript'
-	node.addDevDependency 'ava'
+	nodeEnv.addDevDependency 'coffeescript'
+	nodeEnv.addDevDependency 'ava'
 
-	typeSpecificSetup(node)
-	node.write_pkg_json()
-	console.log """
-		Please run:
-		   cd ../#{dirname}
-		   yarn
-		   npm run dev
-		"""
+	typeSpecificSetup(nodeEnv)
+	nodeEnv.write_pkg_json()
+	if (type == 'elm')
+		console.log """
+			Please run:
+				cd ../#{dirname}
+				elm init
+				yarn
+				npm run dev
+			"""
+	else
+		console.log """
+			Please run:
+				cd ../#{dirname}
+				yarn
+				npm run dev
+			"""
 
 # ---------------------------------------------------------------------------
 
