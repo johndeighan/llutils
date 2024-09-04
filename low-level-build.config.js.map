@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "low-level-build.config.js",
+  "sourceRoot": "\\",
+  "sources": [
+    "low-level-build.config.coffee"
+  ],
+  "names": [],
+  "mappings": "AAA+B;AAE/B,OAAA;EACC,IADD;EACO,eADP;EACwB,QADxB;CAAA,MAAA;;AAGA,OAAA;EAAQ,OAAR;CAAA,MAAA,0BAL+B;;;AAS/B,OAAA,IAAO,UAAA,GAAa;EACnB,MAAA,EAAQ,IADW;EAEnB,SAAA,EAAW;IACV,MAAA,EAAQ,CAAC,IAAD,CADE;IAEV,MAAA,EAAQ;EAFE,CAFQ;EAMnB,QAAA,EAAU;IACT,MAAA,EAAQ,CAAC,eAAD,EAAkB,IAAlB,CADC;IAET,MAAA,EAAQ;EAFC,CANS;EAUnB,QAAA,EAAU;IACT,MAAA,EAAQ,CAAC,OAAD,CADC;IAET,MAAA,EAAQ;EAFC,CAVS;EAcnB,SAAA,EAAW;IACV,MAAA,EAAQ,CAAC,QAAD,CADE;IAEV,MAAA,EAAQ;EAFE;AAdQ",
+  "sourcesContent": [
+    "# low-level-build.config.coffee\r\n\r\nimport {\r\n\tbrew, cieloPreProcess, sveltify,\r\n\t} from '@jdeighan/llutils/file-processor'\r\nimport {peggify} from '@jdeighan/llutils/peggy'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport hLLBConfig = {\r\n\t'echo': true\r\n\t'.coffee': {\r\n\t\tlFuncs: [brew]\r\n\t\toutExt: '.js'\r\n\t\t}\r\n\t'.cielo': {\r\n\t\tlFuncs: [cieloPreProcess, brew]\r\n\t\toutExt: '.js'\r\n\t\t}\r\n\t'.peggy': {\r\n\t\tlFuncs: [peggify]\r\n\t\toutExt: '.js'\r\n\t\t}\r\n\t'.svelte': {\r\n\t\tlFuncs: [sveltify]\r\n\t\toutExt: '.js'\r\n\t\t}\r\n\t}\r\n"
+  ]
+}

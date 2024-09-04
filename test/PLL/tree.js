@@ -79,6 +79,7 @@
 	};
 
 
+
 	// --------------------------------------------------------------
 	var parse__identifier__1, parse__one_ident__1, parse__stmt__1, parse__tree__1;
 
@@ -111,6 +112,7 @@
 	parse__one_ident__1 = (str) => {
 	  return str;
 	};
+
 
 function peg$subclass(child, parent) {
   function C() { this.constructor = child; }

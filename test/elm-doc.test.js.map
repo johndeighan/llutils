@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "elm-doc.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\elm-doc.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAqB;AAErB,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;EAC6B,QAD7B;CAAA,MAAA;;AAGA,OAAA;EAAQ,IAAR;CAAA,MAAA;;AACA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EATqB;;;AAarB,CAAC,CAAA,CAAA,GAAA;AACD,MAAA,KAAA,EAAA;EAAC,GAAA,GAAM,IAAI,WAAJ,CAAA;EAEN,GAAG,CAAC,SAAJ,CAAc,CAAA;;;;;;;;;;;;sBAAA,CAAd;EAgBA,KAAA,GAAQ,GAAG,CAAC,QAAJ,CAAA;EACR,IAAA,CAAK,QAAA,CAAS,KAAT,CAAL,EAAsB,aAAtB;SAEA,KAAA,CAAM,KAAN,EAAa,CAAA;;;;;mBAAA,CAAb;AAtBA,CAAD,CAAA,CAAA",
+  "sourcesContent": [
+    "# elm-doc.test.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined, untabify,\r\n\t} from '@jdeighan/llutils'\r\nimport {barf} from '@jdeighan/llutils/fs'\r\nimport * as lib from '@jdeighan/llutils/elm-doc'\r\nObject.assign(global, lib)\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\n(() =>\r\n\tdoc = new ElmDocument()\r\n\r\n\tdoc.addModule \"\"\"\r\n\t\t---\r\n\t\ttype: module\r\n\t\tname: Hello\r\n\t\tlFuncDefs:\r\n\t\t\t-\r\n\t\t\t\ttype: funcDef\r\n\t\t\t\tname: main\r\n\t\t\t\tlParms: []\r\n\t\t\t\tlStmts:\r\n\t\t\t\t\t-\r\n\t\t\t\t\t\ttype: funcApply\r\n\t\t\t\t\t\tname: text\r\n\t\t\t\t\t\tlArgs: Hello, Elm!\r\n\t\t\"\"\"\r\n\r\n\tblock = doc.getBlock()\r\n\tbarf untabify(block), \"./test1.elm\"\r\n\r\n\tequal block, \"\"\"\r\n\t\tmodule Hello exposing(main)\r\n\r\n\t\timport Element exposing(text)\r\n\r\n\t\tmain =\r\n\t\t\ttext \"Hello, Elm!\"\r\n\t\t\"\"\"\r\n\t)()\r\n"
+  ]
+}

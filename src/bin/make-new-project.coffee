@@ -29,7 +29,8 @@ main = () =>
 	checkIfInstalled 'node', 'yarn'
 	hArgs = getArgs {
 		_: {
-			exactly: 1
+			min: 0
+			max: 1
 			desc: "<dirname>"
 			}
 		c: {
@@ -44,14 +45,17 @@ main = () =>
 		}
 	{_: lNonOptions, c: clear, type} = hArgs
 
+	if notdefined(type)
+		type = await promptForProjType()
+
+	[type, subtype] = type.split('/', 2)
+	setProjType(type, subtype)
+	console.log "type = #{OL(type)}"
+	console.log "subtype = #{OL(subtype)}"
+
+	dirname = lNonOptions[0] || type
 	console.log "make-new-project #{type} in dir #{lNonOptions[0]}"
 
-	if defined(type)
-		setProjType(type)
-	else
-		await promptForProjType()
-
-	dirname = lNonOptions[0]
 	makeProjDir dirname, {clear}   # also cd's to proj dir
 
 	execCmd "git init"
@@ -84,21 +88,12 @@ main = () =>
 
 	typeSpecificSetup(nodeEnv)
 	nodeEnv.write_pkg_json()
-	if (type == 'elm')
-		console.log """
-			Please run:
-				cd ../#{dirname}
-				elm init
-				yarn
-				npm run dev
-			"""
-	else
-		console.log """
-			Please run:
-				cd ../#{dirname}
-				yarn
-				npm run dev
-			"""
+	console.log """
+		Please run:
+			cd ../#{dirname}
+			yarn
+			npm run dev
+		"""
 
 # ---------------------------------------------------------------------------
 

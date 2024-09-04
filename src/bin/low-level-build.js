@@ -2,7 +2,7 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var contents, doLog, echo, ext, fileFilter, firstLine, force, glob, hBin, hFileTypes, hJson, hOptions, i, j, key, lFuncs, lNonOptions, len, len1, n, outExt, reader, ref, ref1, ref2, relPath, root, shebang, short_name, stub, value, watch, x;
+var contents, debug, doLog, echo, ext, firstLine, force, glob, hBin, hJson, hNumProcessed, hOptions, i, j, key, lExtKeys, lFuncs, lNonOptions, len, len1, n, outExt, quiet, reader, ref, ref1, relPath, root, shebang, short_name, stub, value, watch, x;
 
 import chokidar from 'chokidar';
 
@@ -22,8 +22,7 @@ import {
 } from '@jdeighan/llutils';
 
 import {
-  execCmd,
-  npmLogLevel
+  execCmd
 } from '@jdeighan/llutils/exec-utils';
 
 import {
@@ -57,26 +56,11 @@ import {
   sveltify
 } from '@jdeighan/llutils/file-processor';
 
-hFileTypes = {
-  '.coffee': {
-    lFuncs: [brew],
-    outExt: '.js'
-  },
-  '.cielo': {
-    lFuncs: [cieloPreProcess, brew],
-    outExt: '.js'
-  },
-  '.peggy': {
-    lFuncs: [peggify],
-    outExt: '.js'
-  },
-  '.svelte': {
-    lFuncs: [sveltify],
-    outExt: '.js'
-  }
-};
+import {
+  hLLBConfig
+} from '@jdeighan/llutils/llb-config';
 
-echo = npmLogLevel() !== 'silent';
+echo = true;
 
 doLog = (str) => {
   if (echo) {
@@ -91,12 +75,15 @@ shebang = "#!/usr/bin/env node";
 
 // ---------------------------------------------------------------------------
 // 1. Make sure we're in a project root directory
+debugger;
+
 assert(isProjRoot('.', 'strict'), "Not in package root dir");
 
 ({
   _: lNonOptions,
-  e: echo,
+  q: quiet,
   f: force,
+  d: debug,
   w: watch,
   root
 } = getArgs({
@@ -104,10 +91,13 @@ assert(isProjRoot('.', 'strict'), "Not in package root dir");
     min: 0,
     max: 1
   },
-  e: {
+  q: {
     type: 'boolean'
   },
   f: {
+    type: 'boolean'
+  },
+  d: {
     type: 'boolean'
   },
   w: {
@@ -122,40 +112,44 @@ if (notdefined(root)) {
   root = '.';
 }
 
-ref = keys(hFileTypes);
+if (quiet === true) {
+  echo = false;
+}
+
 // ---------------------------------------------------------------------------
 // Process all files
-for (i = 0, len = ref.length; i < len; i++) {
-  ext = ref[i];
-  ({lFuncs, outExt} = hFileTypes[ext]);
-  fileFilter = ({filePath}) => {
-    var outFile;
-    if (filePath.match(/node_modules/i)) {
-      return false;
-    }
-    if (force) {
-      return true;
-    }
-    outFile = withExt(filePath, outExt);
-    return !newerDestFileExists(filePath, outFile);
-  };
+debugger;
+
+hNumProcessed = {}; // --- <ext> -> <n>
+
+lExtKeys = keys(hLLBConfig).filter((key) => {
+  return key.startsWith('.');
+});
+
+for (i = 0, len = lExtKeys.length; i < len; i++) {
+  ext = lExtKeys[i];
+  ({lFuncs, outExt} = hLLBConfig[ext]);
   n = 0;
   // --- possible options: force, debug, logOnly, echo
-  n = procFiles(`${root}/**/*${ext}`, lFuncs, outExt);
-  hFileTypes[ext].numProcessed = n;
+  hNumProcessed[ext] = procFiles(`${root}/**/*${ext}`, lFuncs, outExt, {
+    echo,
+    force,
+    debug,
+    logOnly: debug
+  });
 }
 
 // ---------------------------------------------------------------------------
 hBin = {}; // --- keys to add in package.json / bin
 
-ref1 = allFilesMatching('./src/bin/**/*.js');
+ref = allFilesMatching('./src/bin/**/*.js');
 
 // ---------------------------------------------------------------------------
 // 4. For every *.js file in the 'src/bin' directory
 //       - add a shebang line if not present
 //       - save <stub>: <jsPath> in hBin
 //       - if has a tla, save <tla>: <jsPath> in hBin
-for (x of ref1) {
+for (x of ref) {
   ({relPath, stub} = x);
   ({reader} = readTextFile(relPath));
   firstLine = reader().next().value;
@@ -185,11 +179,11 @@ if (nonEmpty(hBin)) {
   barfPkgJSON(hJson);
 }
 
-ref2 = keys(hFileTypes);
+ref1 = keys(hNumProcessed);
 // --- log number of files processed
-for (j = 0, len1 = ref2.length; j < len1; j++) {
-  ext = ref2[j];
-  n = hFileTypes[ext].numProcessed;
+for (j = 0, len1 = ref1.length; j < len1; j++) {
+  ext = ref1[j];
+  n = hNumProcessed[ext];
   if (defined(n) && (n > 0)) {
     console.log(`${n} *${ext} file${add_s(n)} compiled`);
   }
@@ -213,7 +207,7 @@ if (watch) {
     }
     path = mkpath(path);
     ext = fileExt(path);
-    ({lFuncs, outExt} = hFileTypes[ext]);
+    ({lFuncs, outExt} = hLLBConfig[ext]);
     switch (eventType) {
       case 'add':
       case 'change':

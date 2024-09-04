@@ -27,6 +27,7 @@
 	  return str;
 	};
 
+
 function peg$subclass(child, parent) {
   function C() { this.constructor = child; }
   C.prototype = parent.prototype;

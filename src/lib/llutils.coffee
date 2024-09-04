@@ -859,6 +859,8 @@ export behead = (block) ->
 
 export isTAML = (block) ->
 
+	if ! isString(block)
+		return false
 	[head, rest] = behead(block)
 	return (head == '---')
 

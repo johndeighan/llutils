@@ -961,6 +961,9 @@ export var behead = function(block) {
 // ---------------------------------------------------------------------------
 export var isTAML = function(block) {
   var head, rest;
+  if (!isString(block)) {
+    return false;
+  }
   [head, rest] = behead(block);
   return head === '---';
 };

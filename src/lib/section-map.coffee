@@ -9,18 +9,8 @@ import {
 import {Section} from '@jdeighan/llutils/section'
 
 # ---------------------------------------------------------------------------
-
-isSectionName = (name) =>
-
-	return isString(name) && name.match(/^[a-z][a-z0-9_-]*/)
-
-# ---------------------------------------------------------------------------
-
-isSetName = (name) =>
-
-	return isString(name) && name.match(/^[A-Z][a-z0-9_-]*/)
-
-# ---------------------------------------------------------------------------
+# --- NOTE: section names begin with a lower case letter
+#           set names begin with an upper case letter
 
 export class SectionMap
 
@@ -66,6 +56,13 @@ export class SectionMap
 				@mkSection item
 			else
 				assert isString(item), "Bad item in tree: #{OL(item)}"
+		return
+
+	# ..........................................................
+
+	setReplacer: (name, func) ->
+
+		@section('name').converter = func
 		return
 
 	# ..........................................................
@@ -220,3 +217,16 @@ export class SectionMap
 			assert isFunction(func),
 					"replacer for #{OL(key)} is not a function"
 		return
+
+# ---------------------------------------------------------------------------
+
+isSectionName = (name) =>
+
+	return isString(name) && name.match(/^[a-z][a-z0-9_-]*/)
+
+# ---------------------------------------------------------------------------
+
+isSetName = (name) =>
+
+	return isString(name) && name.match(/^[A-Z][a-z0-9_-]*/)
+

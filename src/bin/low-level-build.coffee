@@ -8,7 +8,7 @@ import {
 	undef, defined, notdefined, assert, hasKey, keys,
 	isEmpty, nonEmpty, add_s, OL, gen2block, tla,
 	} from '@jdeighan/llutils'
-import {execCmd, npmLogLevel} from '@jdeighan/llutils/exec-utils'
+import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
 	isProjRoot, barfJSON, barfPkgJSON, isFile, barf,
@@ -19,27 +19,9 @@ import {peggify} from '@jdeighan/llutils/peggy'
 import {
 	procFiles, brew, cieloPreProcess, sveltify,
 	} from '@jdeighan/llutils/file-processor'
+import {hLLBConfig} from '@jdeighan/llutils/llb-config'
 
-hFileTypes = {
-	'.coffee': {
-		lFuncs: [brew]
-		outExt: '.js'
-		}
-	'.cielo': {
-		lFuncs: [cieloPreProcess, brew]
-		outExt: '.js'
-		}
-	'.peggy': {
-		lFuncs: [peggify]
-		outExt: '.js'
-		}
-	'.svelte': {
-		lFuncs: [sveltify]
-		outExt: '.js'
-		}
-	}
-
-echo = (npmLogLevel() != 'silent')
+echo = true
 doLog = (str) =>
 	if echo
 		console.log str
@@ -53,12 +35,14 @@ shebang = "#!/usr/bin/env node"
 # ---------------------------------------------------------------------------
 # 1. Make sure we're in a project root directory
 
+debugger
 assert isProjRoot('.', 'strict'), "Not in package root dir"
 
 {
 	_: lNonOptions
-	e: echo
+	q: quiet
 	f: force
+	d: debug
 	w: watch
 	root
 	} = getArgs {
@@ -66,32 +50,35 @@ assert isProjRoot('.', 'strict'), "Not in package root dir"
 		min: 0
 		max: 1
 		}
-	e: {type: 'boolean'}
+	q: {type: 'boolean'}
 	f: {type: 'boolean'}
+	d: {type: 'boolean'}
 	w: {type: 'boolean'}
 	root: {type: 'string'}
 	}
 
 if notdefined(root)
 	root = '.'
+if (quiet == true)
+	echo = false
 
 # ---------------------------------------------------------------------------
 # Process all files
 
-for ext in keys(hFileTypes)
-	{lFuncs, outExt} = hFileTypes[ext]
-	fileFilter = ({filePath}) =>
-		if filePath.match(/node_modules/i)
-			return false
-		if force
-			return true
-		outFile = withExt(filePath, outExt)
-		return ! newerDestFileExists(filePath, outFile)
+debugger
+hNumProcessed = {}    # --- <ext> -> <n>
+lExtKeys = keys(hLLBConfig).filter((key) => key.startsWith('.'))
+for ext in lExtKeys
+	{lFuncs, outExt} = hLLBConfig[ext]
 	n = 0
 
 	# --- possible options: force, debug, logOnly, echo
-	n = procFiles "#{root}/**/*#{ext}", lFuncs, outExt
-	hFileTypes[ext].numProcessed = n
+	hNumProcessed[ext] = procFiles "#{root}/**/*#{ext}", lFuncs, outExt, {
+		echo
+		force
+		debug
+		logOnly: debug
+		}
 
 # ---------------------------------------------------------------------------
 
@@ -126,8 +113,8 @@ if nonEmpty(hBin)
 
 # --- log number of files processed
 
-for ext in keys(hFileTypes)
-	n = hFileTypes[ext].numProcessed
+for ext in keys(hNumProcessed)
+	n = hNumProcessed[ext]
 	if defined(n) && (n > 0)
 		console.log "#{n} *#{ext} file#{add_s(n)} compiled"
 
@@ -149,7 +136,7 @@ if watch
 			return
 		path = mkpath(path)
 		ext = fileExt(path)
-		{lFuncs, outExt} = hFileTypes[ext]
+		{lFuncs, outExt} = hLLBConfig[ext]
 		switch eventType
 			when 'add','change'
 				procFiles path, lFuncs, outExt

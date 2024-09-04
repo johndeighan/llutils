@@ -11,7 +11,7 @@ import {BOX} from '@jdeighan/llutils/dump'
 import {
 	mkpath, isDir, mkDir, slurp, barf, clearDir,
 	slurpJSON, barfJSON, slurpPkgJSON, barfPkgJSON,
-	touch, insertLinesAfter,
+	touch, insertLinesAfter, fileExt,
 	} from '@jdeighan/llutils/fs'
 
 export lValidTypes = [
@@ -23,6 +23,7 @@ export lValidTypes = [
 	'none'
 	]
 type = 'none'
+subtype = undef
 
 # ---------------------------------------------------------------------------
 
@@ -38,13 +39,14 @@ export checkIfInstalled = (...lCmds) =>
 
 # ---------------------------------------------------------------------------
 
-export setProjType = (t) =>
+export setProjType = (t, subt) =>
 
 	if (t == 'website')
 		type = 'parcel'    # default web site type
 	assert defined(t), "type is undef"
 	assert lValidTypes.includes(t), "Bad type: #{OL(t)}"
 	type = t
+	subtype = if nonEmpty(subt) then subt else undef
 	return
 
 # ---------------------------------------------------------------------------
@@ -217,7 +219,7 @@ setUpWebSite = (nodeEnv) =>
 			<body>
 				<h1>Hello, World!</h1>
 				<script type="module">
-					import './index.js';
+					import './main.js';
 					// --- Custom Element Imports
 				</script>
 			</body>
@@ -225,11 +227,11 @@ setUpWebSite = (nodeEnv) =>
 		""", "./src/index.html"
 
 	barf """
-		# index.coffee
+		# --- main.coffee
 
 		import {escapeStr} from '@jdeighan/llutils'
 		console.log escapeStr("\t\tabc\r\n")
-		""", "./src/index.coffee"
+		""", "./src/main.coffee"
 	return
 
 # ---------------------------------------------------------------------------
@@ -237,7 +239,7 @@ setUpWebSite = (nodeEnv) =>
 export importCustomElement = (name) =>
 
 	insertLinesAfter(
-		"./src/index.coffee",
+		"./src/main.coffee",
 		/Custom Element Imports/,
 		"\t\t\timport ./elements/#{name}.js"
 		)
@@ -248,40 +250,254 @@ export importCustomElement = (name) =>
 setUpElm = (nodeEnv) =>
 
 	checkIfInstalled 'elm'
-	# execCmd "echo y | elm init"
+
+	console.log "setUpElm(): subtype = #{OL(subtype)}"
 
 	nodeEnv.addDevDependency 'svelte'
+	nodeEnv.addDevDependency 'elm-live'
 
 	nodeEnv.addScript 'build',  "npm run build:coffee && elm make src/Main.elm --output=main.js"
-	nodeEnv.addScript 'dev',    "npm run build && elm reactor"
+	nodeEnv.addScript 'dev',    "elm-live src/Main.elm -- --debug --output=main.js"
 
-	nodeEnv.addFile "./src/Main.elm", """
-		import Main exposing (..)
-		import Html exposing (text)
+	nodeEnv.addFile "./elm.json", """
+		{
+			"type": "application",
+			"source-directories": [
+				"src"
+			],
+			"elm-version": "0.19.1",
+			"dependencies": {
+					"direct": {
+						"elm/browser": "1.0.2",
+						"elm/core": "1.0.5",
+						"elm/html": "1.0.0",
+						"elm/http": "2.0.0",
+						"elm/json": "1.1.3",
+						"elm/svg": "1.0.1",
+						"elm/url": "1.0.0",
+						"krisajenkins/remotedata": "6.0.1",
+						"mdgriffith/elm-ui": "1.1.8"
+					},
+					"indirect": {
+						"elm/bytes": "1.0.8",
+						"elm/file": "1.0.5",
+						"elm/time": "1.0.0",
+						"elm/url": "1.0.0",
+						"elm/virtual-dom": "1.0.3"
+					}
+				},
+			"test-dependencies": {
+				"direct": {},
+				"indirect": {}
+			}
+		}
+			""".replaceAll("\t", "   ")
 
-		main =
-		  text "Hello!"
-		"""
-
-	nodeEnv.addFile "./src/index.html",  """
+	nodeEnv.addFile "./index.html",  """
 		<!DOCTYPE html>
 		<html lang="en">
 		<head>
 			<meta charset="utf-8">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<meta name="viewport" content="width=device-width">
 			<title>Elm Web Site</title>
 			<script src="main.js"></script>
 		</head>
 
 		<body>
-			<div id="myapp"></div>
+			<main></main>
 			<script>
-				var app = Elm.Main.init({
-					node: document.getElementById('myapp')
+				Elm.Main.init({
+					node: document.querySelector('main')
 					});
 			</script>
 		</body>
 		</html>
 		"""
+
+	if (subtype == 'dog')
+		console.log "Creating elm site 'dog'"
+		nodeEnv.addFile "./src/Main.elm", """
+			module Main exposing (main)
+
+			import Browser
+			import Element exposing(
+				layoutWith, text, paragraph, column, image,
+				width, fill, rgb255, padding, paddingXY,
+				maximum, centerX
+				)
+			import Element.Font exposing(bold)
+			import Element.Background
+
+			fontColor = Element.Font.color
+			fontSize = Element.Font.size
+			bkgColor = Element.Background.color
+
+			color = {
+				blue = rgb255 100 100 200,
+				lightGray = rgb255 180 180 180
+				}
+
+			main = Browser.sandbox {
+				init = 0,
+				view = vLayout,
+				update = update
+				}
+
+			update msg model = model
+
+			vLayout model = layoutWith {
+				options = []
+				}
+				[
+					bkgColor color.lightGray,
+					padding 22
+					]
+				( column [] [
+					vTitle,
+					vSubtitle,
+					vDog
+					])
+
+			vTitle = paragraph
+				[
+					bold,
+					fontColor color.blue,
+					fontSize 48,
+					paddingXY 0 20
+					]
+				[text "My Awesome Dog"]
+
+			vSubtitle = paragraph [padding 5] [
+				text "A web page for my dog"
+				]
+
+			vDog = image
+				[
+					width (maximum 300 fill),
+					centerX
+					]
+				{
+					src = "dog.jpg",
+					description = "a picture of my dog"
+					}
+			"""
+	else if (subtype == 'json')
+		console.log "Creating elm site 'json'"
+		nodeEnv.addFile "./src/Main.elm", """
+			module Main exposing (..)
+
+			import Browser exposing(element)
+			import Html exposing(text)
+			import Http
+			import Json.Decode
+			import RemoteData exposing (RemoteData)
+
+
+			main : Program () Model Msg
+			main =
+				element
+					{ init = initModel
+					, view = view
+					, update = update
+					, subscriptions = subscriptions
+					}
+
+
+			initModel : () -> ( Model, Cmd Msg )
+			initModel _ =
+				( { result = RemoteData.NotAsked }, getTitle )
+
+
+			view : Model -> Html.Html msg
+			view model =
+				case model.result of
+					RemoteData.Failure error ->
+						text (getErrorMessage error)
+
+					RemoteData.Success title ->
+						text title
+
+					RemoteData.Loading ->
+						text "Loading ..."
+
+					RemoteData.NotAsked ->
+						text "Where everything starts"
+
+
+			update : Msg -> Model -> ( Model, Cmd Msg )
+			update msg model =
+				case msg of
+					MsgGotTitle result ->
+						( { model | result = result }, Cmd.none )
+
+
+			getErrorMessage errorDetail =
+				case errorDetail of
+					Http.NetworkError ->
+						"Connection error"
+
+					Http.BadStatus errorStatus ->
+						"Invalid server response " ++ String.fromInt errorStatus
+
+					Http.Timeout ->
+						"Request time out"
+
+					Http.BadUrl reasonError ->
+						"Invalid request URL " ++ reasonError
+
+					Http.BadBody invalidData ->
+						"Invalid data " ++ invalidData
+
+
+			subscriptions : Model -> Sub msg
+			subscriptions _ =
+				Sub.none
+
+
+			type alias Model =
+				{ result : RemoteData Http.Error String
+				}
+
+
+			type Msg
+				= MsgGotTitle (RemoteData Http.Error String)
+
+
+			getTitle : Cmd Msg
+			getTitle =
+				Http.get
+					{ url = "https://jsonplaceholder.typicode.com/posts/2"
+					, expect = Http.expectJson upgradeToRemoteData dataTitleDecoder
+					}
+
+
+			upgradeToRemoteData result =
+				MsgGotTitle (RemoteData.fromResult result)
+
+
+			dataTitleDecoder : Json.Decode.Decoder String
+			dataTitleDecoder =
+				Json.Decode.field "title" Json.Decode.string
+		"""
+	else
+		console.log "Creating bare elm site"
+		nodeEnv.addFile "./src/Main.elm", """
+			module Main exposing (main)
+
+			import Browser exposing(sandbox)
+			import Html exposing(Html)
+			import Element exposing(..)
+
+			main = sandbox {
+				 init = {
+					  title = "Hello"
+					  },
+				view = \\model -> layout [] (text model.title),
+				update = \\msg -> \\model -> model
+				}
+
+			"""
 	return
 
 # ---------------------------------------------------------------------------
@@ -631,6 +847,8 @@ export class NodeEnv
 			console.log "ADD FILE #{OL(fileName)}"
 
 		if defined(contents)
+			if (fileExt(fileName) == '.elm')
+				contents = contents.replaceAll("\t", "   ")
 			barf contents, fileName
 			return
 
@@ -693,6 +911,8 @@ getVersion = (pkg) =>
 			return "^2.12.0"
 		when 'vite'
 			return "^5.4.0"
+		when 'elm-live'
+			return "^4.0.2"
 		when 'vite-plugin-top-level-await'
 			return "^1.4.3"
 		else

@@ -44,11 +44,12 @@ import {
 
 // ---------------------------------------------------------------------------
 main = async() => {
-  var clear, dirname, env_dev_installs, env_installs, hArgs, i, j, lNonOptions, len, len1, nodeEnv, pkg, ref, ref1, type;
+  var clear, dirname, env_dev_installs, env_installs, hArgs, i, j, lNonOptions, len, len1, nodeEnv, pkg, ref, ref1, subtype, type;
   checkIfInstalled('node', 'yarn');
   hArgs = getArgs({
     _: {
-      exactly: 1,
+      min: 0,
+      max: 1,
       desc: "<dirname>"
     },
     c: {
@@ -66,13 +67,15 @@ main = async() => {
     c: clear,
     type
   } = hArgs);
-  console.log(`make-new-project ${type} in dir ${lNonOptions[0]}`);
-  if (defined(type)) {
-    setProjType(type);
-  } else {
-    await promptForProjType();
+  if (notdefined(type)) {
+    type = (await promptForProjType());
   }
-  dirname = lNonOptions[0];
+  [type, subtype] = type.split('/', 2);
+  setProjType(type, subtype);
+  console.log(`type = ${OL(type)}`);
+  console.log(`subtype = ${OL(subtype)}`);
+  dirname = lNonOptions[0] || type;
+  console.log(`make-new-project ${type} in dir ${lNonOptions[0]}`);
   makeProjDir(dirname, {clear}); // also cd's to proj dir
   execCmd("git init");
   execCmd("git branch -m main");
@@ -106,18 +109,10 @@ main = async() => {
   nodeEnv.addDevDependency('ava');
   typeSpecificSetup(nodeEnv);
   nodeEnv.write_pkg_json();
-  if (type === 'elm') {
-    return console.log(`Please run:
-	cd ../${dirname}
-	elm init
-	yarn
-	npm run dev`);
-  } else {
-    return console.log(`Please run:
+  return console.log(`Please run:
 	cd ../${dirname}
 	yarn
 	npm run dev`);
-  }
 };
 
 // ---------------------------------------------------------------------------

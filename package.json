@@ -38,6 +38,8 @@
 		"./proj-utils": "./src/lib/proj-utils.js",
 		"./file-processor": "./src/lib/file-processor.js",
 		"./exec-utils": "./src/lib/exec-utils.js",
+		"./elm-doc": "./src/lib/elm-doc.js",
+		"./llb-config": "./low-level-build.config.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {
@@ -87,6 +89,7 @@
 		"deep-equal": "^2.2.3",
 		"glob": "^11.0.0",
 		"n-readlines": "^1.0.1",
+		"nearley": "^2.20.1",
 		"peggy": "file:../peggy",
 		"prompts": "^2.4.2",
 		"source-map-js": "^1.2.0",
