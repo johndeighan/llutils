@@ -2,15 +2,6 @@
 var execAsync;
 
 import {
-  undef,
-  defined,
-  notdefined,
-  getOptions,
-  chomp,
-  assert
-} from '@jdeighan/llutils';
-
-import {
   exec,
   execSync
 } from 'node:child_process';
@@ -20,6 +11,15 @@ import {
 } from 'node:util';
 
 execAsync = promisify(exec);
+
+import {
+  undef,
+  defined,
+  notdefined,
+  getOptions,
+  chomp,
+  assert
+} from '@jdeighan/llutils';
 
 // ---------------------------------------------------------------------------
 export var execCmd = (cmdLine, hOptions = {}) => {

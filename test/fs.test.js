@@ -29,6 +29,10 @@ equal(mkpath('.', 'test'), "c:/Users/johnd/llutils/test");
 equal(mkpath('C:\\temp', 'work'), "c:/temp/work");
 
 // ---------------------------------------------------------------------------
+//symbol "samefile(file1, file2)"
+truthy(samefile("./test/fs.test.coffee", "c:/Users/johnd/llutils/test/fs.test.coffee"));
+
+// ---------------------------------------------------------------------------
 //symbol "relpath(...lParts)"
 equal(relpath(".", "temp"), "temp");
 

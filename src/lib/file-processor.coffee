@@ -6,16 +6,69 @@ import {compile as compileSvelte} from 'svelte/compiler'
 import {
 	undef, defined, notdefined, getOptions, OL,
 	isString, isFunction, isArray, isHash,
-	assert, croak, keys,
+	assert, croak, keys, hasKey, nonEmpty, gen2block,
 	} from '@jdeighan/llutils'
 import {splitLine, indented} from '@jdeighan/llutils/indent'
 import {
-	isProjRoot, isFile, barf, slurp,
-	fileExt, withExt, mkpath,
+	isProjRoot, isFile, allFiles, barf, slurp,
+	fileExt, withExt, mkpath, relpath,
 	allFilesMatching, readTextFile, newerDestFileExists,
 	} from '@jdeighan/llutils/fs'
 import {LineFetcher} from '@jdeighan/llutils/fetcher'
 import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
+import {hLLBConfig} from '@jdeighan/llutils/llb-config'
+
+hConfig = hLLBConfig
+
+# ---------------------------------------------------------------------------
+# --- processes all files with file ext in hLLBConfig
+#     unprocessed, but matching files are
+#        checked for files they use
+
+export procFiles = (pattern="*", hOptions={}) =>
+
+	{debug, force} = getOptions hOptions, {
+		debug: false
+		force: false
+		}
+	if hConfig.force
+		force = true
+
+	# --- accumulate over all files
+	lProcessed = []
+	hUses = {}        # --- { <file>: [<used file>, ...], ...}
+
+	# --- set in filter (filter needs meta data, so save results)
+	hMetaData = undef   # --- set for all matching files
+	contents = undef    #     set only for files that are processed
+
+	# --- fileFilter is called for every matching file, changed or not
+	#     we need to check meta data for every matching file
+	#     so, we update lProcessed and hUses here
+
+	fileFilter = ({filePath}) =>
+
+		ext = fileExt filePath
+
+		# --- If we're not processing file, simply return false
+		if !hasKey(hConfig, ext)
+			return false
+		if force
+			return true
+		outExt = hConfig[ext].outExt
+		destFile = withExt(filePath, outExt)
+		return ! newerDestFileExists(filePath, destFile)
+
+	for {relPath} from allFilesMatching(pattern, {fileFilter})
+		{processed, lUses} = procOneFile relPath, hOptions
+		lProcessed.push relPath
+		if nonEmpty(lUses)
+			hUses[relPath] = lUses
+
+	return {
+		lProcessed
+		hUses
+		}
 
 # ---------------------------------------------------------------------------
 # --- func must have the following signature:
@@ -25,165 +78,73 @@ import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
 #           or a hash with keys:
 #              code
 #              sourceMap (optional)
-#              hOtherFiles (optional)
-#                 { <ext> => <contents>, ... }
+#              lUses - an array, possibly empty
+# ---------------------------------------------------------------------------
 
-export procFiles = (pattern, lFuncs, outExt, hOptions={}) =>
+export procOneFile = (filePath, hOptions={}) =>
 
-	# --- A file is out of date unless a file exists
-	#        with outExt extension
-	#        that's newer than the original file
-	# --- But ignore files inside node_modules
+	ext = fileExt filePath
+	[func, outExt] = extractConfig(hConfig, ext)
+	if !defined(func, outExt)
+		return {
+			processed: false
+			lUses: []
+			}
 
-	if isArray(lFuncs)
-		for f in lFuncs
-			assert isFunction(f), "not a function: #{OL(f)}"
-	else
-		assert isFunction(lFuncs), "not a function: #{OL(lFuncs)}"
-		lFuncs = [lFuncs]
+	assert isFunction(func), "Bad config: #{OL(hConfig)}"
+	assert isString(outExt) && outExt.startsWith('.'),
+			"Bad config: #{OL(hConfig)}"
 
-	assert outExt.startsWith('.'), "Bad out ext: #{OL(outExt)}"
-
-	{force, debug, logOnly, echo} = getOptions hOptions, {
-		force: false
+	{debug, logOnly, echo} = getOptions hOptions, {
 		debug: false
 		logOnly: false
 		echo: true
 		}
 
-	fileFilter = ({filePath}) =>
-		if filePath.match(/\bnode_modules\b/i)
-			return false
-		if force
-			return true
-		destFile = withExt(filePath, outExt)
-		return ! newerDestFileExists(filePath, destFile)
-
-	numFilesProcessed = 0
-	for {relPath} from allFilesMatching(pattern, {fileFilter})
-		if echo || logOnly
-			console.log relPath
-		if logOnly
-			continue
-
-		{hMetaData, contents: code} = readTextFile(relPath, 'eager')
-		assert defined(code), "procFiles(): undef code"
-		if debug
-			hMetaData.debug = true
-
-		lSourceMaps = []
-		for func in lFuncs
-			result = func code, hMetaData, relPath
-			if isString(result)
-				code = result
-				lSourceMaps = undef
-				hOtherFiles = undef
-			else
-				assert isHash(result), "result not a string or hash: #{OL(result)}"
-				{code, sourceMap, hOtherFiles} = result
-				assert isString(code), "code not a string: #{OL(code)}"
-				if defined(lSourceMaps) && defined(sourceMap)
-					lSourceMaps.push sourceMap
-				else
-					lSourceMaps = undef
-				if defined(hOtherFiles)
-					for ext in keys(hOtherFiles)
-						barf hOtherFiles[ext], withExt(relPath, ext)
-
-		barf code, withExt(relPath, outExt)
-		if defined(lSourceMaps) && (lSourceMaps.length == 1)
-			barf lSourceMaps[0], withExt(relPath, "#{outExt}.map")
-		numFilesProcessed += 1
-	return numFilesProcessed
-
-# ---------------------------------------------------------------------------
-
-export brew = (code, hMetaData={}, filePath=undef) ->
-
-	# --- metadata can be used to add a shebang line
-	#     if true, use "#!/usr/bin/env node"
-	#     else use value of shebang key
-
-	# --- filePath is used to check for a source map
-	#     without it, no source map is produced
-
-	assert defined(code), "code: #{OL(code)}"
-	assert isString(code), "Not a string: #{OL(code)}"
-	{debug, shebang} = getOptions hMetaData, {
-		debug: false
-		shebang: undef
-		}
-
-	if defined(filePath)
-		{js, v3SourceMap} = compileCoffee code, {
-			sourceMap: true
-			bare: true
-			header: false
-			filename: filePath
+	relPath = relpath filePath
+	if echo || logOnly
+		console.log relPath
+	if logOnly
+		return {
+			processed: false
+			lUses: []
 			}
+
+	# --- get file contents, including meta data
+	{hMetaData, contents: code} = readTextFile(filePath, 'eager')
+
+	lUses = []
+	sourceMap = undef
+
+	result = func code, hMetaData, relPath
+	if isString(result)
+		barf result, withExt(relPath, outExt)
 	else
-		js = compileCoffee code, {
-			bare: true
-			header: false
-			}
-		v3SourceMap = undef
+		assert isHash(result), "result not a string or hash: #{OL(result)}"
+		{code, hOtherFiles, sourceMap, lUses} = result
+		assert isString(code), "code not a string: #{OL(code)}"
+		barf code, withExt(relPath, outExt)
+		if defined(hOtherFiles)
+			for ext in keys(hOtherFiles)
+				barf hOtherFiles[ext], withExt(relPath, ext)
 
-	assert defined(js), "No JS code generated"
-
-	if defined(shebang)
-		if isString(shebang)
-			js = shebang + "\n" + js.trim()
-		else
-			js = "#!/usr/bin/env node" + "\n" + js.trim()
+		# --- Write out final source map
+		if defined(sourceMap)
+			barf sourceMap, withExt(relPath, "#{outExt}.map")
 
 	return {
-		code: js
-		sourceMap: v3SourceMap
+		processed: true
+		lUses: lUses
 		}
 
 # ---------------------------------------------------------------------------
 
-export cieloPreProcess = (code, hOptions={}, filePath=undef) =>
+export extractConfig = (hConfig, ext) ->
 
-	{debug} = getOptions hOptions, {
-		debug: false
-		}
-
-	if debug
-		console.log "IN cieloPreProcess()"
-	lLines = []
-	src = new LineFetcher(code)
-	while src.moreLines()
-		[level, str] = splitLine(src.fetch())
-		if (level == 0) && (str == '__END__')
-			break
-		if debug
-			console.log "GOT: #{OL(str)} at level #{level}"
-		str = replaceHereDocs(level, str, src)
-		lLines.push indented(str, level)
-	return lLines.join("\n")
-
-# ---------------------------------------------------------------------------
-
-export sveltify = (code, hMetaData={}, filePath=undef) =>
-
-	hMetaData.filename = filePath
-	elem = hMetaData.customElement
-	if isString(elem, 'nonempty')
-		checkCustomElemName(elem)
-		hMetaData.customElement = true
-		str = "<svelte:options customElement=#{OL(elem)}/>"
-		code = str + "\n" + code
-	hResult = compileSvelte code, hMetaData
-	hResult.code = hResult.js.code
-	return hResult
-
-# ---------------------------------------------------------------------------
-
-export checkCustomElemName = (name) =>
-
-	assert (name.length > 0), "empty name: #{OL(name)}"
-	assert (name.indexOf('-') > 0), "Bad custom elem name: #{OL(name)}"
-	return true
+	h = hConfig[ext]
+	if defined(h) && isHash(h)
+		return [h.func, h.outExt]
+	else
+		return [undef, undef]
 
 # ---------------------------------------------------------------------------

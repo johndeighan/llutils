@@ -1,0 +1,14 @@
+main = () =>
+	column []
+		- row [width fill, padding 10]
+			- box [width (px 80), height (px 80)]
+				- text [] "icon"
+			- text [alignRight] "About"
+			- text [alignRight] "Contact"
+		- text <<< "Hello, World!"
+			- width fill
+			- height fill
+			- centerX
+			- centerY
+			- font "bold 18px sans-serif"
+		- text [width fill, centerX] "by John Deighan"

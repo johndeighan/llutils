@@ -1,28 +1,22 @@
 # low-level-build.config.coffee
 
-import {
-	brew, cieloPreProcess, sveltify,
-	} from '@jdeighan/llutils/file-processor'
-import {peggify} from '@jdeighan/llutils/peggy'
+import {undef, defined} from '@jdeighan/llutils'
+import {procCoffee} from '@jdeighan/llutils/coffee'
+import {procCielo} from '@jdeighan/llutils/cielo'
+import {procSvelte} from '@jdeighan/llutils/svelte'
+import {procPeggy} from '@jdeighan/llutils/peggy'
 
 # ---------------------------------------------------------------------------
+# --- func must be:
+#        (code, hMetaData, filePath)
+#     returning code or
+#        { code, lUses, sourceMap, hOtherFiles }
 
 export hLLBConfig = {
 	'echo': true
-	'.coffee': {
-		lFuncs: [brew]
-		outExt: '.js'
-		}
-	'.cielo': {
-		lFuncs: [cieloPreProcess, brew]
-		outExt: '.js'
-		}
-	'.peggy': {
-		lFuncs: [peggify]
-		outExt: '.js'
-		}
-	'.svelte': {
-		lFuncs: [sveltify]
-		outExt: '.js'
-		}
+
+	'.coffee': { func: procCoffee, outExt: '.js' }
+	'.cielo':  { func: procCielo,  outExt: '.js' }
+	'.peggy':  { func: procPeggy,  outExt: '.js' }
+	'.svelte': { func: procSvelte, outExt: '.js' }
 	}

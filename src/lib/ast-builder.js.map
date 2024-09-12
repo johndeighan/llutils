@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "ast-builder.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\lib\\ast-builder.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAoB;AAEpB,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;EAC6B,MAD7B;EACqC,IADrC;EAEC,QAFD;EAEW,MAFX;EAEmB,OAFnB;CAAA,MAAA,oBAFoB;;;;;AAUpB,OAAA,IAAa,aAAN,MAAA,WAAA;EAEN,WAAa,CAAC,IAAD,EAAO,KAAP,CAAA;IAEZ,IAAC,CAAA,IAAD,GAAQ,CAAE,IAAF;EAFI;;AAFP",
+  "sourcesContent": [
+    "# ast-builder.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined, hasKey, keys,\r\n\tisString, isHash, isArray,\r\n\t} from '@jdeighan/llutils'\r\n\r\n# ---------------------------------------------------------------------------\r\n# --- hDesc describes allowed keys in a node\r\n#        <type>:\r\nexport class ASTBuilder\r\n\r\n\tconstructor: (type, hDesc) ->\r\n\r\n\t\t@hAst = { type }\r\n\r\n"
+  ]
+}

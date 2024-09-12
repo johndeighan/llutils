@@ -1,0 +1,30 @@
+{{
+	import {
+	  undef,
+	  defined,
+	  OL,
+	  assert,
+	  nonEmpty,
+	  isFunction
+	} from '@jdeighan/llutils';
+
+	import {
+	  getTracer
+	} from '@jdeighan/llutils/tracer';
+
+	export var ulmusAST = (input, tracerType = 'none') => {
+	  debugger;
+	  var tracer;
+	  tracer = getTracer(tracerType);
+	  return peg$parse(input, {tracer});
+	};
+
+}}
+
+value
+
+	= boolean
+
+	/ number
+
+	/ string

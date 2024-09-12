@@ -23,27 +23,27 @@ import * as lib2 from '@jdeighan/llutils/utest';
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
-//symbol "brew(code)"
+//symbol "procCoffee(code)"
 succeeds(() => {
-  return brew('v = 5');
+  return procCoffee('v = 5');
 });
 
 fails(() => {
-  return brew('let v = 5');
+  return procCoffee('let v = 5');
 });
 
-matches(brew('v = 5').code, `var v;
+matches(procCoffee('v = 5').code, `var v;
 
 v = 5;`);
 
-equal(brew('v = 5', {
+equal(procCoffee('v = 5', {
   shebang: true
 }).code, `#!/usr/bin/env node
 var v;
 
 v = 5;`);
 
-equal(brew('v = 5', {
+equal(procCoffee('v = 5', {
   shebang: 'abc'
 }).code, `abc
 var v;
@@ -107,7 +107,7 @@ blocks = new TextBlockList();
 
 blocks.addBlock(filePath, coffeeCode);
 
-({code} = brew(coffeeCode));
+({code} = procCoffee(coffeeCode));
 
 blocks.addBlock('JavaScript', code);
 

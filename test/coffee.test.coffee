@@ -9,25 +9,25 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
-#symbol "brew(code)"
+#symbol "procCoffee(code)"
 
-succeeds () => brew('v = 5')
-fails () => brew('let v = 5')
+succeeds () => procCoffee('v = 5')
+fails () => procCoffee('let v = 5')
 
-matches brew('v = 5').code, """
+matches procCoffee('v = 5').code, """
 	var v;
 
 	v = 5;
 	"""
 
-equal brew('v = 5', {shebang: true}).code, """
+equal procCoffee('v = 5', {shebang: true}).code, """
 	#!/usr/bin/env node
 	var v;
 
 	v = 5;
 	"""
 
-equal brew('v = 5', {shebang: 'abc'}).code, """
+equal procCoffee('v = 5', {shebang: 'abc'}).code, """
 	abc
 	var v;
 
@@ -122,7 +122,7 @@ truthy isString(coffeeCode)
 blocks = new TextBlockList()
 blocks.addBlock filePath, coffeeCode
 
-{code} = brew coffeeCode
+{code} = procCoffee coffeeCode
 
 blocks.addBlock 'JavaScript', code
 

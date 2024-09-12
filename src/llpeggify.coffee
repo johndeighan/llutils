@@ -1,10 +1,20 @@
 # llpeggify.coffee
 #
 # --- Part of build process, can't use getArgs()
+#     Processes all *.peggy files where there
+#        isn't a corresponding more recent *.js file
 
-import {peggify} from '@jdeighan/llutils/peggy'
-import {procFiles} from '@jdeighan/llutils/file-processor'
+import {
+	withExt, allFilesMatching, newerDestFileExists,
+	} from '@jdeighan/llutils/fs'
+import {procOneFile} from '@jdeighan/llutils/file-processor'
 
 # ---------------------------------------------------------------------------
 
-procFiles '**/*.peggy', peggify, '.js'
+fileFilter = ({filePath}) =>
+
+	destFile = withExt(filePath, '.js')
+	return ! newerDestFileExists(filePath, destFile)
+
+for {relPath} from allFilesMatching("**/*.peggy", {fileFilter})
+	procOneFile relPath

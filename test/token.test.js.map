@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "token.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\token.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAmB;AAEnB,OAAA;EAAQ,KAAR;CAAA,MAAA;;AACA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EANmB;;;AAUnB,KAAA,CAAM,UAAA,CAAW,MAAX,CAAN,EAA0B;EACzB,IAAA,EAAM,SADmB;EAEzB,KAAA,EAAO;AAFkB,CAA1B;;AAKA,KAAA,CAAM,UAAA,CAAW,IAAX,CAAN,EAAwB;EACvB,IAAA,EAAM,SADiB;EAEvB,KAAA,EAAO;AAFgB,CAAxB",
+  "sourcesContent": [
+    "# token.test.coffee\r\n\r\nimport {undef} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/token'\r\nObject.assign(global, lib)\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nequal parseToken(\"true\"), {\r\n\ttype: 'boolean'\r\n\tvalue: true\r\n\t}\r\n\r\nequal parseToken(\"13\"), {\r\n\ttype: 'integer'\r\n\tvalue: 13\r\n\t}\r\n"
+  ]
+}

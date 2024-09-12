@@ -10,7 +10,7 @@ import {temporaryFile} from 'tempy'
 import {
 	undef, defined, notdefined, words, OL, keys, hasKey,
 	assert, croak, arrayToBlock, getOptions, sliceBlock,
-	isString, isHash, gen2block, toTAML,
+	isString, isHash, gen2block, toTAML, isArray,
 	} from '@jdeighan/llutils'
 import {
 	isMetaDataStart, convertMetaData,
@@ -116,6 +116,12 @@ export mkpath = (lParts...) =>
 
 # ---------------------------------------------------------------------------
 
+export samefile = (file1, file2) =>
+
+	return (mkpath(file1) == mkpath(file2))
+
+# ---------------------------------------------------------------------------
+
 export relpath = (lParts...) =>
 
 	fullPath = pathLib.resolve lParts...
@@ -205,6 +211,17 @@ export isFile = (filePath) =>
 		return getFileStats(filePath).isFile()
 	catch
 		return false
+
+# ---------------------------------------------------------------------------
+
+export allFiles = (lStrings) =>
+
+	assert isArray(lStrings), "expected array of strings, got #{OL(lStrings)}"
+	for str in lStrings
+		assert isString(str), "expected array of strings, got #{OL(lStrings)}"
+		if !isFile(str)
+			return false
+	return true
 
 # ---------------------------------------------------------------------------
 
@@ -377,6 +394,7 @@ export globFiles = (pattern='*', hGlobOptions={}) ->
 	hGlobOptions = getOptions hGlobOptions, {
 		withFileTypes: true
 		stat: true
+		ignore: "node_modules/**"
 		}
 
 	for ent in glob(pattern, hGlobOptions)
@@ -532,12 +550,12 @@ export readTextFile = (filePath, hOptions={}) =>
 	firstLine = getLine()
 	if notdefined(firstLine)
 		return {
-			hMetaData: undef
+			hMetaData: {}
 			reader: () -> return undef
 			nLines: 0
 			}
 	lMetaLines = undef
-	hMetaData = undef
+	hMetaData = {}
 
 	# --- Get metadata if present
 	if isMetaDataStart(firstLine)
@@ -559,7 +577,7 @@ export readTextFile = (filePath, hOptions={}) =>
 			line = getLine()
 		return
 
-	# --- number of lines in file
+	# --- number of lines in file read so far
 	nLines = if defined(lMetaLines)
 		lMetaLines.length + 2
 	else

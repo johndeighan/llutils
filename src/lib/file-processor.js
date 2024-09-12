@@ -1,4 +1,6 @@
-  // file-processor.coffee
+// file-processor.coffee
+var hConfig;
+
 import {
   compile as compileCoffee
 } from 'coffeescript';
@@ -19,7 +21,10 @@ import {
   isHash,
   assert,
   croak,
-  keys
+  keys,
+  hasKey,
+  nonEmpty,
+  gen2block
 } from '@jdeighan/llutils';
 
 import {
@@ -30,11 +35,13 @@ import {
 import {
   isProjRoot,
   isFile,
+  allFiles,
   barf,
   slurp,
   fileExt,
   withExt,
   mkpath,
+  relpath,
   allFilesMatching,
   readTextFile,
   newerDestFileExists
@@ -48,6 +55,61 @@ import {
   replaceHereDocs
 } from '@jdeighan/llutils/heredoc';
 
+import {
+  hLLBConfig
+} from '@jdeighan/llutils/llb-config';
+
+hConfig = hLLBConfig;
+
+// ---------------------------------------------------------------------------
+// --- processes all files with file ext in hLLBConfig
+//     unprocessed, but matching files are
+//        checked for files they use
+export var procFiles = (pattern = "*", hOptions = {}) => {
+  var contents, debug, fileFilter, force, hMetaData, hUses, lProcessed, lUses, processed, ref, relPath, x;
+  ({debug, force} = getOptions(hOptions, {
+    debug: false,
+    force: false
+  }));
+  if (hConfig.force) {
+    force = true;
+  }
+  // --- accumulate over all files
+  lProcessed = [];
+  hUses = {}; // --- { <file>: [<used file>, ...], ...}
+  
+  // --- set in filter (filter needs meta data, so save results)
+  hMetaData = undef; // --- set for all matching files
+  contents = undef; //     set only for files that are processed
+  
+  // --- fileFilter is called for every matching file, changed or not
+  //     we need to check meta data for every matching file
+  //     so, we update lProcessed and hUses here
+  fileFilter = ({filePath}) => {
+    var destFile, ext, outExt;
+    ext = fileExt(filePath);
+    if (!hasKey(hConfig, ext)) {
+      return false;
+    }
+    if (force) {
+      return true;
+    }
+    outExt = hConfig[ext].outExt;
+    destFile = withExt(filePath, outExt);
+    return !newerDestFileExists(filePath, destFile);
+  };
+  ref = allFilesMatching(pattern, {fileFilter});
+  for (x of ref) {
+    ({relPath} = x);
+    ({processed, lUses} = procOneFile(relPath, hOptions));
+    lProcessed.push(relPath);
+    if (nonEmpty(lUses)) {
+      hUses[relPath] = lUses;
+    }
+  }
+  return {lProcessed, hUses};
+};
+
 // ---------------------------------------------------------------------------
 // --- func must have the following signature:
 //        params: (code, hMetaData, filePath)
@@ -56,183 +118,77 @@ import {
 //           or a hash with keys:
 //              code
 //              sourceMap (optional)
-//              hOtherFiles (optional)
-//                 { <ext> => <contents>, ... }
-export var procFiles = (pattern, lFuncs, outExt, hOptions = {}) => {
-  var code, debug, echo, ext, f, fileFilter, force, func, hMetaData, hOtherFiles, i, j, k, lSourceMaps, len, len1, len2, logOnly, numFilesProcessed, ref, ref1, relPath, result, sourceMap, x;
-  // --- A file is out of date unless a file exists
-  //        with outExt extension
-  //        that's newer than the original file
-  // --- But ignore files inside node_modules
-  if (isArray(lFuncs)) {
-    for (i = 0, len = lFuncs.length; i < len; i++) {
-      f = lFuncs[i];
-      assert(isFunction(f), `not a function: ${OL(f)}`);
-    }
-  } else {
-    assert(isFunction(lFuncs), `not a function: ${OL(lFuncs)}`);
-    lFuncs = [lFuncs];
+//              lUses - an array, possibly empty
+// ---------------------------------------------------------------------------
+export var procOneFile = (filePath, hOptions = {}) => {
+  var code, debug, echo, ext, func, hMetaData, hOtherFiles, i, lUses, len, logOnly, outExt, ref, relPath, result, sourceMap;
+  ext = fileExt(filePath);
+  [func, outExt] = extractConfig(hConfig, ext);
+  if (!defined(func, outExt)) {
+    return {
+      processed: false,
+      lUses: []
+    };
   }
-  assert(outExt.startsWith('.'), `Bad out ext: ${OL(outExt)}`);
-  ({force, debug, logOnly, echo} = getOptions(hOptions, {
-    force: false,
+  assert(isFunction(func), `Bad config: ${OL(hConfig)}`);
+  assert(isString(outExt) && outExt.startsWith('.'), `Bad config: ${OL(hConfig)}`);
+  ({debug, logOnly, echo} = getOptions(hOptions, {
     debug: false,
     logOnly: false,
     echo: true
   }));
-  fileFilter = ({filePath}) => {
-    var destFile;
-    if (filePath.match(/\bnode_modules\b/i)) {
-      return false;
-    }
-    if (force) {
-      return true;
-    }
-    destFile = withExt(filePath, outExt);
-    return !newerDestFileExists(filePath, destFile);
-  };
-  numFilesProcessed = 0;
-  ref = allFilesMatching(pattern, {fileFilter});
-  for (x of ref) {
-    ({relPath} = x);
-    if (echo || logOnly) {
-      console.log(relPath);
-    }
-    if (logOnly) {
-      continue;
-    }
-    ({
-      hMetaData,
-      contents: code
-    } = readTextFile(relPath, 'eager'));
-    assert(defined(code), "procFiles(): undef code");
-    if (debug) {
-      hMetaData.debug = true;
-    }
-    lSourceMaps = [];
-    for (j = 0, len1 = lFuncs.length; j < len1; j++) {
-      func = lFuncs[j];
-      result = func(code, hMetaData, relPath);
-      if (isString(result)) {
-        code = result;
-        lSourceMaps = undef;
-        hOtherFiles = undef;
-      } else {
-        assert(isHash(result), `result not a string or hash: ${OL(result)}`);
-        ({code, sourceMap, hOtherFiles} = result);
-        assert(isString(code), `code not a string: ${OL(code)}`);
-        if (defined(lSourceMaps) && defined(sourceMap)) {
-          lSourceMaps.push(sourceMap);
-        } else {
-          lSourceMaps = undef;
-        }
-        if (defined(hOtherFiles)) {
-          ref1 = keys(hOtherFiles);
-          for (k = 0, len2 = ref1.length; k < len2; k++) {
-            ext = ref1[k];
-            barf(hOtherFiles[ext], withExt(relPath, ext));
-          }
-        }
+  relPath = relpath(filePath);
+  if (echo || logOnly) {
+    console.log(relPath);
+  }
+  if (logOnly) {
+    return {
+      processed: false,
+      lUses: []
+    };
+  }
+  ({
+    // --- get file contents, including meta data
+    hMetaData,
+    contents: code
+  } = readTextFile(filePath, 'eager'));
+  lUses = [];
+  sourceMap = undef;
+  result = func(code, hMetaData, relPath);
+  if (isString(result)) {
+    barf(result, withExt(relPath, outExt));
+  } else {
+    assert(isHash(result), `result not a string or hash: ${OL(result)}`);
+    ({code, hOtherFiles, sourceMap, lUses} = result);
+    assert(isString(code), `code not a string: ${OL(code)}`);
+    barf(code, withExt(relPath, outExt));
+    if (defined(hOtherFiles)) {
+      ref = keys(hOtherFiles);
+      for (i = 0, len = ref.length; i < len; i++) {
+        ext = ref[i];
+        barf(hOtherFiles[ext], withExt(relPath, ext));
       }
     }
-    barf(code, withExt(relPath, outExt));
-    if (defined(lSourceMaps) && (lSourceMaps.length === 1)) {
-      barf(lSourceMaps[0], withExt(relPath, `${outExt}.map`));
-    }
-    numFilesProcessed += 1;
-  }
-  return numFilesProcessed;
-};
-
-// ---------------------------------------------------------------------------
-export var brew = function(code, hMetaData = {}, filePath = undef) {
-  var debug, js, shebang, v3SourceMap;
-  // --- metadata can be used to add a shebang line
-  //     if true, use "#!/usr/bin/env node"
-  //     else use value of shebang key
-
-  // --- filePath is used to check for a source map
-  //     without it, no source map is produced
-  assert(defined(code), `code: ${OL(code)}`);
-  assert(isString(code), `Not a string: ${OL(code)}`);
-  ({debug, shebang} = getOptions(hMetaData, {
-    debug: false,
-    shebang: undef
-  }));
-  if (defined(filePath)) {
-    ({js, v3SourceMap} = compileCoffee(code, {
-      sourceMap: true,
-      bare: true,
-      header: false,
-      filename: filePath
-    }));
-  } else {
-    js = compileCoffee(code, {
-      bare: true,
-      header: false
-    });
-    v3SourceMap = undef;
-  }
-  assert(defined(js), "No JS code generated");
-  if (defined(shebang)) {
-    if (isString(shebang)) {
-      js = shebang + "\n" + js.trim();
-    } else {
-      js = "#!/usr/bin/env node" + "\n" + js.trim();
+    // --- Write out final source map
+    if (defined(sourceMap)) {
+      barf(sourceMap, withExt(relPath, `${outExt}.map`));
     }
   }
   return {
-    code: js,
-    sourceMap: v3SourceMap
+    processed: true,
+    lUses: lUses
   };
 };
 
 // ---------------------------------------------------------------------------
-export var cieloPreProcess = (code, hOptions = {}, filePath = undef) => {
-  var debug, lLines, level, src, str;
-  ({debug} = getOptions(hOptions, {
-    debug: false
-  }));
-  if (debug) {
-    console.log("IN cieloPreProcess()");
+export var extractConfig = function(hConfig, ext) {
+  var h;
+  h = hConfig[ext];
+  if (defined(h) && isHash(h)) {
+    return [h.func, h.outExt];
+  } else {
+    return [undef, undef];
   }
-  lLines = [];
-  src = new LineFetcher(code);
-  while (src.moreLines()) {
-    [level, str] = splitLine(src.fetch());
-    if ((level === 0) && (str === '__END__')) {
-      break;
-    }
-    if (debug) {
-      console.log(`GOT: ${OL(str)} at level ${level}`);
-    }
-    str = replaceHereDocs(level, str, src);
-    lLines.push(indented(str, level));
-  }
-  return lLines.join("\n");
-};
-
-// ---------------------------------------------------------------------------
-export var sveltify = (code, hMetaData = {}, filePath = undef) => {
-  var elem, hResult, str;
-  hMetaData.filename = filePath;
-  elem = hMetaData.customElement;
-  if (isString(elem, 'nonempty')) {
-    checkCustomElemName(elem);
-    hMetaData.customElement = true;
-    str = `<svelte:options customElement=${OL(elem)}/>`;
-    code = str + "\n" + code;
-  }
-  hResult = compileSvelte(code, hMetaData);
-  hResult.code = hResult.js.code;
-  return hResult;
-};
-
-// ---------------------------------------------------------------------------
-export var checkCustomElemName = (name) => {
-  assert(name.length > 0, `empty name: ${OL(name)}`);
-  assert(name.indexOf('-') > 0, `Bad custom elem name: ${OL(name)}`);
-  return true;
 };
 
 // ---------------------------------------------------------------------------

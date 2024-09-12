@@ -33,7 +33,8 @@ import {
   isString,
   isHash,
   gen2block,
-  toTAML
+  toTAML,
+  isArray
 } from '@jdeighan/llutils';
 
 import {
@@ -122,6 +123,11 @@ export var mkpath = (...lParts) => {
   var fullPath;
   fullPath = pathLib.resolve(...lParts);
   return normalize(fullPath);
+};
+
+// ---------------------------------------------------------------------------
+export var samefile = (file1, file2) => {
+  return mkpath(file1) === mkpath(file2);
 };
 
 // ---------------------------------------------------------------------------
@@ -227,6 +233,20 @@ export var isFile = (filePath) => {
   } catch (error) {
     return false;
   }
+};
+
+// ---------------------------------------------------------------------------
+export var allFiles = (lStrings) => {
+  var i, len, str;
+  assert(isArray(lStrings), `expected array of strings, got ${OL(lStrings)}`);
+  for (i = 0, len = lStrings.length; i < len; i++) {
+    str = lStrings[i];
+    assert(isString(str), `expected array of strings, got ${OL(lStrings)}`);
+    if (!isFile(str)) {
+      return false;
+    }
+  }
+  return true;
 };
 
 // ---------------------------------------------------------------------------
@@ -392,7 +412,8 @@ export var globFiles = function*(pattern = '*', hGlobOptions = {}) {
   var base, dir, ent, ext, filePath, hFile, i, j, key, lMatches, len, len1, name, purpose, ref, root, type;
   hGlobOptions = getOptions(hGlobOptions, {
     withFileTypes: true,
-    stat: true
+    stat: true,
+    ignore: "node_modules/**"
   });
   ref = glob(pattern, hGlobOptions);
   for (i = 0, len = ref.length; i < len; i++) {
@@ -564,7 +585,7 @@ export var readTextFile = (filePath, hOptions = {}) => {
   firstLine = getLine();
   if (notdefined(firstLine)) {
     return {
-      hMetaData: undef,
+      hMetaData: {},
       reader: function() {
         return undef;
       },
@@ -572,7 +593,7 @@ export var readTextFile = (filePath, hOptions = {}) => {
     };
   }
   lMetaLines = undef;
-  hMetaData = undef;
+  hMetaData = {};
   // --- Get metadata if present
   if (isMetaDataStart(firstLine)) {
     lMetaLines = [];
@@ -595,7 +616,7 @@ export var readTextFile = (filePath, hOptions = {}) => {
       line = getLine();
     }
   };
-  // --- number of lines in file
+  // --- number of lines in file read so far
   nLines = defined(lMetaLines) ? lMetaLines.length + 2 : 0;
   if (eager) {
     contents = gen2block(reader);

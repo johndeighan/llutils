@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "",
+  "sourceRoot": "",
+  "sources": [
+    "test/cielo/testme.cielo"
+  ],
+  "names": [],
+  "mappings": "AAAc;AAEd,OAAO,CAAC,GAAR,CAAY,SAAZ",
+  "sourcesContent": [
+    "# testme.cielo\n\nconsole.log \"testing\""
+  ]
+}

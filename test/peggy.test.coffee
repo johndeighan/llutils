@@ -20,9 +20,9 @@ parseExpr = await getParser(exprPath)
 	)()
 
 # ---------------------------------------------------------------------------
-#symbol "peggify(code, hMeta, hOptions)"    # --- compile peggy code
+#symbol "procPeggy(code, hMeta, hOptions)"    # --- compile peggy code
 
-succeeds () => peggify("""
+succeeds () => procPeggy("""
 	start
 		"abc"
 			return 42
@@ -42,3 +42,8 @@ fails () => parseExpr('*44')
 equal parseExpr('2 + 2'), 4
 equal parseExpr('(2 + 4) * 3'), 18
 like parseExpr('3.14 * 5'), 15.7
+
+# ---------------------------------------------------------------------------
+
+succeeds () ->
+	writer = new ByteCodeWriter()

@@ -2,7 +2,7 @@
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
-var contents, debug, doLog, echo, ext, firstLine, force, glob, hBin, hJson, hNumProcessed, hOptions, i, j, key, lExtKeys, lFuncs, lNonOptions, len, len1, n, outExt, quiet, reader, ref, ref1, relPath, root, shebang, short_name, stub, value, watch, x;
+var contents, debug, doLog, echo, ext, file, filePath, firstLine, force, glob, hBin, hFiles, hJson, hOptions, hUses, i, j, k, key, l, lNonOptions, lProcessed, len, len1, len2, len3, n, pattern, quiet, reader, ref, ref1, ref2, ref3, relPath, root, shebang, short_name, stub, usedFile, value, watch, x;
 
 import chokidar from 'chokidar';
 
@@ -31,34 +31,20 @@ import {
 
 import {
   isProjRoot,
-  barfJSON,
-  barfPkgJSON,
-  isFile,
   barf,
-  slurpJSON,
+  barfPkgJSON,
   slurpPkgJSON,
+  mkpath,
   fileExt,
   withExt,
-  mkpath,
   allFilesMatching,
-  readTextFile,
-  newerDestFileExists
+  readTextFile
 } from '@jdeighan/llutils/fs';
 
 import {
-  peggify
-} from '@jdeighan/llutils/peggy';
-
-import {
   procFiles,
-  brew,
-  cieloPreProcess,
-  sveltify
+  procOneFile
 } from '@jdeighan/llutils/file-processor';
-
-import {
-  hLLBConfig
-} from '@jdeighan/llutils/llb-config';
 
 echo = true;
 
@@ -108,48 +94,71 @@ assert(isProjRoot('.', 'strict'), "Not in package root dir");
   }
 }));
 
-if (notdefined(root)) {
+if (defined(root)) {
+  if (root.endsWith('/')) {
+    root = root.substring(0, root.length - 1);
+  }
+} else {
   root = '.';
 }
 
-if (quiet === true) {
+if (quiet) {
   echo = false;
 }
 
 // ---------------------------------------------------------------------------
 // Process all files
-debugger;
+pattern = `${root}/{*.*,**/*.*}`;
 
-hNumProcessed = {}; // --- <ext> -> <n>
+({lProcessed, hUses} = procFiles(pattern, {force, debug}));
 
-lExtKeys = keys(hLLBConfig).filter((key) => {
-  return key.startsWith('.');
-});
+ref = keys(hUses);
+for (i = 0, len = ref.length; i < len; i++) {
+  filePath = ref[i];
+  ref1 = hUses[filePath];
+  for (j = 0, len1 = ref1.length; j < len1; j++) {
+    usedFile = ref1[j];
+    if (lProcessed.includes(usedFile)) {
+      if (!lProcessed.includes(filePath)) {
+        console.log(`ALSO PROCESS: ${OL(filePath)}`);
+        procOneFile(filePath);
+        lProcessed.push(filePath, hLLBConfig);
+      }
+    }
+  }
+}
 
-for (i = 0, len = lExtKeys.length; i < len; i++) {
-  ext = lExtKeys[i];
-  ({lFuncs, outExt} = hLLBConfig[ext]);
-  n = 0;
-  // --- possible options: force, debug, logOnly, echo
-  hNumProcessed[ext] = procFiles(`${root}/**/*${ext}`, lFuncs, outExt, {
-    echo,
-    force,
-    debug,
-    logOnly: debug
-  });
+// --- log number of files processed
+hFiles = {};
+
+for (k = 0, len2 = lProcessed.length; k < len2; k++) {
+  file = lProcessed[k];
+  ext = fileExt(file);
+  if (hasKey(hFiles, ext)) {
+    hFiles[ext].push(file);
+  } else {
+    hFiles[ext] = [file];
+  }
+}
+
+ref2 = keys(hFiles).sort();
+for (l = 0, len3 = ref2.length; l < len3; l++) {
+  ext = ref2[l];
+  n = hFiles[ext].length;
+  console.log(`${n} *${ext} file${add_s(n)} compiled`);
 }
 
 // ---------------------------------------------------------------------------
 hBin = {}; // --- keys to add in package.json / bin
 
-ref = allFilesMatching('./src/bin/**/*.js');
+ref3 = allFilesMatching('./src/bin/**/*.js');
 
 // ---------------------------------------------------------------------------
 // 4. For every *.js file in the 'src/bin' directory
 //       - add a shebang line if not present
 //       - save <stub>: <jsPath> in hBin
 //       - if has a tla, save <tla>: <jsPath> in hBin
-for (x of ref) {
+for (x of ref3) {
   ({relPath, stub} = x);
   ({reader} = readTextFile(relPath));
   firstLine = reader().next().value;
@@ -179,16 +188,6 @@ if (nonEmpty(hBin)) {
   barfPkgJSON(hJson);
 }
 
-ref1 = keys(hNumProcessed);
-// --- log number of files processed
-for (j = 0, len1 = ref1.length; j < len1; j++) {
-  ext = ref1[j];
-  n = hNumProcessed[ext];
-  if (defined(n) && (n > 0)) {
-    console.log(`${n} *${ext} file${add_s(n)} compiled`);
-  }
-}
-
 // --- watch for file changes
 if (watch) {
   console.log("watching for file changes...");
@@ -202,16 +201,17 @@ if (watch) {
     }
   };
   chokidar.watch(glob, hOptions).on('all', (eventType, path) => {
+    var func, outExt;
     if (path.match(/node_modules/)) {
       return;
     }
     path = mkpath(path);
     ext = fileExt(path);
-    ({lFuncs, outExt} = hLLBConfig[ext]);
+    ({func, outExt} = hLLBConfig[ext]);
     switch (eventType) {
       case 'add':
       case 'change':
-        return procFiles(path, lFuncs, outExt);
+        return procOneFile(path);
       case 'unlink':
         return execCmd(`rm ${withExt(path, outExt)}`);
     }

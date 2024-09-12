@@ -1,8 +1,6 @@
 // peggy.coffee
 var hCodeConverters, sep;
 
-import pathLib from 'node:path';
-
 import {
   pathToFileURL
 } from 'node:url';
@@ -62,8 +60,8 @@ import {
 } from '@jdeighan/llutils/fs';
 
 import {
-  brew
-} from '@jdeighan/llutils/file-processor';
+  procCoffee
+} from '@jdeighan/llutils/coffee';
 
 import {
   PLLFetcher
@@ -82,20 +80,16 @@ import {
 } from '@jdeighan/llutils/op-dumper';
 
 import {
-  ByteCodeWriter
-} from '@jdeighan/llutils/bytecode-writer';
-
-import {
-  procFiles
+  procOneFile
 } from '@jdeighan/llutils/file-processor';
 
-assert(isFunction(brew), `brew is not a function: ${OL(brew)}`);
+assert(isFunction(procCoffee), `procCoffee is not a function: ${OL(procCoffee)}`);
 
 // --- code converter is applied to each code block in a peggy file
 //     using type: 'javascript' allows you to use indentation syntax
 //        for everything but the code blocks
 hCodeConverters = {
-  coffee: brew
+  coffee: procCoffee
 };
 
 sep = '# ' + '-'.repeat(62);
@@ -113,8 +107,8 @@ export var getSource = (filePath) => {
 
 // ---------------------------------------------------------------------------
 // --- Only creates the parser as a *.js file
-export var peggify = (code, hMetaData = {}, filePath = undef) => {
-  var allCode, allowedStartRules, byteCodeWriter, debug, debugAllCode, debugPreProcess, dumpAST, err, hMD, hOptions, i, include, input, j, jsCode, len, len1, map, opDumper, path, peggyCode, source, sourceMap, sourceNode, text, trace, type;
+export var procPeggy = (code, hMetaData = {}, filePath = undef) => {
+  var allCode, allowedStartRules, byteCodeWriter, debug, debugAllCode, debugPreProcess, dumpAST, err, hMD, hOptions, include, input, j, jsCode, k, lUses, len, len1, map, opDumper, path, peggyCode, source, sourceMap, sourceNode, text, trace, type;
   assert(isString(code), `code not a string: ${typeof code}`);
   // --- type determines which preprocessor to use, if any
   //        e.g. 'coffee'
@@ -137,9 +131,9 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
   }
   if (debug) {
     if (type) {
-      console.log(`peggify ${OL(filePath)} as ${type}`);
+      console.log(`procPeggy ${OL(filePath)} as ${type}`);
     } else {
-      console.log(`peggify ${OL(filePath)}`);
+      console.log(`procPeggy ${OL(filePath)}`);
     }
   }
   // --- preprocess code if required
@@ -154,7 +148,9 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
   } else {
     peggyCode = code;
   }
+  lUses = [];
   if (isString(include)) {
+    lUses = [include];
     input = [
       {
         source: filePath,
@@ -163,14 +159,15 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
       getSource(include)
     ];
   } else if (isArray(include)) {
+    lUses = include;
     input = [
       {
         source: filePath,
         text: peggyCode
       }
     ];
-    for (i = 0, len = include.length; i < len; i++) {
-      path = include[i];
+    for (j = 0, len = include.length; j < len; j++) {
+      path = include[j];
       input.push(getSource(path));
     }
   } else {
@@ -179,8 +176,8 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
   if (debug) {
     console.log("INPUTS:");
     allCode = '';
-    for (j = 0, len1 = input.length; j < len1; j++) {
-      ({source, text} = input[j]);
+    for (k = 0, len1 = input.length; k < len1; k++) {
+      ({source, text} = input[k]);
       console.log(`   SOURCE: ${OL(source)}`);
       console.log(`   TEXT: ${escapeStr(text).substring(0, 40)}`);
       allCode += text;
@@ -222,9 +219,10 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
       sourceMap = map.toString();
       assert(isString(sourceMap), `sourceMap = ${OL(sourceMap)}`);
       return {
+        code: jsCode,
+        lUses,
         orgCode: code,
         js: jsCode,
-        code: jsCode,
         sourceMap: map.toString(),
         peggyCode
       };
@@ -232,9 +230,10 @@ export var peggify = (code, hMetaData = {}, filePath = undef) => {
       hOptions.output = 'source';
       code = peggy.generate(input, hOptions);
       return {
+        code,
+        lUses,
         orgCode: code,
         peggyCode,
-        code,
         js: code
       };
     }
@@ -439,7 +438,7 @@ export var getParser = async(filePath, hOptions = {}) => {
   }
   assert(isFile(fullPath), `No such file: ${OL(filePath)}`);
   assert(fileExt(fullPath) === '.peggy', `Not a peggy file: ${OL(filePath)}`);
-  procFiles(fullPath, peggify, '.js');
+  procOneFile(fullPath);
   jsFilePath = withExt(filePath, '.js');
   if (debug) {
     console.log(`JS file = ${OL(jsFilePath)}`);
@@ -475,5 +474,262 @@ export var getParser = async(filePath, hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
+export var ByteCodeWriter = class ByteCodeWriter {
+  constructor(hOptions = {}) {
+    this.lRuleNames = [];
+    this.hRules = {};
+    // --- These are set when the AST is known
+    this.literals = undef;
+    this.expectations = undef;
+    // --- options
+    this.detailed = hOptions.detailed;
+  }
+
+  // ..........................................................
+  setAST(ast) {
+    assert(ast.type === 'grammar', "not a grammar");
+    assert(ast.rules.length > 0, "no rules");
+    this.literals = ast.literals;
+    this.expectations = ast.expectations;
+  }
+
+  // ..........................................................
+  add(ruleName, lOpcodes) {
+    assert(typeof ruleName === 'string', "not a string");
+    assert(Array.isArray(lOpcodes), "not an array");
+    assert(!this.hRules[ruleName], `rule ${ruleName} already defined`);
+    this.lRuleNames.push(ruleName);
+    this.hRules[ruleName] = lOpcodes;
+  }
+
+  // ..........................................................
+  getOpInfo(op, pos) {
+    switch (op) {
+      case 35:
+        return ['PUSH_EMPTY_STRING', [], []];
+      case 5:
+        return ['PUSH_CUR_POS', [], []];
+      case 1:
+        return ['PUSH_UNDEFINED', [], []];
+      case 2:
+        return ['PUSH_NULL', [], []];
+      case 3:
+        return ['PUSH_FAILED', [], []];
+      case 4:
+        return ['PUSH_EMPTY_ARRAY', [], []];
+      case 6:
+        return ['POP', [], []];
+      case 7:
+        return ['POP_CUR_POS', [], []];
+      case 8:
+        return ['POP_N', ['/'], []];
+      case 9:
+        return ['NIP', [], []];
+      case 10:
+        return ['APPEND', [], []];
+      case 11:
+        return ['WRAP', [''], []];
+      case 12:
+        return ['TEXT', [], []];
+      case 36:
+        return ['PLUCK', ['/', '/', '/', 'p'], []];
+      case 13:
+        return ['IF', [], ['THEN', 'ELSE']];
+      case 14:
+        return ['IF_ERROR', [], ['THEN', 'ELSE']];
+      case 15:
+        return ['IF_NOT_ERROR', [], ['THEN', 'ELSE']];
+      case 30:
+        return ['IF_LT', [], ['THEN', 'ELSE']];
+      case 31:
+        return ['IF_GE', [], ['THEN', 'ELSE']];
+      case 32:
+        return ['IF_LT_DYNAMIC', [], ['THEN', 'ELSE']];
+      case 33:
+        return ['IF_GE_DYNAMIC', [], ['THEN', 'ELSE']];
+      case 16:
+        return ['WHILE_NOT_ERROR', [], ['THEN']];
+      case 17:
+        return ['MATCH_ANY', [], ['THEN', 'ELSE']];
+      case 18:
+        return ['MATCH_STRING', ['/lit'], ['THEN', 'ELSE']];
+      case 19:
+        return ['MATCH_STRING_IC', ['/lit'], ['THEN', 'ELSE']];
+      case 20:
+        return ['MATCH_CHAR_CLASS', ['/class'], []];
+      case 21:
+        return ['ACCEPT_N', ['/num'], []];
+      case 22:
+        return ['ACCEPT_STRING', ['/lit'], []];
+      case 23:
+        return ['FAIL', ['/expectation'], []];
+      case 24:
+        return ['LOAD_SAVED_POS', ['pos/num'], []];
+      case 25:
+        return ['UPDATE_SAVED_POS', ['pos/num'], []];
+      case 26:
+        return ['CALL', [], []];
+      case 27:
+        return ['RULE', ['/rule'], []];
+      case 37:
+        return ['SOURCE_MAP_PUSH', [], []];
+      case 38:
+        return ['SOURCE_MAP_POP', [], []];
+      case 39:
+        return ['SOURCE_MAP_LABEL_PUSH', [], []];
+      case 40:
+        return ['SOURCE_MAP_LABEL_POP', [], []];
+      default:
+        return [`OPCODE ${op}`, [], []];
+    }
+  }
+
+  // ..........................................................
+  argStr(arg, infoStr) {
+    var hExpect, label, result, type, value;
+    if (infoStr === '/') {
+      return arg.toString();
+    }
+    [label, type] = infoStr.split('/');
+    switch (type) {
+      case 'rule':
+        if (arg < this.lRuleNames.length) {
+          result = `<${this.lRuleNames[arg]}>`;
+        } else {
+          result = `<#${arg}>`;
+        }
+        break;
+      case 'lit':
+        result = `'${this.literals[arg]}'`;
+        break;
+      case 'num':
+      case 'i':
+        result = arg.toString();
+        break;
+      case 'expectation':
+        hExpect = this.expectations[arg];
+        if (defined(hExpect)) {
+          ({type, value} = hExpect);
+          switch (type) {
+            case 'literal':
+              result = `\"${value}\"`;
+              break;
+            case 'class':
+              result = "[..]";
+              break;
+            case 'any':
+              result = '.';
+              break;
+            default:
+              result = `Unknown expectation type: ${type}`;
+          }
+        } else {
+          result = 'hExpect = undef';
+        }
+        break;
+      case 'block':
+        if (label) {
+          result = `${label}:${arg}`;
+        } else {
+          result = `BLOCK: ${arg}`;
+        }
+        break;
+      case 'class':
+        if (label) {
+          result = `${label}:[${arg}]`;
+        } else {
+          result = `CLASS: ${arg}`;
+        }
+        break;
+      default:
+        result = `<UNKNOWN>: ${OL(arg)}`;
+    }
+    if (this.detailed) {
+      return `(${arg}) ${result}`;
+    } else {
+      return result;
+    }
+  }
+
+  // ..........................................................
+  opStr(lOpcodes) {
+    debugger;
+    var blockBase, blockLen, i, j, lArgDesc, lArgInfo, lArgs, lBlockInfo, lLines, lSubOps, label, len, name, numArgs, op, pos;
+    lLines = [];
+    pos = 0;
+    while (pos < lOpcodes.length) {
+      op = lOpcodes[pos];
+      pos += 1;
+      [name, lArgInfo, lBlockInfo] = this.getOpInfo(op, pos);
+      numArgs = lArgInfo.length;
+      if (numArgs === 0) {
+        if (this.detailed) {
+          lLines.push(`(${op}) ${name}`);
+        } else {
+          lLines.push(`${name}`);
+        }
+      } else {
+        lArgs = lOpcodes.slice(pos, pos + numArgs);
+        pos += numArgs;
+        lArgDesc = lArgs.map((arg, i) => {
+          return this.argStr(arg, lArgInfo[i]);
+        });
+        if (this.detailed) {
+          lLines.push(`(${op}) ${name} ${lArgDesc.join(' ')}`);
+        } else {
+          lLines.push(`${name} ${lArgDesc.join(' ')}`);
+        }
+      }
+      blockBase = pos + lBlockInfo.length;
+      for (i = j = 0, len = lBlockInfo.length; j < len; i = ++j) {
+        label = lBlockInfo[i];
+        blockLen = lOpcodes[pos];
+        pos += 1;
+        switch (label) {
+          case 'ELSE':
+            if (blockLen > 0) {
+              lLines.push('ELSE');
+            }
+            break;
+          case 'THEN':
+            pass();
+            break;
+          default:
+            croak(`Bad block label: ${label}`);
+        }
+        lSubOps = lOpcodes.slice(blockBase, blockBase + blockLen);
+        lLines.push(indented(this.opStr(lSubOps)));
+        blockBase += blockLen;
+      }
+      pos = blockBase;
+    }
+    return lLines.join("\n");
+  }
+
+  // ..........................................................
+  getBlock() {
+    var block, j, lOpcodes, lParts, len, ref, ruleName;
+    lParts = [];
+    ref = Object.keys(this.hRules);
+    for (j = 0, len = ref.length; j < len; j++) {
+      ruleName = ref[j];
+      lParts.push(`<${ruleName}>`);
+      lOpcodes = this.hRules[ruleName];
+      block = this.opStr(lOpcodes).trimEnd();
+      if (block !== '') {
+        lParts.push(indented(block));
+      }
+      lParts.push('');
+    }
+    return lParts.join("\n").trimEnd();
+  }
+
+  // ..........................................................
+  writeTo(filePath) {
+    console.log(`Writing bytecodes to ${filePath}`);
+    fs.writeFileSync(filePath, this.getBlock());
+  }
+
+};
 
 //# sourceMappingURL=peggy.js.map

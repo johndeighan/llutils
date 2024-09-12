@@ -2,7 +2,7 @@
 #
 # --- Designed to run in ANY project that installs @jdeighan/llutils
 
-import chokidar from 'chokidar'
+import chokidar from 'chokidar'    # --- for file watching
 
 import {
 	undef, defined, notdefined, assert, hasKey, keys,
@@ -11,15 +11,12 @@ import {
 import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
-	isProjRoot, barfJSON, barfPkgJSON, isFile, barf,
-	slurpJSON, slurpPkgJSON, fileExt, withExt, mkpath,
-	allFilesMatching, readTextFile, newerDestFileExists,
+	isProjRoot, barf, barfPkgJSON, slurpPkgJSON, mkpath,
+	fileExt, withExt, allFilesMatching, readTextFile,
 	} from '@jdeighan/llutils/fs'
-import {peggify} from '@jdeighan/llutils/peggy'
 import {
-	procFiles, brew, cieloPreProcess, sveltify,
+	procFiles, procOneFile,
 	} from '@jdeighan/llutils/file-processor'
-import {hLLBConfig} from '@jdeighan/llutils/llb-config'
 
 echo = true
 doLog = (str) =>
@@ -57,28 +54,39 @@ assert isProjRoot('.', 'strict'), "Not in package root dir"
 	root: {type: 'string'}
 	}
 
-if notdefined(root)
+if defined(root)
+	if root.endsWith('/')
+		root = root.substring(0, root.length-1)
+else
 	root = '.'
-if (quiet == true)
+if quiet
 	echo = false
 
 # ---------------------------------------------------------------------------
 # Process all files
 
-debugger
-hNumProcessed = {}    # --- <ext> -> <n>
-lExtKeys = keys(hLLBConfig).filter((key) => key.startsWith('.'))
-for ext in lExtKeys
-	{lFuncs, outExt} = hLLBConfig[ext]
-	n = 0
+pattern = "#{root}/{*.*,**/*.*}"
+{lProcessed, hUses} = procFiles(pattern, {force, debug})
 
-	# --- possible options: force, debug, logOnly, echo
-	hNumProcessed[ext] = procFiles "#{root}/**/*#{ext}", lFuncs, outExt, {
-		echo
-		force
-		debug
-		logOnly: debug
-		}
+for filePath in keys(hUses)
+	for usedFile in hUses[filePath]
+		if lProcessed.includes usedFile
+			if ! lProcessed.includes filePath
+				console.log "ALSO PROCESS: #{OL(filePath)}"
+				procOneFile filePath
+				lProcessed.push filePath, hLLBConfig
+
+# --- log number of files processed
+hFiles = {}
+for file in lProcessed
+	ext = fileExt file
+	if hasKey(hFiles, ext)
+		hFiles[ext].push file
+	else
+		hFiles[ext] = [file]
+for ext in keys(hFiles).sort()
+	n = hFiles[ext].length
+	console.log "#{n} *#{ext} file#{add_s(n)} compiled"
 
 # ---------------------------------------------------------------------------
 
@@ -111,13 +119,6 @@ if nonEmpty(hBin)
 			hJson.bin[key] = value
 	barfPkgJSON hJson
 
-# --- log number of files processed
-
-for ext in keys(hNumProcessed)
-	n = hNumProcessed[ext]
-	if defined(n) && (n > 0)
-		console.log "#{n} *#{ext} file#{add_s(n)} compiled"
-
 # --- watch for file changes
 
 if watch
@@ -136,9 +137,9 @@ if watch
 			return
 		path = mkpath(path)
 		ext = fileExt(path)
-		{lFuncs, outExt} = hLLBConfig[ext]
+		{func, outExt} = hLLBConfig[ext]
 		switch eventType
 			when 'add','change'
-				procFiles path, lFuncs, outExt
+				procOneFile path
 			when 'unlink'
 				execCmd "rm #{withExt(path, outExt)}"

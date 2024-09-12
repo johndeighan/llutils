@@ -6,8 +6,8 @@
     "src\\llpeggify.coffee"
   ],
   "names": [],
-  "mappings": "AAEgD;;;AAEhD,OAAA;EAAQ,OAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,SAAR;CAAA,MAAA,mCAHgD;;;AAOhD,SAAA,CAAU,YAAV,EAAwB,OAAxB,EAAiC,KAAjC",
+  "mappings": "AAIoD;;;;;AAAA,IAAA,UAAA,EAAA,GAAA,EAAA,OAAA,EAAA;;AAEpD,OAAA;EACC,OADD;EACU,gBADV;EAC4B,mBAD5B;CAAA,MAAA;;AAGA,OAAA;EAAQ,WAAR;CAAA,MAAA,mCALoD;;;AASpD,UAAA,GAAa,CAAC,CAAC,QAAD,CAAD,CAAA,GAAA;AAEb,MAAA;EAAC,QAAA,GAAW,OAAA,CAAQ,QAAR,EAAkB,KAAlB;AACX,SAAO,CAAE,mBAAA,CAAoB,QAApB,EAA8B,QAA9B;AAHG;;AAKb;AAAA,KAAA,QAAA;GAAI,CAAC,OAAD;EACH,WAAA,CAAY,OAAZ;AADD",
   "sourcesContent": [
-    "# llpeggify.coffee\r\n#\r\n# --- Part of build process, can't use getArgs()\r\n\r\nimport {peggify} from '@jdeighan/llutils/peggy'\r\nimport {procFiles} from '@jdeighan/llutils/file-processor'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nprocFiles '**/*.peggy', peggify, '.js'\r\n"
+    "# llpeggify.coffee\r\n#\r\n# --- Part of build process, can't use getArgs()\r\n#     Processes all *.peggy files where there\r\n#        isn't a corresponding more recent *.js file\r\n\r\nimport {\r\n\twithExt, allFilesMatching, newerDestFileExists,\r\n\t} from '@jdeighan/llutils/fs'\r\nimport {procOneFile} from '@jdeighan/llutils/file-processor'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nfileFilter = ({filePath}) =>\r\n\r\n\tdestFile = withExt(filePath, '.js')\r\n\treturn ! newerDestFileExists(filePath, destFile)\r\n\r\nfor {relPath} from allFilesMatching(\"**/*.peggy\", {fileFilter})\r\n\tprocOneFile relPath\r\n"
   ]
 }

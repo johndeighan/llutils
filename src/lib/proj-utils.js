@@ -260,11 +260,11 @@ export var importCustomElement = (name) => {
 // ---------------------------------------------------------------------------
 setUpElm = (nodeEnv) => {
   checkIfInstalled('elm');
+  checkIfInstalled('elm-live');
   console.log(`setUpElm(): subtype = ${OL(subtype)}`);
   nodeEnv.addDevDependency('svelte');
-  nodeEnv.addDevDependency('elm-live');
   nodeEnv.addScript('build', "npm run build:coffee && elm make src/Main.elm --output=main.js");
-  nodeEnv.addScript('dev', "elm-live src/Main.elm -- --debug --output=main.js");
+  nodeEnv.addScript('dev', "npm run build && elm-live src/Main.elm -- --debug --output=main.js");
   nodeEnv.addFile("./elm.json", `{
 	"type": "application",
 	"source-directories": [
@@ -281,7 +281,8 @@ setUpElm = (nodeEnv) => {
 				"elm/svg": "1.0.1",
 				"elm/url": "1.0.0",
 				"krisajenkins/remotedata": "6.0.1",
-				"mdgriffith/elm-ui": "1.1.8"
+				"mdgriffith/elm-ui": "1.1.8",
+            		"phollyer/elm-ui-colors": "3.0.1"
 			},
 			"indirect": {
 				"elm/bytes": "1.0.8",
@@ -311,6 +312,10 @@ setUpElm = (nodeEnv) => {
 	<script>
 		Elm.Main.init({
 			node: document.querySelector('main')
+			flags: {
+				width: window.innerWidth,
+				height: window.innerHeight
+				}
 			});
 	</script>
 </body>
@@ -478,19 +483,47 @@ dataTitleDecoder =
 	Json.Decode.field "title" Json.Decode.string`);
   } else {
     console.log("Creating bare elm site");
-    nodeEnv.addFile("./src/Main.elm", `module Main exposing (main)
+    nodeEnv.addFile("./src/Main.elm", `module Main exposing(main)
 
 import Browser exposing(sandbox)
 import Html exposing(Html)
 import Element exposing(..)
+import Element.Font as Font
 
-main = sandbox {
-	 init = {
-		  title = "Hello"
-		  },
-	view = \\model -> layout [] (text model.title),
-	update = \\msg -> \\model -> model
+main : Program () Model Msg
+main =
+	sandbox {
+		init = initModel,
+		view = vMain,
+		update = update
+		}
+
+--------------------------------------
+
+type alias Model = {
+	title: String
 	}
+
+type Msg = EmptyMessage
+
+--------------------------------------
+
+initModel : Model
+initModel = {
+	 title = "Cars"
+	 }
+
+--------------------------------------
+
+vMain model = layout
+	[]
+	(el [centerX, Font.size 32] (text model.title))
+
+--------------------------------------
+
+update : Msg -> Model -> Model
+update msg model =
+	model
 `);
   }
 };

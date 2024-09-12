@@ -1,11 +1,12 @@
 # exec-utils.coffee
 
-import {
-	undef, defined, notdefined, getOptions, chomp, assert,
-	} from '@jdeighan/llutils'
 import {exec, execSync} from 'node:child_process'
 import {promisify} from 'node:util'
 execAsync = promisify(exec)
+
+import {
+	undef, defined, notdefined, getOptions, chomp, assert,
+	} from '@jdeighan/llutils'
 
 # ---------------------------------------------------------------------------
 

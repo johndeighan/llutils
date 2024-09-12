@@ -1,0 +1,132 @@
+type: module
+name: Main
+lDefs:
+	-
+		type: function
+		name: main
+		lParms: []
+		body:
+			type: apply
+			func: column
+			lArgs:
+				-
+					type: list
+					subtype: attribute
+					lMembers: []
+				-
+					type: list
+					subtype: element
+					lMembers:
+						-
+							type: apply
+							func: row
+							lArgs:
+								-
+									type: list
+									subtype: attribute
+									lMembers:
+										-
+											type: apply
+											name: width
+											lArgs:
+												-
+													type: const
+													value: fill
+										-
+											type: apply
+											name: padding
+											lArgs:
+												-
+													type: const
+													value: 10
+								-
+									type: list
+									subtype: element
+									lMembers:
+										-
+											type: apply
+											func: box
+											lArgs:
+												-
+													type: list
+													subtype: attribute
+													lMembers:
+														-
+															type: apply
+															func: width
+															lArgs:
+																-
+																	type: apply
+																	func: px
+																	lArgs:
+																		-
+																			type: const
+																			value: 80
+														-
+															type: apply
+															func: height
+															lArgs:
+																-
+																	type: apply
+																	func: px
+																	lArgs:
+																		-
+																			type: const
+																			value: 80
+												-
+													type: list
+													subtype: element
+													lMembers:
+														-
+															type: apply
+															func: text
+															lArgs:
+																-
+																	type: list
+																	subtype: attribute
+																	lMembers: []
+																- icon
+										-
+											type: apply
+											func: text
+											lArgs:
+												-
+													type: list
+													subtype: attribute
+													lMembers:
+														-
+															type: apply
+															func: alignRight
+															lArgs: []
+														- About
+												-
+													type: list
+													subtype: attribute
+													lMembers:
+														-
+															type: apply
+															func: alignRight
+															lArgs: []
+														- Contact
+										-
+											type: apply
+											func: text
+											lArgs: ???
+						-
+							type: apply
+							name: text
+							lArgs:
+								-
+									type: list
+									subtype: attribute
+									lMembers: ???
+								- Hello, World!
+						-
+							type: apply
+							name: text
+							lArgs:
+								-
+									type: list
+									subtype: attribute
+									lMembers: ???
+								- by John Deighan

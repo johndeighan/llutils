@@ -1,0 +1,121 @@
+{{
+	var parse__boolean__1, parse__boolean__2, parse__identifier__1, parse__number__1, parse__string__1, parse__string__2;
+
+	import {
+	  undef,
+	  nonEmpty
+	} from '@jdeighan/llutils';
+
+	import {
+	  getTracer
+	} from '@jdeighan/llutils/tracer';
+
+	export var parseToken = (input, tracerType = 'none') => {
+	  debugger;
+	  var tracer;
+	  tracer = getTracer(tracerType);
+	  return peg$parse(input, {tracer});
+	};
+
+	// --------------------------------------------------------------
+	parse__boolean__1 = () => {
+	  return {
+	    type: 'boolean',
+	    value: true
+	  };
+	};
+
+	// --------------------------------------------------------------
+	parse__boolean__2 = () => {
+	  return {
+	    type: 'boolean',
+	    value: false
+	  };
+	};
+
+	// --------------------------------------------------------------
+	parse__number__1 = (pre, post) => {
+	  if (nonEmpty(post)) {
+	    return {
+	      type: "float",
+	      value: parseFloat(`${pre}${post}`)
+	    };
+	  } else {
+	    return {
+	      type: "integer",
+	      value: parseInt(pre, 10)
+	    };
+	  }
+	};
+
+	// --------------------------------------------------------------
+	parse__string__1 = (str) => {
+	  return {
+	    type: 'string',
+	    value: str
+	  };
+	};
+
+	// --------------------------------------------------------------
+	parse__string__2 = (str) => {
+	  return {
+	    type: 'string',
+	    value: str
+	  };
+	};
+
+	// --------------------------------------------------------------
+	parse__identifier__1 = (str) => {
+	  return {
+	    type: 'identifier',
+	    value: str
+	  };
+	};
+
+}}
+
+token
+
+	= boolean
+
+	/ number
+
+	/ string
+
+	/ identifier
+
+	/ NL
+
+boolean
+
+	= "true"
+		{ return parse__boolean__1(); }
+
+	/ "false"
+		{ return parse__boolean__2(); }
+
+number
+
+	= pre:$[0-9]+ post:$("." [0-9]*)?
+		{ return parse__number__1(pre, post); }
+
+string
+
+	= '"' str: $ ([^"]*) '"'
+		{ return parse__string__1(str); }
+
+	/ "'" str: $ ([^']*) "'"
+		{ return parse__string__2(str); }
+
+identifier
+
+	= str: $ ([A-Za-z]+) & {return (str != 'if');}
+		{ return parse__identifier__1(str); }
+
+NL
+
+	= "\r" ? "\n"
+
+_
+
+	= " "+

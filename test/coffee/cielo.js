@@ -23,7 +23,7 @@ import {
 } from '@jdeighan/llutils/fs';
 
 import {
-  brew,
+  procCoffee,
   cieloPreProcess
 } from '@jdeighan/llutils/file-processor';
 
@@ -39,7 +39,7 @@ import {
 export var func = function(code, hMetaData = {}) {
   assert(isString(code), `code: ${OL(code)}`);
   hMetaData.preprocess = cieloPreProcess;
-  return brew(code, hMetaData);
+  return procCoffee(code, hMetaData);
 };
 
 //# sourceMappingURL=cielo.js.map

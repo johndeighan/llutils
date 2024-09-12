@@ -28,9 +28,9 @@ parseExpr = (await getParser(exprPath));
 })();
 
 // ---------------------------------------------------------------------------
-//symbol "peggify(code, hMeta, hOptions)"    # --- compile peggy code
+//symbol "procPeggy(code, hMeta, hOptions)"    # --- compile peggy code
 succeeds(() => {
-  return peggify(`start
+  return procPeggy(`start
 	"abc"
 		return 42
 	"def"
@@ -57,5 +57,11 @@ equal(parseExpr('2 + 2'), 4);
 equal(parseExpr('(2 + 4) * 3'), 18);
 
 like(parseExpr('3.14 * 5'), 15.7);
+
+// ---------------------------------------------------------------------------
+succeeds(function() {
+  var writer;
+  return writer = new ByteCodeWriter();
+});
 
 //# sourceMappingURL=peggy.test.js.map
