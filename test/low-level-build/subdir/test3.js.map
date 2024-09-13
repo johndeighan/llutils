@@ -1,13 +1,13 @@
 {
   "version": 3,
-  "file": "",
-  "sourceRoot": "",
+  "file": "test3.js",
+  "sourceRoot": "..\\..\\..\\",
   "sources": [
-    "test/low-level-build/subdir/test3.coffee"
+    "test\\low-level-build\\subdir\\test3.coffee"
   ],
   "names": [],
   "mappings": "AAAc;AAEd,OAAO,CAAC,GAAR,CAAY,sBAAZ",
   "sourcesContent": [
-    "# test3.coffee\n\nconsole.log \"testing a third time\""
+    "# test3.coffee\r\n\r\nconsole.log \"testing a third time\"\r\n"
   ]
 }

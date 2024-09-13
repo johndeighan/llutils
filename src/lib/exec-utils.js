@@ -18,22 +18,30 @@ import {
   notdefined,
   getOptions,
   chomp,
-  assert
+  assert,
+  croak,
+  OL,
+  stripCR
 } from '@jdeighan/llutils';
 
 // ---------------------------------------------------------------------------
 export var execCmd = (cmdLine, hOptions = {}) => {
   var result;
   // --- may throw an exception
-  hOptions = getOptions(hOptions, {
-    encoding: 'utf8',
-    windowsHide: true
-  });
+  hOptions.encoding = 'utf8';
+  hOptions.windowsHide = true;
+  hOptions.timeout = 100000;
   result = execSync(cmdLine, hOptions);
   assert(defined(result), "undef return from execSync()");
   result = result.toString();
-  assert(defined(result), "undef return from execSync()");
-  return result;
+  assert(defined(result), "undef return from toString()");
+  return stripCR(result);
+};
+
+// ---------------------------------------------------------------------------
+export var execCmdY = (cmdLine, hOptions = {}) => {
+  hOptions.input = "y\r\n";
+  return execCmd(cmdLine, hOptions);
 };
 
 // ---------------------------------------------------------------------------

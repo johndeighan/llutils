@@ -18,7 +18,8 @@ import {
 } from '@jdeighan/llutils';
 
 import {
-  execCmd
+  execCmd,
+  execCmdY
 } from '@jdeighan/llutils/exec-utils';
 
 import {
@@ -259,44 +260,22 @@ export var importCustomElement = (name) => {
 
 // ---------------------------------------------------------------------------
 setUpElm = (nodeEnv) => {
+  var i, len, lib, ref;
   checkIfInstalled('elm');
   checkIfInstalled('elm-live');
   console.log(`setUpElm(): subtype = ${OL(subtype)}`);
   nodeEnv.addDevDependency('svelte');
   nodeEnv.addScript('build', "npm run build:coffee && elm make src/Main.elm --output=main.js");
   nodeEnv.addScript('dev', "npm run build && elm-live src/Main.elm -- --debug --output=main.js");
-  nodeEnv.addFile("./elm.json", `{
-	"type": "application",
-	"source-directories": [
-		"src"
-	],
-	"elm-version": "0.19.1",
-	"dependencies": {
-			"direct": {
-				"elm/browser": "1.0.2",
-				"elm/core": "1.0.5",
-				"elm/html": "1.0.0",
-				"elm/http": "2.0.0",
-				"elm/json": "1.1.3",
-				"elm/svg": "1.0.1",
-				"elm/url": "1.0.0",
-				"krisajenkins/remotedata": "6.0.1",
-				"mdgriffith/elm-ui": "1.1.8",
-            		"phollyer/elm-ui-colors": "3.0.1"
-			},
-			"indirect": {
-				"elm/bytes": "1.0.8",
-				"elm/file": "1.0.5",
-				"elm/time": "1.0.0",
-				"elm/url": "1.0.0",
-				"elm/virtual-dom": "1.0.3"
-			}
-		},
-	"test-dependencies": {
-		"direct": {},
-		"indirect": {}
-	}
-}`.replaceAll("\t", "   "));
+  console.log("initializing elm");
+  execCmdY("elm init");
+  console.log("elm is initialized");
+  ref = ["mdgriffith/elm-ui", "krisajenkins/remotedata", "phollyer/elm-ui-colors"];
+  for (i = 0, len = ref.length; i < len; i++) {
+    lib = ref[i];
+    console.log(`installing elm lib ${lib}`);
+    execCmdY(`elm install ${lib}`);
+  }
   nodeEnv.addFile("./index.html", `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -311,7 +290,7 @@ setUpElm = (nodeEnv) => {
 	<main></main>
 	<script>
 		Elm.Main.init({
-			node: document.querySelector('main')
+			node: document.querySelector('main'),
 			flags: {
 				width: window.innerWidth,
 				height: window.innerHeight
@@ -320,72 +299,7 @@ setUpElm = (nodeEnv) => {
 	</script>
 </body>
 </html>`);
-  if (subtype === 'dog') {
-    console.log("Creating elm site 'dog'");
-    nodeEnv.addFile("./src/Main.elm", `module Main exposing (main)
-
-import Browser
-import Element exposing(
-	layoutWith, text, paragraph, column, image,
-	width, fill, rgb255, padding, paddingXY,
-	maximum, centerX
-	)
-import Element.Font exposing(bold)
-import Element.Background
-
-fontColor = Element.Font.color
-fontSize = Element.Font.size
-bkgColor = Element.Background.color
-
-color = {
-	blue = rgb255 100 100 200,
-	lightGray = rgb255 180 180 180
-	}
-
-main = Browser.sandbox {
-	init = 0,
-	view = vLayout,
-	update = update
-	}
-
-update msg model = model
-
-vLayout model = layoutWith {
-	options = []
-	}
-	[
-		bkgColor color.lightGray,
-		padding 22
-		]
-	( column [] [
-		vTitle,
-		vSubtitle,
-		vDog
-		])
-
-vTitle = paragraph
-	[
-		bold,
-		fontColor color.blue,
-		fontSize 48,
-		paddingXY 0 20
-		]
-	[text "My Awesome Dog"]
-
-vSubtitle = paragraph [padding 5] [
-	text "A web page for my dog"
-	]
-
-vDog = image
-	[
-		width (maximum 300 fill),
-		centerX
-		]
-	{
-		src = "dog.jpg",
-		description = "a picture of my dog"
-		}`);
-  } else if (subtype === 'json') {
+  if (subtype === 'json') {
     console.log("Creating elm site 'json'");
     nodeEnv.addFile("./src/Main.elm", `module Main exposing (..)
 
@@ -485,7 +399,7 @@ dataTitleDecoder =
     console.log("Creating bare elm site");
     nodeEnv.addFile("./src/Main.elm", `module Main exposing(main)
 
-import Browser exposing(sandbox)
+import Browser exposing(sandbox, element)
 import Html exposing(Html)
 import Element exposing(..)
 import Element.Font as Font

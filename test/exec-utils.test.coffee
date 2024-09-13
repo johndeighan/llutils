@@ -8,7 +8,8 @@ Object.assign(global, lib2)
 # ---------------------------------------------------------------------------
 #symbol "execCmd(str)"    # --- execute a command
 
-equal execCmd('echo this'), "this\r\n"
+equal execCmd('echo this'), "this\n"
+equal execCmd('echo "Hello World" | wc -w'), "2\n"
 
 # ---------------------------------------------------------------------------
 #symbol "npmLogLevel()"    # --- get NPM log level
