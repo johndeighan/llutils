@@ -1,13 +1,13 @@
 {
   "version": 3,
-  "file": "test.js",
-  "sourceRoot": "..\\..\\",
+  "file": "",
+  "sourceRoot": "",
   "sources": [
-    "test\\low-level-build\\test.coffee"
+    "test/low-level-build/test.coffee"
   ],
   "names": [],
   "mappings": "AAAa;AAEb,OAAO,CAAC,GAAR,CAAY,SAAZ",
   "sourcesContent": [
-    "# test.coffee\n\nconsole.log \"testing\"\n\n"
+    "# test.coffee\n\nconsole.log \"testing\"\n"
   ]
 }

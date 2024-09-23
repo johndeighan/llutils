@@ -4,7 +4,7 @@ import {
 	undef, defined, notdefined, getOptions,
 	assert, croak,
 	} from '@jdeighan/llutils'
-import {procCoffee} from '@jdeighan/llutils/coffee'
+import {procCoffee} from '@jdeighan/llutils/llcoffee'
 import {LineFetcher} from '@jdeighan/llutils/fetcher'
 import {indented, splitLine} from '@jdeighan/llutils/indent'
 import {replaceHereDocs} from '@jdeighan/llutils/heredoc'

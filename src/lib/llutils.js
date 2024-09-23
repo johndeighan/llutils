@@ -18,6 +18,11 @@ export var dclone = (x) => {
 };
 
 // ---------------------------------------------------------------------------
+export var identityFunc = (x) => {
+  return x;
+};
+
+// ---------------------------------------------------------------------------
 export var stripCR = (str) => {
   if (notdefined(str)) {
     return undef;
@@ -712,11 +717,14 @@ export var untabify = (str, numSpaces = 3) => {
 };
 
 // ---------------------------------------------------------------------------
-export var LOG = (item) => {
+export var LOG = (item, hOptions = {}) => {
+  hOptions = getOptions(hOptions, {
+    depth: null
+  });
   if (isString(item)) {
     return console.log(untabify(item));
   } else {
-    return console.log(item);
+    return console.dir(item, hOptions);
   }
 };
 

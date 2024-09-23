@@ -4,7 +4,7 @@ import {compile as compileCoffee} from 'coffeescript'
 import {compile as compileSvelte} from 'svelte/compiler'
 
 import {
-	undef, defined, notdefined, getOptions, OL,
+	undef, defined, notdefined, getOptions, OL, LOG,
 	isString, isFunction, isArray, isHash,
 	assert, croak, keys, hasKey, nonEmpty, gen2block,
 	} from '@jdeighan/llutils'
@@ -16,16 +16,14 @@ import {
 	} from '@jdeighan/llutils/fs'
 import {LineFetcher} from '@jdeighan/llutils/fetcher'
 import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
-import {hLLBConfig} from '@jdeighan/llutils/llb-config'
-
-hConfig = hLLBConfig
+import {hConfig} from '@jdeighan/llutils/config'
 
 # ---------------------------------------------------------------------------
-# --- processes all files with file ext in hLLBConfig
+# --- processes all files with file ext in hConfig
 #     unprocessed, but matching files are
 #        checked for files they use
 
-export procFiles = (pattern="*", hOptions={}) =>
+export procFiles = (pattern="./{*.*,**/*.*}", hOptions={}) =>
 
 	{debug, force} = getOptions hOptions, {
 		debug: false
@@ -103,7 +101,7 @@ export procOneFile = (filePath, hOptions={}) =>
 
 	relPath = relpath filePath
 	if echo || logOnly
-		console.log relPath
+		LOG relPath
 	if logOnly
 		return {
 			processed: false
@@ -111,30 +109,34 @@ export procOneFile = (filePath, hOptions={}) =>
 			}
 
 	# --- get file contents, including meta data
-	{hMetaData, contents: code} = readTextFile(filePath, 'eager')
+	{hMetaData, contents} = readTextFile(filePath, 'eager')
+	assert isString(contents), "contents not a string: #{OL(contents)}"
+	assert nonEmpty(contents), "empty contents: #{OL(contents)}"
 
 	lUses = []
 	sourceMap = undef
 
-	result = func code, hMetaData, relPath
-	if isString(result)
-		barf result, withExt(relPath, outExt)
-	else
-		assert isHash(result), "result not a string or hash: #{OL(result)}"
-		{code, hOtherFiles, sourceMap, lUses} = result
-		assert isString(code), "code not a string: #{OL(code)}"
-		barf code, withExt(relPath, outExt)
-		if defined(hOtherFiles)
-			for ext in keys(hOtherFiles)
-				barf hOtherFiles[ext], withExt(relPath, ext)
+	hResult = func contents, hMetaData, relPath, hOptions
+	assert isHash(hResult), "result not a hash: #{OL(hResult)}"
+	{code, sourceMap, hOtherFiles, lUses} = hResult
 
-		# --- Write out final source map
-		if defined(sourceMap)
-			barf sourceMap, withExt(relPath, "#{outExt}.map")
+	# --- Write out main output file
+	assert isString(code), "code not a string: #{OL(code)}"
+	assert nonEmpty(code), "empty code: #{OL(code)}"
+	barf code, withExt(relPath, outExt)
+
+	# --- Write out final source map
+	if defined(sourceMap)
+		barf sourceMap, withExt(relPath, "#{outExt}.map")
+
+	# --- Write out other files
+	if defined(hOtherFiles)
+		for ext in keys(hOtherFiles)
+			barf hOtherFiles[ext], withExt(relPath, ext)
 
 	return {
 		processed: true
-		lUses: lUses
+		lUses
 		}
 
 # ---------------------------------------------------------------------------

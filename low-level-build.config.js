@@ -20,12 +20,16 @@ import {
   procPeggy
 } from '@jdeighan/llutils/peggy';
 
+import {
+  procDot
+} from '@jdeighan/llutils/lldot';
+
 // ---------------------------------------------------------------------------
 // --- func must be:
 //        (code, hMetaData, filePath)
 //     returning code or
 //        { code, lUses, sourceMap, hOtherFiles }
-export var hLLBConfig = {
+export var hConfig = {
   'echo': true,
   '.coffee': {
     func: procCoffee,
@@ -42,6 +46,10 @@ export var hLLBConfig = {
   '.svelte': {
     func: procSvelte,
     outExt: '.js'
+  },
+  '.dot': {
+    func: procDot,
+    outExt: '.png'
   }
 };
 

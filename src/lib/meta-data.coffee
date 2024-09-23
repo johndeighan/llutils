@@ -1,4 +1,4 @@
-# metadata.coffee
+# meta-data.coffee
 
 import {
 	undef, defined, notdefined, isString, untabify,
@@ -33,10 +33,10 @@ export isMetaDataStart = (str) =>
 	return defined(hMetaDataTypes[str])
 
 # ---------------------------------------------------------------------------
-# --- block does NOT contain the metadata start line
+# --- block does NOT contain the meta data start line
 
 export convertMetaData = (firstLine, block) =>
 
-	assert isMetaDataStart(firstLine), "Bad metadata"
+	assert isMetaDataStart(firstLine), "Bad meta data"
 	converter = hMetaDataTypes[firstLine]
 	return converter(block)

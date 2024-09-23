@@ -98,7 +98,6 @@ export var SectionMap = class SectionMap {
       // --- a section's getBlock() applies any replacer
       block = this.section(desc).getBlock();
     } else if (isSetName(desc)) {
-      debugger;
       lBlocks = (function() {
         var i, len, ref, results;
         ref = this.hSets[desc];

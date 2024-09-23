@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "lldot.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\lib\\lldot.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAc;AAEd,OAAA;EACC,KADD;EACQ,OADR;EACiB,EADjB;EACqB,MADrB;EAC6B,KAD7B;CAAA,MAAA;;AAGA,OAAA;EAAQ,OAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,MAAR;EAAgB,OAAhB;EAAyB,YAAzB;CAAA,MAAA,uBANc;;;AAUd,OAAA,IAAO,OAAA,GAAU,QAAA,CAAC,IAAD,EAAO,YAAU,CAAA,CAAjB,EAAqB,WAAS,KAA9B,CAAA;EAEhB,MAAA,CAAO,OAAA,CAAQ,QAAR,CAAP,EAA0B,0BAA1B;EACA,OAAA,CAAQ,CAAA,UAAA,CAAA,CAAa,QAAb,CAAA,EAAA,CAAA,CAA0B,OAAA,CAAQ,QAAR,EAAkB,MAAlB,CAA1B,CAAA,CAAR;AACA,SAAO;IACN,OAAA,EAAS;EADH;AAJS,EAVH;;;AAoBd,OAAA,IAAO,WAAA,GAAc,QAAA,CAAC,QAAD,CAAA;AAErB,MAAA,QAAA,EAAA;EAAC,MAAA,CAAO,MAAA,CAAO,QAAP,CAAP,EAAyB,CAAA,cAAA,CAAA,CAAiB,EAAA,CAAG,QAAH,CAAjB,CAAA,CAAzB;EACA,CAAA,CAAC,SAAD,EAAY,QAAZ,CAAA,GAAwB,YAAA,CAAa,QAAb,EAAuB,OAAvB,CAAxB;AACA,SAAO,OAAA,CAAQ,QAAR,EAAkB,SAAlB,EAA6B,QAA7B;AAJa",
+  "sourcesContent": [
+    "# lldot.coffee\r\n\r\nimport {\r\n\tundef, defined, OL, assert, croak,\r\n\t} from '@jdeighan/llutils'\r\nimport {execCmd} from '@jdeighan/llutils/exec-utils'\r\nimport {isFile, withExt, readTextFile} from '@jdeighan/llutils/fs'\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport procDot = (code, hMetaData={}, filePath=undef) ->\r\n\r\n\tassert defined(filePath), \"filePath must be defined\"\r\n\texecCmd \"dot -Tpng #{filePath} >#{withExt(filePath, '.png')}\"\r\n\treturn {\r\n\t\tcreated: true\r\n\t\t}\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport procDotFile = (filePath) ->\r\n\r\n\tassert isFile(filePath), \"No such file: #{OL(filePath)}\"\r\n\t{hMetaData, contents} = readTextFile(filePath, 'eager')\r\n\treturn procDot(contents, hMetaData, filePath)\r\n\r\n"
+  ]
+}

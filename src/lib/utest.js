@@ -216,7 +216,7 @@ export var UnitTester = class UnitTester {
   // ..........................................................
   samelist(val, expected) {
     var label;
-    [label, val, expected] = this.begin(val, expected, 'samewordlist');
+    [label, val, expected] = this.begin(val, expected, 'samelist');
     test(label, (t) => {
       return t.deepEqual(val.sort(), expected.sort());
     });

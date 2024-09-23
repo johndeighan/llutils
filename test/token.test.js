@@ -1,7 +1,7 @@
   // token.test.coffee
 import {
-  undef
-} from '@jdeighan/llutils';
+  BaseTracer
+} from '@jdeighan/llutils/peggy';
 
 import * as lib from '@jdeighan/llutils/token';
 
@@ -11,15 +11,46 @@ import * as lib2 from '@jdeighan/llutils/utest';
 
 Object.assign(global, lib2);
 
+u.transformValue = (block) => {
+  return parse(block, {
+    tracer: new BaseTracer()
+  });
+};
+
 // ---------------------------------------------------------------------------
-equal(parseToken("true"), {
+equal("true", {
   type: 'boolean',
   value: true
 });
 
-equal(parseToken("13"), {
+equal("false", {
+  type: 'boolean',
+  value: false
+});
+
+equal("13", {
   type: 'integer',
   value: 13
+});
+
+equal("13.5", {
+  type: 'float',
+  value: 13.5
+});
+
+equal("'abc'", {
+  type: 'string',
+  value: 'abc'
+});
+
+equal('"abc"', {
+  type: 'string',
+  value: 'abc'
+});
+
+equal('abc', {
+  type: 'identifier',
+  value: 'abc'
 });
 
 //# sourceMappingURL=token.test.js.map

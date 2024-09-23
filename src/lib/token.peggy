@@ -5,15 +5,6 @@ type: coffee
 GLOBAL
 
 	import {undef, nonEmpty} from '@jdeighan/llutils'
-	import {
-		getTracer,
-		} from '@jdeighan/llutils/tracer'
-
-	export parseToken = (input, tracerType='none') =>
-
-		debugger
-		tracer = getTracer(tracerType)
-		return peg$parse(input, {tracer})
 
 token
 	boolean

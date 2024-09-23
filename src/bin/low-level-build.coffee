@@ -17,6 +17,7 @@ import {
 import {
 	procFiles, procOneFile,
 	} from '@jdeighan/llutils/file-processor'
+import {hConfig} from '@jdeighan/llutils/config'
 
 echo = true
 doLog = (str) =>
@@ -74,7 +75,7 @@ for filePath in keys(hUses)
 			if ! lProcessed.includes filePath
 				console.log "ALSO PROCESS: #{OL(filePath)}"
 				procOneFile filePath
-				lProcessed.push filePath, hLLBConfig
+				lProcessed.push filePath, hConfig
 
 # --- log number of files processed
 hFiles = {}
@@ -137,7 +138,7 @@ if watch
 			return
 		path = mkpath(path)
 		ext = fileExt(path)
-		{func, outExt} = hLLBConfig[ext]
+		{func, outExt} = hConfig[ext]
 		switch eventType
 			when 'add','change'
 				procOneFile path

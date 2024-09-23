@@ -1,7 +1,7 @@
-// metadata.test.coffee
+// meta-data.test.coffee
 var block;
 
-import * as lib from '@jdeighan/llutils/metadata';
+import * as lib from '@jdeighan/llutils/meta-data';
 
 Object.assign(global, lib);
 
@@ -30,4 +30,4 @@ equal(convertMetaData('---', block), {
   include: 'pll-parser'
 });
 
-//# sourceMappingURL=metadata.test.js.map
+//# sourceMappingURL=meta-data.test.js.map

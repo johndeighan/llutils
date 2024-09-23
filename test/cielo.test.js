@@ -118,7 +118,6 @@ equal fromTAML("a: 1${bsl}nb: 2"), {"a":1,"b":2}`);
 │ equal(extract(hAST, \`type="program"\`), { │
 │   name: 'John'                           │
 │ });                                      │
-│                                          │
 └──────────────────────────────────────────┘`);
 })();
 

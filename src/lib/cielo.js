@@ -10,7 +10,7 @@ import {
 
 import {
   procCoffee
-} from '@jdeighan/llutils/coffee';
+} from '@jdeighan/llutils/llcoffee';
 
 import {
   LineFetcher

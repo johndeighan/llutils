@@ -1,8 +1,4 @@
-  // ulmus.test.coffee
-import {
-  undef
-} from '@jdeighan/llutils';
-
+// ulmus.test.coffee
 import * as lib from '@jdeighan/llutils/ulmus';
 
 Object.assign(global, lib);

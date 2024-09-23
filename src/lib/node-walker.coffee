@@ -6,8 +6,8 @@ import {
 	isString, isArray, isHash, isEmpty,
 	hasKey, keys, untabify,
 	} from '@jdeighan/llutils'
-import {DUMP} from '@jdeighan/llutils/dump'
 import {indented, undented} from '@jdeighan/llutils/indent'
+import {DUMP} from '@jdeighan/llutils/dump'
 
 # ---------------------------------------------------------------------------
 

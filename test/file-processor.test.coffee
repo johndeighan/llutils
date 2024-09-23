@@ -5,7 +5,6 @@ import {deleteFilesMatching, slurp} from '@jdeighan/llutils/fs'
 import {indented} from '@jdeighan/llutils/indent'
 import {procPeggy} from '@jdeighan/llutils/peggy'
 import {TextBlockList} from '@jdeighan/llutils/text-block'
-import {hLLBConfig} from '@jdeighan/llutils/llb-config'
 
 import * as lib from '@jdeighan/llutils/file-processor'
 Object.assign(global, lib)

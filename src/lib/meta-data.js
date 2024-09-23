@@ -1,4 +1,4 @@
-// metadata.coffee
+// meta-data.coffee
 var hMetaDataTypes;
 
 import {
@@ -36,12 +36,12 @@ export var isMetaDataStart = (str) => {
 };
 
 // ---------------------------------------------------------------------------
-// --- block does NOT contain the metadata start line
+// --- block does NOT contain the meta data start line
 export var convertMetaData = (firstLine, block) => {
   var converter;
-  assert(isMetaDataStart(firstLine), "Bad metadata");
+  assert(isMetaDataStart(firstLine), "Bad meta data");
   converter = hMetaDataTypes[firstLine];
   return converter(block);
 };
 
-//# sourceMappingURL=metadata.js.map
+//# sourceMappingURL=meta-data.js.map

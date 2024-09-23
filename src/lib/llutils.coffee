@@ -15,6 +15,12 @@ export dclone = (x) =>
 
 # ---------------------------------------------------------------------------
 
+export identityFunc = (x) =>
+
+	return x
+
+# ---------------------------------------------------------------------------
+
 export stripCR = (str) =>
 
 	if notdefined(str)
@@ -620,12 +626,15 @@ export untabify = (str, numSpaces=3) =>
 
 # ---------------------------------------------------------------------------
 
-export LOG = (item) =>
+export LOG = (item, hOptions={}) =>
 
+	hOptions = getOptions hOptions, {
+		depth: null
+		}
 	if isString(item)
 		console.log untabify(item)
 	else
-		console.log item
+		console.dir item, hOptions
 
 # ---------------------------------------------------------------------------
 

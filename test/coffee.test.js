@@ -138,7 +138,6 @@ equal(blocks.asString('format=box'), `┌───────  test/coffee/test
 │ equal(extract(hAST, \`type="program"\`), { │
 │   name: 'John'                           │
 │ });                                      │
-│                                          │
 └──────────────────────────────────────────┘`);
 
 //# sourceMappingURL=coffee.test.js.map

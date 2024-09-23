@@ -4,21 +4,16 @@ include: ['src/lib/PLL.peggy', 'src/lib/token.peggy']
 ---
 
 GLOBAL
-	import {
-		undef, defined, OL,
-		assert, nonEmpty, isFunction,
-		} from '@jdeighan/llutils'
-	import {
-		getTracer,
-		} from '@jdeighan/llutils/tracer'
+	{getTracer} = await import('@jdeighan/llutils/peggy')
 
 	# ---------------------------------------------------------
 
 	export ulmusAST = (input, tracerType='none') =>
 
 		debugger
-		tracer = getTracer(tracerType)
-		return peg$parse(input, {tracer})
+		return peg$parse(input, {
+			tracer: getTracer(tracerType)
+			})
 
 # --------------------------------------------------------------------------
 

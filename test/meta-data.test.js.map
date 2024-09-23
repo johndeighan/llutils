@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "meta-data.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\meta-data.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAuB;AAAA,IAAA;;AAEvB,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EALuB;;;;AAUvB,MAAA,CAAO,eAAA,CAAgB,KAAhB,CAAP;;AACA,KAAA,CAAM,eAAA,CAAgB,KAAhB,CAAN;;AACA,KAAA,CAAM,eAAA,CAAgB,EAAhB,CAAN,EAZuB;;;AAgBvB,KAAA,GAAQ,CAAA;;;mBAAA;;AAOR,KAAA,CAAM,eAAA,CAAgB,KAAhB,EAAuB,KAAvB,CAAN,EAAqC;EACpC,QAAA,EAAU,iBAD0B;EAEpC,IAAA,EAAM,QAF8B;EAGpC,MAAA,EAAQ,cAH4B;EAIpC,OAAA,EAAS;AAJ2B,CAArC",
+  "sourcesContent": [
+    "# meta-data.test.coffee\n\nimport * as lib from '@jdeighan/llutils/meta-data'\nObject.assign(global, lib)\nimport * as lib2 from '@jdeighan/llutils/utest'\nObject.assign(global, lib2)\n\n# ---------------------------------------------------------------------------\n#symbol \"isMetaDataStart(str)\"\n\ntruthy isMetaDataStart('---')\nfalsy isMetaDataStart('===')\nfalsy isMetaDataStart('')\n\n# ---------------------------------------------------------------------------\n\nblock = \"\"\"\n\tfileName: primitive-value\n\ttype: coffee\n\tauthor: John Deighan\n\tinclude: pll-parser\n\t\"\"\"\n\nequal convertMetaData('---', block), {\n\tfileName: 'primitive-value'\n\ttype: 'coffee'\n\tauthor: 'John Deighan'\n\tinclude: 'pll-parser'\n\t}\n"
+  ]
+}

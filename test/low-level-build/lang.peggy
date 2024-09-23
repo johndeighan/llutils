@@ -8,7 +8,7 @@ GLOBAL
 		undef, defined, OL,
 		assert, nonEmpty,
 		} from '@jdeighan/llutils'
-	import {getTracer} from '@jdeighan/llutils/tracer'
+	import {getTracer} from '@jdeighan/llutils/peggy'
 
 	# ---------------------------------------------------------
 

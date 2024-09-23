@@ -4,22 +4,14 @@
 
 
 
-	import {
-	  undef,
-	  defined,
-	  OL,
-	  assert,
-	  nonEmpty,
-	  isFunction
-	} from '@jdeighan/llutils';
-
-	import {
-	  getTracer
-	} from '@jdeighan/llutils/tracer';
-
-	// --------------------------------------------------------------
 	var parse__boolean__1, parse__boolean__2, parse__identifier__1, parse__number__1, parse__string__1, parse__string__2;
 
+	import {
+	  undef,
+	  nonEmpty
+	} from '@jdeighan/llutils';
+
+	// --------------------------------------------------------------
 	parse__boolean__1 = () => {
 	  return {
 	    type: 'boolean',
@@ -73,7 +65,6 @@
 	    value: str
 	  };
 	};
-
 
 
 	var init, isExtend, isIndent, isSep, isUndent, level, log, parse__EXTEND__1, parse__INDENTATION__1, parse__INDENT__1, parse__SEP__1, parse__UNDENT__1, sep;
@@ -151,15 +142,16 @@
 	};
 
 
+	var getTracer;
 
+	({getTracer} = (await import('@jdeighan/llutils/peggy')));
 
 	export var ulmusAST = (input, tracerType = 'none') => {
 	  debugger;
-	  var tracer;
-	  tracer = getTracer(tracerType);
-	  return peg$parse(input, {tracer});
+	  return peg$parse(input, {
+	    tracer: getTracer(tracerType)
+	  });
 	};
-
 
 function peg$subclass(child, parent) {
   function C() { this.constructor = child; }
@@ -384,7 +376,7 @@ function peg$parse(input, options) {
   var peg$FAILED = {};
   var peg$source = options.grammarSource;
 
-  var peg$startRuleFunctions = { value: peg$parse_value, SEP: peg$parse_SEP, INDENT: peg$parse_INDENT, EXTEND: peg$parse_EXTEND, UNDENT: peg$parse_UNDENT, INDENTATION: peg$parse_INDENTATION, boolean: peg$parse_boolean, number: peg$parse_number, string: peg$parse_string, identifier: peg$parse_identifier };
+  var peg$startRuleFunctions = { value: peg$parse_value, SEP: peg$parse_SEP, INDENT: peg$parse_INDENT, EXTEND: peg$parse_EXTEND, UNDENT: peg$parse_UNDENT, INDENTATION: peg$parse_INDENTATION, token: peg$parse_token, boolean: peg$parse_boolean, number: peg$parse_number, string: peg$parse_string, identifier: peg$parse_identifier, NL: peg$parse_NL, _: peg$parse__ };
   var peg$startRuleFunction = peg$parse_value;
 
   var peg$c0 = "hInfo";
@@ -400,11 +392,12 @@ function peg$parse(input, options) {
   var peg$c10 = "\"";
   var peg$c11 = "str";
   var peg$c12 = "'";
+  var peg$c13 = " ";
   var peg$r0 = /^[ \t]/;
   var peg$r1 = /^[0-9]/;
   var peg$r2 = /^[^"]/;
   var peg$r3 = /^[^']/;
-  var peg$r4 = /^[a-z]/;
+  var peg$r4 = /^[A-Za-z]/;
   var peg$e0 = peg$literalExpectation("\r", false);
   var peg$e1 = peg$literalExpectation("\n", false);
   var peg$e2 = peg$classExpectation([" ", "\t"], false, false);
@@ -417,7 +410,8 @@ function peg$parse(input, options) {
   var peg$e9 = peg$classExpectation(["\""], true, false);
   var peg$e10 = peg$literalExpectation("'", false);
   var peg$e11 = peg$classExpectation(["'"], true, false);
-  var peg$e12 = peg$classExpectation([["a", "z"]], false, false);
+  var peg$e12 = peg$classExpectation([["A", "Z"], ["a", "z"]], false, false);
+  var peg$e13 = peg$literalExpectation(" ", false);
 
   var peg$f0 = function(hInfo) {return isSep(hInfo)};
   var peg$f1 = function(hInfo) { return parse__SEP__1(hInfo); };
@@ -1089,6 +1083,48 @@ function peg$parse(input, options) {
     return s0;
   }
 
+  function peg$parse_token() {
+    var startPos = peg$currPos;
+    var s0;
+
+    peg$tracer.trace({
+      type: "rule.enter",
+      rule: "token",
+      location: peg$computeLocation(startPos, startPos, true),
+    });
+
+    s0 = peg$parse_boolean();
+    if (s0 === peg$FAILED) {
+      s0 = peg$parse_number();
+      if (s0 === peg$FAILED) {
+        s0 = peg$parse_string();
+        if (s0 === peg$FAILED) {
+          s0 = peg$parse_identifier();
+          if (s0 === peg$FAILED) {
+            s0 = peg$parse_NL();
+          }
+        }
+      }
+    }
+
+    if (s0 !== peg$FAILED) {
+      peg$tracer.trace({
+        type: "rule.match",
+        rule: "token",
+        result: s0,
+        location: peg$computeLocation(startPos, peg$currPos, true),
+      });
+    } else {
+      peg$tracer.trace({
+        type: "rule.fail",
+        rule: "token",
+        location: peg$computeLocation(startPos, startPos, true),
+      });
+    }
+
+    return s0;
+  }
+
   function peg$parse_boolean() {
     var startPos = peg$currPos;
     var s0, s1;
@@ -1665,6 +1701,159 @@ function peg$parse(input, options) {
     return s0;
   }
 
+  function peg$parse_NL() {
+    var startPos = peg$currPos;
+    var s0, s1, s2;
+
+    peg$tracer.trace({
+      type: "rule.enter",
+      rule: "NL",
+      location: peg$computeLocation(startPos, startPos, true),
+    });
+
+    s0 = peg$currPos;
+    if (input.charCodeAt(peg$currPos) === 13) {
+      s1 = peg$c1;
+      peg$currPos++;
+      peg$tracer.trace({
+        type: "string.match",
+        rule: "NL",
+        result: "\r",
+        location: peg$computeLocation(startPos, peg$currPos, true),
+      });
+    } else {
+      s1 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e0); }
+      peg$tracer.trace({
+        type: "string.fail",
+        rule: "NL",
+        details: "\r",
+        location: peg$computeLocation(peg$currPos, peg$currPos, true),
+      });
+    }
+    if (s1 === peg$FAILED) {
+      s1 = null;
+    }
+    if (input.charCodeAt(peg$currPos) === 10) {
+      s2 = peg$c2;
+      peg$currPos++;
+      peg$tracer.trace({
+        type: "string.match",
+        rule: "NL",
+        result: "\n",
+        location: peg$computeLocation(startPos, peg$currPos, true),
+      });
+    } else {
+      s2 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e1); }
+      peg$tracer.trace({
+        type: "string.fail",
+        rule: "NL",
+        details: "\n",
+        location: peg$computeLocation(peg$currPos, peg$currPos, true),
+      });
+    }
+    if (s2 !== peg$FAILED) {
+      s1 = [s1, s2];
+      s0 = s1;
+    } else {
+      peg$currPos = s0;
+      s0 = peg$FAILED;
+    }
+
+    if (s0 !== peg$FAILED) {
+      peg$tracer.trace({
+        type: "rule.match",
+        rule: "NL",
+        result: s0,
+        location: peg$computeLocation(startPos, peg$currPos, true),
+      });
+    } else {
+      peg$tracer.trace({
+        type: "rule.fail",
+        rule: "NL",
+        location: peg$computeLocation(startPos, startPos, true),
+      });
+    }
+
+    return s0;
+  }
+
+  function peg$parse__() {
+    var startPos = peg$currPos;
+    var s0, s1;
+
+    peg$tracer.trace({
+      type: "rule.enter",
+      rule: "_",
+      location: peg$computeLocation(startPos, startPos, true),
+    });
+
+    s0 = [];
+    if (input.charCodeAt(peg$currPos) === 32) {
+      s1 = peg$c13;
+      peg$currPos++;
+      peg$tracer.trace({
+        type: "string.match",
+        rule: "_",
+        result: " ",
+        location: peg$computeLocation(startPos, peg$currPos, true),
+      });
+    } else {
+      s1 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e13); }
+      peg$tracer.trace({
+        type: "string.fail",
+        rule: "_",
+        details: " ",
+        location: peg$computeLocation(peg$currPos, peg$currPos, true),
+      });
+    }
+    if (s1 !== peg$FAILED) {
+      while (s1 !== peg$FAILED) {
+        s0.push(s1);
+        if (input.charCodeAt(peg$currPos) === 32) {
+          s1 = peg$c13;
+          peg$currPos++;
+          peg$tracer.trace({
+            type: "string.match",
+            rule: "_",
+            result: " ",
+            location: peg$computeLocation(startPos, peg$currPos, true),
+          });
+        } else {
+          s1 = peg$FAILED;
+          if (peg$silentFails === 0) { peg$fail(peg$e13); }
+          peg$tracer.trace({
+            type: "string.fail",
+            rule: "_",
+            details: " ",
+            location: peg$computeLocation(peg$currPos, peg$currPos, true),
+          });
+        }
+      }
+    } else {
+      s0 = peg$FAILED;
+    }
+
+    if (s0 !== peg$FAILED) {
+      peg$tracer.trace({
+        type: "rule.match",
+        rule: "_",
+        result: s0,
+        location: peg$computeLocation(startPos, peg$currPos, true),
+      });
+    } else {
+      peg$tracer.trace({
+        type: "rule.fail",
+        rule: "_",
+        location: peg$computeLocation(startPos, startPos, true),
+      });
+    }
+
+    return s0;
+  }
+
 
 init();
 
@@ -1704,10 +1893,13 @@ const peg$allowedStartRules = [
   "EXTEND",
   "UNDENT",
   "INDENTATION",
+  "token",
   "boolean",
   "number",
   "string",
-  "identifier"
+  "identifier",
+  "NL",
+  "_"
 ];
 
 export {

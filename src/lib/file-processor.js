@@ -1,6 +1,4 @@
-// file-processor.coffee
-var hConfig;
-
+  // file-processor.coffee
 import {
   compile as compileCoffee
 } from 'coffeescript';
@@ -15,6 +13,7 @@ import {
   notdefined,
   getOptions,
   OL,
+  LOG,
   isString,
   isFunction,
   isArray,
@@ -56,16 +55,14 @@ import {
 } from '@jdeighan/llutils/heredoc';
 
 import {
-  hLLBConfig
-} from '@jdeighan/llutils/llb-config';
-
-hConfig = hLLBConfig;
+  hConfig
+} from '@jdeighan/llutils/config';
 
 // ---------------------------------------------------------------------------
-// --- processes all files with file ext in hLLBConfig
+// --- processes all files with file ext in hConfig
 //     unprocessed, but matching files are
 //        checked for files they use
-export var procFiles = (pattern = "*", hOptions = {}) => {
+export var procFiles = (pattern = "./{*.*,**/*.*}", hOptions = {}) => {
   var contents, debug, fileFilter, force, hMetaData, hUses, lProcessed, lUses, processed, ref, relPath, x;
   ({debug, force} = getOptions(hOptions, {
     debug: false,
@@ -121,7 +118,7 @@ export var procFiles = (pattern = "*", hOptions = {}) => {
 //              lUses - an array, possibly empty
 // ---------------------------------------------------------------------------
 export var procOneFile = (filePath, hOptions = {}) => {
-  var code, debug, echo, ext, func, hMetaData, hOtherFiles, i, lUses, len, logOnly, outExt, ref, relPath, result, sourceMap;
+  var code, contents, debug, echo, ext, func, hMetaData, hOtherFiles, hResult, i, lUses, len, logOnly, outExt, ref, relPath, sourceMap;
   ext = fileExt(filePath);
   [func, outExt] = extractConfig(hConfig, ext);
   if (!defined(func, outExt)) {
@@ -139,7 +136,7 @@ export var procOneFile = (filePath, hOptions = {}) => {
   }));
   relPath = relpath(filePath);
   if (echo || logOnly) {
-    console.log(relPath);
+    LOG(relPath);
   }
   if (logOnly) {
     return {
@@ -147,36 +144,34 @@ export var procOneFile = (filePath, hOptions = {}) => {
       lUses: []
     };
   }
-  ({
-    // --- get file contents, including meta data
-    hMetaData,
-    contents: code
-  } = readTextFile(filePath, 'eager'));
+  // --- get file contents, including meta data
+  ({hMetaData, contents} = readTextFile(filePath, 'eager'));
+  assert(isString(contents), `contents not a string: ${OL(contents)}`);
+  assert(nonEmpty(contents), `empty contents: ${OL(contents)}`);
   lUses = [];
   sourceMap = undef;
-  result = func(code, hMetaData, relPath);
-  if (isString(result)) {
-    barf(result, withExt(relPath, outExt));
-  } else {
-    assert(isHash(result), `result not a string or hash: ${OL(result)}`);
-    ({code, hOtherFiles, sourceMap, lUses} = result);
-    assert(isString(code), `code not a string: ${OL(code)}`);
-    barf(code, withExt(relPath, outExt));
-    if (defined(hOtherFiles)) {
-      ref = keys(hOtherFiles);
-      for (i = 0, len = ref.length; i < len; i++) {
-        ext = ref[i];
-        barf(hOtherFiles[ext], withExt(relPath, ext));
-      }
-    }
-    // --- Write out final source map
-    if (defined(sourceMap)) {
-      barf(sourceMap, withExt(relPath, `${outExt}.map`));
+  hResult = func(contents, hMetaData, relPath, hOptions);
+  assert(isHash(hResult), `result not a hash: ${OL(hResult)}`);
+  ({code, sourceMap, hOtherFiles, lUses} = hResult);
+  // --- Write out main output file
+  assert(isString(code), `code not a string: ${OL(code)}`);
+  assert(nonEmpty(code), `empty code: ${OL(code)}`);
+  barf(code, withExt(relPath, outExt));
+  // --- Write out final source map
+  if (defined(sourceMap)) {
+    barf(sourceMap, withExt(relPath, `${outExt}.map`));
+  }
+  // --- Write out other files
+  if (defined(hOtherFiles)) {
+    ref = keys(hOtherFiles);
+    for (i = 0, len = ref.length; i < len; i++) {
+      ext = ref[i];
+      barf(hOtherFiles[ext], withExt(relPath, ext));
     }
   }
   return {
     processed: true,
-    lUses: lUses
+    lUses
   };
 };
 

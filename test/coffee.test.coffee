@@ -154,6 +154,5 @@ equal blocks.asString('format=box'), '''
 	│ equal(extract(hAST, `type="program"`), { │
 	│   name: 'John'                           │
 	│ });                                      │
-	│                                          │
 	└──────────────────────────────────────────┘
 	'''

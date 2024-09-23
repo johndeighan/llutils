@@ -183,7 +183,7 @@ export class UnitTester
 
 	samelist: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected, 'samewordlist')
+		[label, val, expected] = @begin(val, expected, 'samelist')
 		test label, (t) =>
 			t.deepEqual(val.sort(), expected.sort())
 		@end()

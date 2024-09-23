@@ -34,11 +34,9 @@ import {
   EnvNodeStack
 } from '@jdeighan/llutils/env-stack';
 
-// ---------------------------------------------------------------------------
-export var removeExtraASTKeys = (hAST) => {
-  removeKeys(hAST, words('loc range extra start end', 'directives comments tokens'));
-  return hAST;
-};
+import {
+  removeExtraASTKeys
+} from '@jdeighan/llutils/llcoffee';
 
 // ---------------------------------------------------------------------------
 export var ASTWalker = class ASTWalker extends NodeWalker {

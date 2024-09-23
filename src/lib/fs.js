@@ -40,7 +40,7 @@ import {
 import {
   isMetaDataStart,
   convertMetaData
-} from '@jdeighan/llutils/metadata';
+} from '@jdeighan/llutils/meta-data';
 
 export var lStatFields = words('dev ino mode nlink uid gid rdev size blksize blocks', 'atimeMs mtimeMs ctimeMs birthtimeMs', 'atime mtime ctime birthtime');
 
@@ -479,7 +479,7 @@ export var allFilesMatching = function*(pattern = '*', hOptions = {}) {
       ({
         filePath: path
       } = h);
-      return isFile(path) && !path.match(/\bnode_modules\b/i);
+      return isFile(path); // --- && ! path.match(/\bnode_modules\b/i)
     }
   }));
   ref = globFiles(pattern, hGlobOptions);
@@ -527,6 +527,18 @@ export var fileExt = (filePath) => {
     return lMatches[0];
   } else {
     return '';
+  }
+};
+
+// ---------------------------------------------------------------------------
+export var fileStub = (filePath) => {
+  var fileName, lMatches;
+  fileName = filePath.split(/[\\\/]/).at(-1);
+  lMatches = fileName.match(/(.*)\.([^\.]*)$/);
+  if (defined(lMatches)) {
+    return lMatches[1];
+  } else {
+    return fileName;
   }
 };
 
@@ -580,7 +592,7 @@ export var readTextFile = (filePath, hOptions = {}) => {
     return buffer.toString().replaceAll('\r', '');
   };
   // --- we need to get the first line to check if
-  //     there's metadata. But if there is not,
+  //     there's meta data. But if there is not,
   //     we need to return it by the reader
   firstLine = getLine();
   if (notdefined(firstLine)) {
@@ -594,7 +606,7 @@ export var readTextFile = (filePath, hOptions = {}) => {
   }
   lMetaLines = undef;
   hMetaData = {};
-  // --- Get metadata if present
+  // --- Get meta data if present
   if (isMetaDataStart(firstLine)) {
     lMetaLines = [];
     line = getLine();

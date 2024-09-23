@@ -11,17 +11,6 @@
 	  nonEmpty
 	} from '@jdeighan/llutils';
 
-	import {
-	  getTracer
-	} from '@jdeighan/llutils/tracer';
-
-	export var parseToken = (input, tracerType = 'none') => {
-	  debugger;
-	  var tracer;
-	  tracer = getTracer(tracerType);
-	  return peg$parse(input, {tracer});
-	};
-
 	// --------------------------------------------------------------
 	parse__boolean__1 = () => {
 	  return {
@@ -76,7 +65,6 @@
 	    value: str
 	  };
 	};
-
 
 function peg$subclass(child, parent) {
   function C() { this.constructor = child; }

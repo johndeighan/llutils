@@ -29,13 +29,13 @@ import {
 } from '@jdeighan/llutils';
 
 import {
-  DUMP
-} from '@jdeighan/llutils/dump';
-
-import {
   indented,
   splitLine
 } from '@jdeighan/llutils/indent';
+
+import {
+  DUMP
+} from '@jdeighan/llutils/dump';
 
 import {
   barf,
@@ -48,77 +48,23 @@ import {
 } from '@jdeighan/llutils/fetcher';
 
 import {
-  ASTWalker,
-  removeExtraASTKeys
-} from '@jdeighan/llutils/ast-walker';
-
-import {
   replaceHereDocs
 } from '@jdeighan/llutils/heredoc';
 
-// ---------------------------------------------------------------------------
-export var procCoffee = function(code, hMetaData = {}, filePath = undef) {
-  var debug, js, shebang, v3SourceMap;
-  // --- metadata can be used to add a shebang line
-  //     if true, use "#!/usr/bin/env node"
-  //     else use value of shebang key
+import {
+  procCoffee,
+  toAST,
+  toASTFile
+} from '@jdeighan/llutils/llcoffee';
 
-  // --- filePath is used to check for a source map
-  //     without it, no source map is produced
-  assert(defined(code), `code: ${OL(code)}`);
-  assert(isString(code), `Not a string: ${OL(code)}`);
-  ({debug, shebang} = getOptions(hMetaData, {
-    debug: false,
-    shebang: undef
-  }));
-  if (defined(filePath)) {
-    ({js, v3SourceMap} = compileCoffee(code, {
-      sourceMap: true,
-      bare: true,
-      header: false,
-      filename: filePath
-    }));
-  } else {
-    js = compileCoffee(code, {
-      bare: true,
-      header: false
-    });
-    v3SourceMap = undef;
-  }
-  assert(defined(js), "No JS code generated");
-  if (defined(shebang)) {
-    if (isString(shebang)) {
-      js = shebang + "\n" + js.trim();
-    } else {
-      js = "#!/usr/bin/env node" + "\n" + js.trim();
-    }
-  }
-  return {
-    code: js,
-    sourceMap: v3SourceMap
-  };
-};
+import {
+  ASTWalker
+} from '@jdeighan/llutils/ast-walker';
 
-// ---------------------------------------------------------------------------
-export var toAST = (coffeeCode, hOptions = {}) => {
-  var hAST, minimal;
-  ({minimal} = getOptions(hOptions, {
-    minimal: false
-  }));
-  hAST = compileCoffee(coffeeCode, {
-    ast: true
-  });
-  if (minimal) {
-    removeExtraASTKeys(hAST);
-  }
-  return hAST;
-};
-
-// ---------------------------------------------------------------------------
-export var toASTFile = function(code, filePath, hOptions = {}) {
-  var hAST;
-  hAST = toAST(code, hOptions);
-  barfAST(hAST, filePath);
+export {
+  procCoffee,
+  toAST,
+  toASTFile
 };
 
 // ---------------------------------------------------------------------------

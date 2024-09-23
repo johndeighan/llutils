@@ -1,6 +1,5 @@
 # ulmus.test.coffee
 
-import {undef} from '@jdeighan/llutils'
 import * as lib from '@jdeighan/llutils/ulmus'
 Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'

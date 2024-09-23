@@ -22,13 +22,13 @@ import {
 } from '@jdeighan/llutils';
 
 import {
-  DUMP
-} from '@jdeighan/llutils/dump';
-
-import {
   indented,
   undented
 } from '@jdeighan/llutils/indent';
+
+import {
+  DUMP
+} from '@jdeighan/llutils/dump';
 
 // ---------------------------------------------------------------------------
 export var stackMatches = (lStack, str) => {

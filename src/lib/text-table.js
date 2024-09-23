@@ -1,4 +1,4 @@
-  // --- text-table.coffee
+  // text-table.coffee
 import {
   sprintf
 } from 'sprintf-js';

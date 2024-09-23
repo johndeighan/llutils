@@ -14,7 +14,7 @@ GLOBAL
 		isString, isFunction, isBoolean, isArray, isHash, isRegExp,
 		} from '@jdeighan/llutils'
 	import {DUMP} from '@jdeighan/llutils/dump'
-	import {getTracer} from '@jdeighan/llutils/tracer'
+	import {getTracer} from '@jdeighan/llutils/peggy'
 
 	hOptions = {}
 

@@ -9,7 +9,7 @@ GLOBAL
 		getOptions, OL, hasKey, keys, isClassInstance,
 		isEmpty, isString, isArray, isHash, isFunction,
 		} from '@jdeighan/llutils'
-	import {getTracer} from '@jdeighan/llutils/tracer'
+	import {getTracer} from '@jdeighan/llutils/peggy'
 	import {ContextStack} from '@jdeighan/llutils/context-stack'
 	import {DUMP, BOX, setMinWidth} from '@jdeighan/llutils/dump'
 

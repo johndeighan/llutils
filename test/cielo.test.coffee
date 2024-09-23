@@ -120,7 +120,6 @@ Object.assign(global, lib2)
 		│ equal(extract(hAST, `type="program"`), { │
 		│   name: 'John'                           │
 		│ });                                      │
-		│                                          │
 		└──────────────────────────────────────────┘
 		'''
 

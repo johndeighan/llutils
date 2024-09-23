@@ -5,6 +5,7 @@ import {procCoffee} from '@jdeighan/llutils/coffee'
 import {procCielo} from '@jdeighan/llutils/cielo'
 import {procSvelte} from '@jdeighan/llutils/svelte'
 import {procPeggy} from '@jdeighan/llutils/peggy'
+import {procDot} from '@jdeighan/llutils/lldot'
 
 # ---------------------------------------------------------------------------
 # --- func must be:
@@ -12,11 +13,12 @@ import {procPeggy} from '@jdeighan/llutils/peggy'
 #     returning code or
 #        { code, lUses, sourceMap, hOtherFiles }
 
-export hLLBConfig = {
+export hConfig = {
 	'echo': true
 
 	'.coffee': { func: procCoffee, outExt: '.js' }
 	'.cielo':  { func: procCielo,  outExt: '.js' }
 	'.peggy':  { func: procPeggy,  outExt: '.js' }
 	'.svelte': { func: procSvelte, outExt: '.js' }
+	'.dot':    { func: procDot,    outExt: '.png'}
 	}

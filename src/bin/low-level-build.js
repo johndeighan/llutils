@@ -46,6 +46,10 @@ import {
   procOneFile
 } from '@jdeighan/llutils/file-processor';
 
+import {
+  hConfig
+} from '@jdeighan/llutils/config';
+
 echo = true;
 
 doLog = (str) => {
@@ -122,7 +126,7 @@ for (i = 0, len = ref.length; i < len; i++) {
       if (!lProcessed.includes(filePath)) {
         console.log(`ALSO PROCESS: ${OL(filePath)}`);
         procOneFile(filePath);
-        lProcessed.push(filePath, hLLBConfig);
+        lProcessed.push(filePath, hConfig);
       }
     }
   }
@@ -207,7 +211,7 @@ if (watch) {
     }
     path = mkpath(path);
     ext = fileExt(path);
-    ({func, outExt} = hLLBConfig[ext]);
+    ({func, outExt} = hConfig[ext]);
     switch (eventType) {
       case 'add':
       case 'change':

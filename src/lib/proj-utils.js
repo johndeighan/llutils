@@ -266,11 +266,11 @@ setUpElm = (nodeEnv) => {
   console.log(`setUpElm(): subtype = ${OL(subtype)}`);
   nodeEnv.addDevDependency('svelte');
   nodeEnv.addScript('build', "npm run build:coffee && elm make src/Main.elm --output=main.js");
-  nodeEnv.addScript('dev', "npm run build && elm-live src/Main.elm -- --debug --output=main.js");
+  nodeEnv.addScript('dev', "npm run build:coffee && elm-live src/Main.elm -- --debug --output=main.js");
   console.log("initializing elm");
   execCmdY("elm init");
   console.log("elm is initialized");
-  ref = ["mdgriffith/elm-ui", "krisajenkins/remotedata", "phollyer/elm-ui-colors"];
+  ref = ["elm/http", "elm/json", "elm/regex", "mdgriffith/elm-ui", "krisajenkins/remotedata", "phollyer/elm-ui-colors"];
   for (i = 0, len = ref.length; i < len; i++) {
     lib = ref[i];
     console.log(`installing elm lib ${lib}`);
@@ -399,46 +399,123 @@ dataTitleDecoder =
     console.log("Creating bare elm site");
     nodeEnv.addFile("./src/Main.elm", `module Main exposing(main)
 
-import Browser exposing(sandbox, element)
+import Browser exposing(element)
+import Browser.Events exposing(..)
 import Html exposing(Html)
 import Element exposing(..)
 import Element.Font as Font
-
-main : Program () Model Msg
-main =
-	sandbox {
-		init = initModel,
-		view = vMain,
-		update = update
-		}
+import Utils exposing(..)
 
 --------------------------------------
 
 type alias Model = {
+	width: Int,
+	height: Int,
+	kind: String,
 	title: String
 	}
 
-type Msg = EmptyMessage
+type Msg =
+	  EmptyMessage
+	| WindowResized Int Int
 
 --------------------------------------
 
-initModel : Model
-initModel = {
-	 title = "Cars"
-	 }
+main : Program Flags Model Msg
+main =
+	element {
+		init = init,
+		view = vMain,
+		update = updateFunc,
+		subscriptions = subscriptions
+		}
 
 --------------------------------------
 
+vDevice: Model -> Element Msg
+vDevice model =
+	( el [Font.size 18] (text ("(device: " ++ model.kind ++ ")")))
+
+vMain: Model -> Html msg
 vMain model = layout
 	[]
-	(el [centerX, Font.size 32] (text model.title))
+	(row
+		[centerX, spacing 25]
+		[
+			(el [centerX, Font.size 32] (text model.title)),
+			(vDevice model)
+			]
+		)
 
 --------------------------------------
 
-update : Msg -> Model -> Model
-update msg model =
-	model
+init: Flags -> (Model, Cmd arg)
+init f =
+	(
+		{
+			width = f.width,
+			height = f.height,
+			kind = deviceKind f.width f.height,
+			title = "Hello"
+			},
+		Cmd.none
+		)
+
+--------------------------------------
+
+updateFunc : Msg -> Model -> (Model, Cmd arg)
+updateFunc msg model =
+	case msg of
+
+		EmptyMsg ->
+			(model, Cmd.none)
+
+		WindowResized w h ->
+			(
+				{model |
+					width = w,
+					height = h,
+					kind = deviceKind w h
+					},
+				Cmd.none
+				)
+
+--------------------------------------
+
+subscriptions: Model -> (Sub Msg)
+subscriptions model =
+	onResize WindowResized
+
+--------------------------------------
+
+txtDevice: Model -> Element msg
+txtDevice model =
+	(text ("(device: " ++ model.kind ++ ")" ) )
+
 `);
+    nodeEnv.addFile("./src/Utils.elm", `module Utils exposing(..)
+
+import Element exposing(..)
+
+------------------------------
+
+type alias Flags = {
+	height: Int,
+	width: Int
+	}
+
+------------------------------
+
+deviceKind: Int -> Int -> String
+deviceKind width height =
+	if (width > 2000) then
+		"big desktop"
+	else if (width > 1200) then
+		"desktop"
+	else if (width > 700) then
+		"tablet"
+	else
+		"cell phone"`);
   }
 };
 

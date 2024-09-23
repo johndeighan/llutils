@@ -5,9 +5,8 @@ import {
 } from '@jdeighan/llutils';
 
 import {
-  getTracer,
   BaseTracer
-} from '@jdeighan/llutils/tracer';
+} from '@jdeighan/llutils/peggy';
 
 import {
   parse

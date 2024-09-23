@@ -5,7 +5,9 @@ import {
 	assert, croak, behead, fromTAML,
 	isString, isClassInstance,
 	} from '@jdeighan/llutils'
-import {indented, undented, splitLine} from '@jdeighan/llutils/indent'
+import {
+	indented, undented, splitLine,
+	} from '@jdeighan/llutils/indent'
 import {LineFetcher} from '@jdeighan/llutils/fetcher'
 
 lHereDocs = []   # checked in this order - list of type names

@@ -9,6 +9,20 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
+#symbol "fileExt(path)"
+
+equal fileExt("C:/temp/file.txt"), ".txt"
+equal fileExt("c:\\temp/to/file.txt"), ".txt"
+equal fileExt("c:\\temp/to/file.flag.txt"), ".txt"
+
+# ---------------------------------------------------------------------------
+#symbol "fileStub(path)"
+
+equal fileStub("C:/temp/file.txt"), "file"
+equal fileStub("c:\\temp/to/file.txt"), "file"
+equal fileStub("c:\\temp/to/file.flag.txt"), "file.flag"
+
+# ---------------------------------------------------------------------------
 #symbol "normalize(path)"
 
 equal normalize("C:\\temp"), "c:/temp"

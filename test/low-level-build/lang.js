@@ -79,7 +79,6 @@
 	};
 
 
-
 	var init, parse__identifier__1, parse__program__1, parse__stmt__1, parse__stmt__2;
 
 	import {
@@ -92,7 +91,7 @@
 
 	import {
 	  getTracer
-	} from '@jdeighan/llutils/tracer';
+	} from '@jdeighan/llutils/peggy';
 
 	export var evaluate = (input, tracerType = 'none') => {
 	  var tracer;
@@ -146,7 +145,6 @@
 	parse__identifier__1 = (str) => {
 	  return str;
 	};
-
 
 function peg$subclass(child, parent) {
   function C() { this.constructor = child; }

@@ -11,16 +11,7 @@ import {
 	NodeWalker, stackMatches,
 	} from '@jdeighan/llutils/node-walker'
 import {EnvNodeStack} from '@jdeighan/llutils/env-stack'
-
-# ---------------------------------------------------------------------------
-
-export removeExtraASTKeys = (hAST) =>
-
-	removeKeys hAST, words(
-		'loc range extra start end',
-		'directives comments tokens',
-		)
-	return hAST
+import {removeExtraASTKeys} from '@jdeighan/llutils/llcoffee'
 
 # ---------------------------------------------------------------------------
 

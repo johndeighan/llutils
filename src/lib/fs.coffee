@@ -14,7 +14,7 @@ import {
 	} from '@jdeighan/llutils'
 import {
 	isMetaDataStart, convertMetaData,
-	} from '@jdeighan/llutils/metadata'
+	} from '@jdeighan/llutils/meta-data'
 
 export lStatFields = words(
 	'dev ino mode nlink uid gid rdev size blksize blocks',
@@ -455,7 +455,7 @@ export allFilesMatching = (pattern='*', hOptions={}) ->
 			}
 		fileFilter: (h) =>
 			{filePath: path} = h
-			return isFile(path) && ! path.match(/\bnode_modules\b/i)
+			return isFile(path) # --- && ! path.match(/\bnode_modules\b/i)
 		})
 
 	for h from globFiles(pattern, hGlobOptions)
@@ -498,6 +498,17 @@ export fileExt = (filePath) =>
 		return lMatches[0]
 	else
 		return ''
+
+# ---------------------------------------------------------------------------
+
+export fileStub = (filePath) =>
+
+	fileName = filePath.split(/[\\\/]/).at(-1)
+	lMatches = fileName.match(/(.*)\.([^\.]*)$/)
+	if defined(lMatches)
+		return lMatches[1]
+	else
+		return fileName
 
 # ---------------------------------------------------------------------------
 
@@ -544,7 +555,7 @@ export readTextFile = (filePath, hOptions={}) =>
 		return buffer.toString().replaceAll('\r', '')
 
 	# --- we need to get the first line to check if
-	#     there's metadata. But if there is not,
+	#     there's meta data. But if there is not,
 	#     we need to return it by the reader
 
 	firstLine = getLine()
@@ -557,7 +568,7 @@ export readTextFile = (filePath, hOptions={}) =>
 	lMetaLines = undef
 	hMetaData = {}
 
-	# --- Get metadata if present
+	# --- Get meta data if present
 	if isMetaDataStart(firstLine)
 		lMetaLines = []
 		line = getLine()
