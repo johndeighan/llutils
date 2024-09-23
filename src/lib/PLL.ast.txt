@@ -1,36 +1,68 @@
 {
    "type": "grammar",
    "imports": [],
-   "topLevelInitializer": {
-      "type": "top_level_initializer",
-      "code": "\n\tvar init, isExtend, isIndent, isSep, isUndent, level, log, parse__EXTEND__1, parse__INDENTATION__1, parse__INDENT__1, parse__SEP__1, parse__UNDENT__1, sep;\n\n\tlevel = 0;\n\n\tsep = false;\n\n\tlog = (...lObj) => {\n\t  var i, len, obj;\n\t  for (i = 0, len = lObj.length; i < len; i++) {\n\t    obj = lObj[i];\n\t    console.log(obj);\n\t  }\n\t  return true;\n\t};\n\n\tisSep = ({match, nTabs}) => {\n\t  return sep || (match && (nTabs === level));\n\t};\n\n\tisIndent = ({match, nTabs}) => {\n\t  return match && (nTabs === level + 1);\n\t};\n\n\tisExtend = ({match, nTabs}) => {\n\t  return match && (nTabs > level + 1);\n\t};\n\n\tisUndent = ({match, nTabs}) => {\n\t  if (match && (nTabs < level)) {\n\t    return true;\n\t  }\n\t  if ((nTabs === 0) && (level > 0)) {\n\t    return true;\n\t  }\n\t  return false;\n\t};\n\n\tinit = () => {\n\t  level = 0;\n\t  return sep = false;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__SEP__1 = (hInfo) => {\n\t  sep = false;\n\t  return 'SEP';\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__INDENT__1 = (hInfo) => {\n\t  level += 1;\n\t  return `INDENT ${level - 1} -> ${level}`;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__EXTEND__1 = (hInfo) => {\n\t  return 'EXTEND';\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__UNDENT__1 = (hInfo) => {\n\t  level -= 1;\n\t  sep = true; // cause SEP after last UNDENT\n\t  return `UNDENT ${level + 1} -> ${level}`;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__INDENTATION__1 = (lTabs) => {\n\t  return {\n\t    match: lTabs !== null,\n\t    nTabs: lTabs === null ? 0 : lTabs.length\n\t  };\n\t};\n",
-      "codeLocation": {
-         "source": "src/lib/PLL.peggy",
-         "start": {
-            "offset": 2,
-            "line": 1,
-            "column": 3
+   "topLevelInitializer": [
+      {
+         "type": "top_level_initializer",
+         "code": "\n\tvar ExtractError, assert, check, contextStack, croak, dbg, debug, getObj, mergeKeys, parse__data__1, parse__desc__1, parse__desc__2, parse__expr__1, parse__ident__1, parse__listexpr__1, parse__string__1, warnOnly;\n\n\timport {\n\t  undef,\n\t  defined,\n\t  notdefined,\n\t  range,\n\t  getOptions,\n\t  OL,\n\t  hasKey,\n\t  keys,\n\t  isClassInstance,\n\t  isEmpty,\n\t  isString,\n\t  isArray,\n\t  isHash,\n\t  isFunction\n\t} from '@jdeighan/llutils';\n\n\timport {\n\t  getTracer\n\t} from '@jdeighan/llutils/peggy';\n\n\timport {\n\t  ContextStack\n\t} from '@jdeighan/llutils/context-stack';\n\n\timport {\n\t  DUMP,\n\t  BOX,\n\t  setMinWidth\n\t} from '@jdeighan/llutils/dump';\n\n\tcontextStack = undef;\n\n\tdebug = false;\n\n\twarnOnly = false;\n\n\tdbg = (str) => {\n\t  if (debug) {\n\t    return console.log(str);\n\t  }\n\t};\n\n\tsetMinWidth(40);\n\n\texport var extract = (obj, desc, hOptions = {}) => {\n\t  debugger;\n\t  var tracer;\n\t  hOptions = getOptions(hOptions, {\n\t    tracer: 'none',\n\t    debug: false,\n\t    lIgnoreSubs: []\n\t  });\n\t  hOptions.lIgnoreSubs.push('INDENT', 'SEP', 'UNDENT');\n\t  dbg(\"DEBUG ON\");\n\t  assert(isHash(obj) || isClassInstance(), `Not a hash or class instance: ${OL(obj)}`);\n\t  assert(isString(desc), `Not a string: ${OL(desc)}`);\n\t  contextStack = new ContextStack(obj);\n\t  tracer = getTracer(hOptions.tracer, hOptions);\n\t  return peg$parse(desc, {tracer});\n\t};\n\n\tExtractError = class ExtractError extends Error {\n\t  constructor(message) {\n\t    super(message);\n\t    this.name = \"ExtractError\";\n\t  }\n\n\t};\n\n\tgetObj = (obj, lSelectors) => {\n\t  var i, ident, len;\n\t  assert(isHash(obj), `getObj: Not a hash: ${OL(obj)}`);\n\t// --- there's at least 1 selector\n\t  for (i = 0, len = lSelectors.length; i < len; i++) {\n\t    ident = lSelectors[i];\n\t    obj = obj[ident];\n\t    if (notdefined(obj)) {\n\t      return undef;\n\t    }\n\t  }\n\t  return obj;\n\t};\n\n\tcroak = (errmsg) => {\n\t  if (warnOnly) {\n\t    console.log(`ERROR: ${errmsg}`);\n\t  } else {\n\t    throw new Error(errmsg);\n\t  }\n\t};\n\n\tassert = (cond, errmsg) => {\n\t  if (!cond) {\n\t    if (warnOnly) {\n\t      console.log(`ERROR: ${errmsg}`);\n\t    } else {\n\t      throw new ExtractError(errmsg);\n\t    }\n\t  }\n\t};\n\n\tcheck = (obj, expect) => {\n\t  assert(defined(obj), \"obj is undef\");\n\t  if (defined(expect)) {\n\t    assert(obj === expect, `Expected ${OL(expect)}, found ${OL(obj)}`);\n\t  }\n\t};\n\n\tmergeKeys = (hObj, ...lMore) => {\n\t  var h, i, j, key, len, len1, ref;\n\t  assert(isHash(hObj), `merge into non-hash: ${OL(hObj)}`);\n\t  for (i = 0, len = lMore.length; i < len; i++) {\n\t    h = lMore[i];\n\t    if (isEmpty(h)) {\n\t      continue;\n\t    }\n\t    assert(isHash(h), `Not a hash: ${OL(h)}`);\n\t    ref = keys(h);\n\t    for (j = 0, len1 = ref.length; j < len1; j++) {\n\t      key = ref[j];\n\t      assert(isString(key), `Not a string: ${OL(key)}`);\n\t      assert(!hasKey(hObj, key), `key ${OL(key)} already in hObj`);\n\t      hObj[key] = h[key];\n\t    }\n\t  }\n\t  return hObj;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__data__1 = (lDesc) => {\n\t  return mergeKeys({}, ...lDesc);\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__desc__1 = (result, hData) => {\n\t  return mergeKeys(hData || {}, result[0]);\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__desc__2 = (result, hData) => {\n\t  return mergeKeys(hData || {}, result[0]);\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__expr__1 = (dontSave, optional, lSelectors, expect, as) => {\n\t  var curr, i, item, lItems, len, name, obj;\n\t  assert(!(expect && as), \"Can't use 'as' with expected value\");\n\t  name = as || lSelectors.at(-1);\n\t  curr = contextStack.current();\n\t  if (curr === undef) {\n\t    return [{}, undef, name];\n\t  }\n\t  if (isArray(curr)) {\n\t    lItems = [];\n\t    for (i = 0, len = curr.length; i < len; i++) {\n\t      item = curr[i];\n\t      obj = getObj(item, lSelectors);\n\t      if (defined(obj)) {\n\t        check(obj, expect);\n\t        lItems.push(obj);\n\t      }\n\t    }\n\t    return [\n\t      {\n\t        [name]: lItems\n\t      },\n\t      lItems,\n\t      name\n\t    ];\n\t  } else {\n\t    obj = getObj(curr, lSelectors);\n\t    if (defined(obj)) {\n\t      check(obj, expect);\n\t      if (expect || dontSave) {\n\t        return [{}, obj, name];\n\t      } else {\n\t        return [\n\t          {\n\t            [name]: obj\n\t          },\n\t          obj,\n\t          name\n\t        ];\n\t      }\n\t    } else {\n\t      if (optional || dontSave) {\n\t        return [{}, obj, name];\n\t      } else {\n\t        return croak(`Non-optional missing key ${OL(name)}`);\n\t      }\n\t    }\n\t  }\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__listexpr__1 = (result) => {\n\t  var hData, lItems, name;\n\t  [hData, lItems, name] = result;\n\t  hData[name] = lItems;\n\t  return [\n\t    {\n\t      [name]: lItems\n\t    },\n\t    undef\n\t  ];\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__ident__1 = (str) => {\n\t  return str;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__string__1 = (lChars) => {\n\t  return lChars.join('');\n\t};\n",
+         "codeLocation": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 2,
+               "line": 1,
+               "column": 3
+            },
+            "end": {
+               "offset": 5055,
+               "line": 221,
+               "column": 1
+            }
          },
-         "end": {
-            "offset": 1664,
-            "line": 75,
-            "column": 1
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 0,
+               "line": 1,
+               "column": 1
+            },
+            "end": {
+               "offset": 5058,
+               "line": 222,
+               "column": 1
+            }
          }
       },
-      "location": {
-         "source": "src/lib/PLL.peggy",
-         "start": {
-            "offset": 0,
-            "line": 1,
-            "column": 1
+      {
+         "type": "top_level_initializer",
+         "code": "\n\tvar init, isExtend, isIndent, isSep, isUndent, level, log, parse__EXTEND__1, parse__INDENTATION__1, parse__INDENT__1, parse__SEP__1, parse__UNDENT__1, sep;\n\n\tlevel = 0;\n\n\tsep = false;\n\n\tlog = (...lObj) => {\n\t  var i, len, obj;\n\t  for (i = 0, len = lObj.length; i < len; i++) {\n\t    obj = lObj[i];\n\t    console.log(obj);\n\t  }\n\t  return true;\n\t};\n\n\tisSep = ({match, nTabs}) => {\n\t  return sep || (match && (nTabs === level));\n\t};\n\n\tisIndent = ({match, nTabs}) => {\n\t  return match && (nTabs === level + 1);\n\t};\n\n\tisExtend = ({match, nTabs}) => {\n\t  return match && (nTabs > level + 1);\n\t};\n\n\tisUndent = ({match, nTabs}) => {\n\t  if (match && (nTabs < level)) {\n\t    return true;\n\t  }\n\t  if ((nTabs === 0) && (level > 0)) {\n\t    return true;\n\t  }\n\t  return false;\n\t};\n\n\tinit = () => {\n\t  level = 0;\n\t  return sep = false;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__SEP__1 = (hInfo) => {\n\t  sep = false;\n\t  return 'SEP';\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__INDENT__1 = (hInfo) => {\n\t  level += 1;\n\t  return `INDENT ${level - 1} -> ${level}`;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__EXTEND__1 = (hInfo) => {\n\t  return 'EXTEND';\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__UNDENT__1 = (hInfo) => {\n\t  level -= 1;\n\t  sep = true; // cause SEP after last UNDENT\n\t  return `UNDENT ${level + 1} -> ${level}`;\n\t};\n\n\t// --------------------------------------------------------------\n\tparse__INDENTATION__1 = (lTabs) => {\n\t  return {\n\t    match: lTabs !== null,\n\t    nTabs: lTabs === null ? 0 : lTabs.length\n\t  };\n\t};\n",
+         "codeLocation": {
+            "source": "src/lib/PLL.peggy",
+            "start": {
+               "offset": 2,
+               "line": 1,
+               "column": 3
+            },
+            "end": {
+               "offset": 1664,
+               "line": 75,
+               "column": 1
+            }
          },
-         "end": {
-            "offset": 1667,
-            "line": 76,
-            "column": 1
+         "location": {
+            "source": "src/lib/PLL.peggy",
+            "start": {
+               "offset": 0,
+               "line": 1,
+               "column": 1
+            },
+            "end": {
+               "offset": 1667,
+               "line": 76,
+               "column": 1
+            }
          }
       }
-   },
+   ],
    "initializer": {
       "type": "initializer",
       "code": "\ninit();\n",
@@ -62,6 +94,3372 @@
       }
    },
    "rules": [
+      {
+         "type": "rule",
+         "name": "data",
+         "nameLocation": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5059,
+               "line": 223,
+               "column": 1
+            },
+            "end": {
+               "offset": 5063,
+               "line": 223,
+               "column": 5
+            }
+         },
+         "expression": {
+            "type": "action",
+            "expression": {
+               "type": "sequence",
+               "elements": [
+                  {
+                     "type": "labeled",
+                     "label": "lDesc",
+                     "labelLocation": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5068,
+                           "line": 225,
+                           "column": 4
+                        },
+                        "end": {
+                           "offset": 5073,
+                           "line": 225,
+                           "column": 9
+                        }
+                     },
+                     "expression": {
+                        "type": "repeated",
+                        "min": {
+                           "type": "constant",
+                           "value": 1,
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5081,
+                                 "line": 225,
+                                 "column": 17
+                              },
+                              "end": {
+                                 "offset": 5082,
+                                 "line": 225,
+                                 "column": 18
+                              }
+                           }
+                        },
+                        "max": {
+                           "type": "constant",
+                           "value": null
+                        },
+                        "expression": {
+                           "type": "rule_ref",
+                           "name": "desc",
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5075,
+                                 "line": 225,
+                                 "column": 11
+                              },
+                              "end": {
+                                 "offset": 5079,
+                                 "line": 225,
+                                 "column": 15
+                              }
+                           },
+                           "match": 0
+                        },
+                        "delimiter": {
+                           "type": "rule_ref",
+                           "name": "SEP",
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5086,
+                                 "line": 225,
+                                 "column": 22
+                              },
+                              "end": {
+                                 "offset": 5089,
+                                 "line": 225,
+                                 "column": 25
+                              }
+                           },
+                           "match": 0
+                        },
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5075,
+                              "line": 225,
+                              "column": 11
+                           },
+                           "end": {
+                              "offset": 5090,
+                              "line": 225,
+                              "column": 26
+                           }
+                        },
+                        "match": 0
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5068,
+                           "line": 225,
+                           "column": 4
+                        },
+                        "end": {
+                           "offset": 5090,
+                           "line": 225,
+                           "column": 26
+                        }
+                     },
+                     "match": 0
+                  },
+                  {
+                     "type": "zero_or_more",
+                     "expression": {
+                        "type": "literal",
+                        "value": "\n",
+                        "ignoreCase": false,
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5091,
+                              "line": 225,
+                              "column": 27
+                           },
+                           "end": {
+                              "offset": 5095,
+                              "line": 225,
+                              "column": 31
+                           }
+                        },
+                        "match": 0
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5091,
+                           "line": 225,
+                           "column": 27
+                        },
+                        "end": {
+                           "offset": 5096,
+                           "line": 225,
+                           "column": 32
+                        }
+                     },
+                     "match": 1
+                  }
+               ],
+               "location": {
+                  "source": "src/lib/data-extractor.peggy",
+                  "start": {
+                     "offset": 5068,
+                     "line": 225,
+                     "column": 4
+                  },
+                  "end": {
+                     "offset": 5096,
+                     "line": 225,
+                     "column": 32
+                  }
+               },
+               "match": 0
+            },
+            "code": " return parse__data__1(lDesc); ",
+            "codeLocation": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5100,
+                  "line": 226,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5131,
+                  "line": 226,
+                  "column": 35
+               }
+            },
+            "location": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5068,
+                  "line": 225,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5132,
+                  "line": 226,
+                  "column": 36
+               }
+            },
+            "match": 0
+         },
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5059,
+               "line": 223,
+               "column": 1
+            },
+            "end": {
+               "offset": 5133,
+               "line": 227,
+               "column": 1
+            }
+         },
+         "match": 0,
+         "bytecode": [
+            37,
+            9,
+            37,
+            8,
+            5,
+            37,
+            5,
+            39,
+            1,
+            0,
+            4,
+            37,
+            3,
+            5,
+            4,
+            37,
+            0,
+            27,
+            1,
+            38,
+            16,
+            24,
+            10,
+            5,
+            37,
+            2,
+            27,
+            7,
+            38,
+            15,
+            13,
+            1,
+            6,
+            37,
+            1,
+            27,
+            1,
+            38,
+            14,
+            3,
+            1,
+            6,
+            7,
+            3,
+            9,
+            9,
+            6,
+            30,
+            1,
+            3,
+            1,
+            6,
+            7,
+            3,
+            9,
+            38,
+            40,
+            1,
+            38,
+            15,
+            37,
+            3,
+            37,
+            7,
+            4,
+            37,
+            6,
+            18,
+            1,
+            2,
+            2,
+            22,
+            1,
+            23,
+            0,
+            38,
+            16,
+            12,
+            10,
+            37,
+            6,
+            18,
+            1,
+            2,
+            2,
+            22,
+            1,
+            23,
+            0,
+            38,
+            6,
+            38,
+            24,
+            2,
+            26,
+            0,
+            3,
+            1,
+            1,
+            6,
+            7,
+            3,
+            38,
+            38
+         ]
+      },
+      {
+         "type": "rule",
+         "name": "desc",
+         "nameLocation": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5134,
+               "line": 228,
+               "column": 1
+            },
+            "end": {
+               "offset": 5138,
+               "line": 228,
+               "column": 5
+            }
+         },
+         "expression": {
+            "type": "choice",
+            "alternatives": [
+               {
+                  "type": "action",
+                  "expression": {
+                     "type": "sequence",
+                     "elements": [
+                        {
+                           "type": "labeled",
+                           "label": "result",
+                           "labelLocation": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5143,
+                                 "line": 230,
+                                 "column": 4
+                              },
+                              "end": {
+                                 "offset": 5149,
+                                 "line": 230,
+                                 "column": 10
+                              }
+                           },
+                           "expression": {
+                              "type": "rule_ref",
+                              "name": "expr",
+                              "location": {
+                                 "source": "src/lib/data-extractor.peggy",
+                                 "start": {
+                                    "offset": 5151,
+                                    "line": 230,
+                                    "column": 12
+                                 },
+                                 "end": {
+                                    "offset": 5155,
+                                    "line": 230,
+                                    "column": 16
+                                 }
+                              },
+                              "match": 0
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5143,
+                                 "line": 230,
+                                 "column": 4
+                              },
+                              "end": {
+                                 "offset": 5155,
+                                 "line": 230,
+                                 "column": 16
+                              }
+                           },
+                           "match": 0
+                        },
+                        {
+                           "type": "semantic_and",
+                           "code": " contextStack.add(result[1]) ;return true;",
+                           "codeLocation": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5159,
+                                 "line": 230,
+                                 "column": 20
+                              },
+                              "end": {
+                                 "offset": 5201,
+                                 "line": 230,
+                                 "column": 62
+                              }
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5156,
+                                 "line": 230,
+                                 "column": 17
+                              },
+                              "end": {
+                                 "offset": 5202,
+                                 "line": 230,
+                                 "column": 63
+                              }
+                           },
+                           "match": 0
+                        },
+                        {
+                           "type": "labeled",
+                           "label": "hData",
+                           "labelLocation": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5203,
+                                 "line": 230,
+                                 "column": 64
+                              },
+                              "end": {
+                                 "offset": 5208,
+                                 "line": 230,
+                                 "column": 69
+                              }
+                           },
+                           "expression": {
+                              "type": "optional",
+                              "expression": {
+                                 "type": "group",
+                                 "expression": {
+                                    "type": "sequence",
+                                    "elements": [
+                                       {
+                                          "type": "rule_ref",
+                                          "name": "INDENT",
+                                          "location": {
+                                             "source": "src/lib/data-extractor.peggy",
+                                             "start": {
+                                                "offset": 5212,
+                                                "line": 230,
+                                                "column": 73
+                                             },
+                                             "end": {
+                                                "offset": 5218,
+                                                "line": 230,
+                                                "column": 79
+                                             }
+                                          },
+                                          "match": 0
+                                       },
+                                       {
+                                          "type": "labeled",
+                                          "label": null,
+                                          "labelLocation": {
+                                             "source": "src/lib/data-extractor.peggy",
+                                             "start": {
+                                                "offset": 5219,
+                                                "line": 230,
+                                                "column": 80
+                                             },
+                                             "end": {
+                                                "offset": 5220,
+                                                "line": 230,
+                                                "column": 81
+                                             }
+                                          },
+                                          "pick": true,
+                                          "expression": {
+                                             "type": "rule_ref",
+                                             "name": "data",
+                                             "location": {
+                                                "source": "src/lib/data-extractor.peggy",
+                                                "start": {
+                                                   "offset": 5220,
+                                                   "line": 230,
+                                                   "column": 81
+                                                },
+                                                "end": {
+                                                   "offset": 5224,
+                                                   "line": 230,
+                                                   "column": 85
+                                                }
+                                             },
+                                             "match": 0
+                                          },
+                                          "location": {
+                                             "source": "src/lib/data-extractor.peggy",
+                                             "start": {
+                                                "offset": 5219,
+                                                "line": 230,
+                                                "column": 80
+                                             },
+                                             "end": {
+                                                "offset": 5224,
+                                                "line": 230,
+                                                "column": 85
+                                             }
+                                          },
+                                          "match": 0
+                                       },
+                                       {
+                                          "type": "rule_ref",
+                                          "name": "UNDENT",
+                                          "location": {
+                                             "source": "src/lib/data-extractor.peggy",
+                                             "start": {
+                                                "offset": 5225,
+                                                "line": 230,
+                                                "column": 86
+                                             },
+                                             "end": {
+                                                "offset": 5231,
+                                                "line": 230,
+                                                "column": 92
+                                             }
+                                          },
+                                          "match": 0
+                                       }
+                                    ],
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5212,
+                                          "line": 230,
+                                          "column": 73
+                                       },
+                                       "end": {
+                                          "offset": 5231,
+                                          "line": 230,
+                                          "column": 92
+                                       }
+                                    },
+                                    "match": 0
+                                 },
+                                 "location": {
+                                    "source": "src/lib/data-extractor.peggy",
+                                    "start": {
+                                       "offset": 5210,
+                                       "line": 230,
+                                       "column": 71
+                                    },
+                                    "end": {
+                                       "offset": 5232,
+                                       "line": 230,
+                                       "column": 93
+                                    }
+                                 },
+                                 "match": 0
+                              },
+                              "location": {
+                                 "source": "src/lib/data-extractor.peggy",
+                                 "start": {
+                                    "offset": 5210,
+                                    "line": 230,
+                                    "column": 71
+                                 },
+                                 "end": {
+                                    "offset": 5234,
+                                    "line": 230,
+                                    "column": 95
+                                 }
+                              },
+                              "match": 1
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5203,
+                                 "line": 230,
+                                 "column": 64
+                              },
+                              "end": {
+                                 "offset": 5234,
+                                 "line": 230,
+                                 "column": 95
+                              }
+                           },
+                           "match": 1
+                        },
+                        {
+                           "type": "semantic_and",
+                           "code": " contextStack.pop() ;return true;",
+                           "codeLocation": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5238,
+                                 "line": 230,
+                                 "column": 99
+                              },
+                              "end": {
+                                 "offset": 5271,
+                                 "line": 230,
+                                 "column": 132
+                              }
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5235,
+                                 "line": 230,
+                                 "column": 96
+                              },
+                              "end": {
+                                 "offset": 5272,
+                                 "line": 230,
+                                 "column": 133
+                              }
+                           },
+                           "match": 0
+                        }
+                     ],
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5143,
+                           "line": 230,
+                           "column": 4
+                        },
+                        "end": {
+                           "offset": 5272,
+                           "line": 230,
+                           "column": 133
+                        }
+                     },
+                     "match": 0
+                  },
+                  "code": " return parse__desc__1(result, hData); ",
+                  "codeLocation": {
+                     "source": "src/lib/data-extractor.peggy",
+                     "start": {
+                        "offset": 5276,
+                        "line": 231,
+                        "column": 4
+                     },
+                     "end": {
+                        "offset": 5315,
+                        "line": 231,
+                        "column": 43
+                     }
+                  },
+                  "location": {
+                     "source": "src/lib/data-extractor.peggy",
+                     "start": {
+                        "offset": 5143,
+                        "line": 230,
+                        "column": 4
+                     },
+                     "end": {
+                        "offset": 5316,
+                        "line": 231,
+                        "column": 44
+                     }
+                  },
+                  "match": 0
+               },
+               {
+                  "type": "action",
+                  "expression": {
+                     "type": "sequence",
+                     "elements": [
+                        {
+                           "type": "labeled",
+                           "label": "result",
+                           "labelLocation": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5321,
+                                 "line": 233,
+                                 "column": 4
+                              },
+                              "end": {
+                                 "offset": 5327,
+                                 "line": 233,
+                                 "column": 10
+                              }
+                           },
+                           "expression": {
+                              "type": "rule_ref",
+                              "name": "listexpr",
+                              "location": {
+                                 "source": "src/lib/data-extractor.peggy",
+                                 "start": {
+                                    "offset": 5329,
+                                    "line": 233,
+                                    "column": 12
+                                 },
+                                 "end": {
+                                    "offset": 5337,
+                                    "line": 233,
+                                    "column": 20
+                                 }
+                              },
+                              "match": 0
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5321,
+                                 "line": 233,
+                                 "column": 4
+                              },
+                              "end": {
+                                 "offset": 5337,
+                                 "line": 233,
+                                 "column": 20
+                              }
+                           },
+                           "match": 0
+                        },
+                        {
+                           "type": "semantic_and",
+                           "code": " contextStack.add(result[1]) ;return true;",
+                           "codeLocation": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5341,
+                                 "line": 233,
+                                 "column": 24
+                              },
+                              "end": {
+                                 "offset": 5383,
+                                 "line": 233,
+                                 "column": 66
+                              }
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5338,
+                                 "line": 233,
+                                 "column": 21
+                              },
+                              "end": {
+                                 "offset": 5384,
+                                 "line": 233,
+                                 "column": 67
+                              }
+                           },
+                           "match": 0
+                        },
+                        {
+                           "type": "labeled",
+                           "label": "hData",
+                           "labelLocation": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5385,
+                                 "line": 233,
+                                 "column": 68
+                              },
+                              "end": {
+                                 "offset": 5390,
+                                 "line": 233,
+                                 "column": 73
+                              }
+                           },
+                           "expression": {
+                              "type": "optional",
+                              "expression": {
+                                 "type": "group",
+                                 "expression": {
+                                    "type": "sequence",
+                                    "elements": [
+                                       {
+                                          "type": "rule_ref",
+                                          "name": "INDENT",
+                                          "location": {
+                                             "source": "src/lib/data-extractor.peggy",
+                                             "start": {
+                                                "offset": 5394,
+                                                "line": 233,
+                                                "column": 77
+                                             },
+                                             "end": {
+                                                "offset": 5400,
+                                                "line": 233,
+                                                "column": 83
+                                             }
+                                          },
+                                          "match": 0
+                                       },
+                                       {
+                                          "type": "labeled",
+                                          "label": null,
+                                          "labelLocation": {
+                                             "source": "src/lib/data-extractor.peggy",
+                                             "start": {
+                                                "offset": 5401,
+                                                "line": 233,
+                                                "column": 84
+                                             },
+                                             "end": {
+                                                "offset": 5402,
+                                                "line": 233,
+                                                "column": 85
+                                             }
+                                          },
+                                          "pick": true,
+                                          "expression": {
+                                             "type": "rule_ref",
+                                             "name": "data",
+                                             "location": {
+                                                "source": "src/lib/data-extractor.peggy",
+                                                "start": {
+                                                   "offset": 5402,
+                                                   "line": 233,
+                                                   "column": 85
+                                                },
+                                                "end": {
+                                                   "offset": 5406,
+                                                   "line": 233,
+                                                   "column": 89
+                                                }
+                                             },
+                                             "match": 0
+                                          },
+                                          "location": {
+                                             "source": "src/lib/data-extractor.peggy",
+                                             "start": {
+                                                "offset": 5401,
+                                                "line": 233,
+                                                "column": 84
+                                             },
+                                             "end": {
+                                                "offset": 5406,
+                                                "line": 233,
+                                                "column": 89
+                                             }
+                                          },
+                                          "match": 0
+                                       },
+                                       {
+                                          "type": "rule_ref",
+                                          "name": "UNDENT",
+                                          "location": {
+                                             "source": "src/lib/data-extractor.peggy",
+                                             "start": {
+                                                "offset": 5407,
+                                                "line": 233,
+                                                "column": 90
+                                             },
+                                             "end": {
+                                                "offset": 5413,
+                                                "line": 233,
+                                                "column": 96
+                                             }
+                                          },
+                                          "match": 0
+                                       }
+                                    ],
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5394,
+                                          "line": 233,
+                                          "column": 77
+                                       },
+                                       "end": {
+                                          "offset": 5413,
+                                          "line": 233,
+                                          "column": 96
+                                       }
+                                    },
+                                    "match": 0
+                                 },
+                                 "location": {
+                                    "source": "src/lib/data-extractor.peggy",
+                                    "start": {
+                                       "offset": 5392,
+                                       "line": 233,
+                                       "column": 75
+                                    },
+                                    "end": {
+                                       "offset": 5414,
+                                       "line": 233,
+                                       "column": 97
+                                    }
+                                 },
+                                 "match": 0
+                              },
+                              "location": {
+                                 "source": "src/lib/data-extractor.peggy",
+                                 "start": {
+                                    "offset": 5392,
+                                    "line": 233,
+                                    "column": 75
+                                 },
+                                 "end": {
+                                    "offset": 5416,
+                                    "line": 233,
+                                    "column": 99
+                                 }
+                              },
+                              "match": 1
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5385,
+                                 "line": 233,
+                                 "column": 68
+                              },
+                              "end": {
+                                 "offset": 5416,
+                                 "line": 233,
+                                 "column": 99
+                              }
+                           },
+                           "match": 1
+                        },
+                        {
+                           "type": "semantic_and",
+                           "code": " contextStack.pop() ;return true;",
+                           "codeLocation": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5420,
+                                 "line": 233,
+                                 "column": 103
+                              },
+                              "end": {
+                                 "offset": 5453,
+                                 "line": 233,
+                                 "column": 136
+                              }
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5417,
+                                 "line": 233,
+                                 "column": 100
+                              },
+                              "end": {
+                                 "offset": 5454,
+                                 "line": 233,
+                                 "column": 137
+                              }
+                           },
+                           "match": 0
+                        }
+                     ],
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5321,
+                           "line": 233,
+                           "column": 4
+                        },
+                        "end": {
+                           "offset": 5454,
+                           "line": 233,
+                           "column": 137
+                        }
+                     },
+                     "match": 0
+                  },
+                  "code": " return parse__desc__2(result, hData); ",
+                  "codeLocation": {
+                     "source": "src/lib/data-extractor.peggy",
+                     "start": {
+                        "offset": 5458,
+                        "line": 234,
+                        "column": 4
+                     },
+                     "end": {
+                        "offset": 5497,
+                        "line": 234,
+                        "column": 43
+                     }
+                  },
+                  "location": {
+                     "source": "src/lib/data-extractor.peggy",
+                     "start": {
+                        "offset": 5321,
+                        "line": 233,
+                        "column": 4
+                     },
+                     "end": {
+                        "offset": 5498,
+                        "line": 234,
+                        "column": 44
+                     }
+                  },
+                  "match": 0
+               }
+            ],
+            "location": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5143,
+                  "line": 230,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5498,
+                  "line": 234,
+                  "column": 44
+               }
+            },
+            "match": 0
+         },
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5134,
+               "line": 228,
+               "column": 1
+            },
+            "end": {
+               "offset": 5499,
+               "line": 235,
+               "column": 1
+            }
+         },
+         "match": 0,
+         "bytecode": [
+            37,
+            42,
+            37,
+            25,
+            37,
+            24,
+            5,
+            37,
+            12,
+            39,
+            1,
+            2,
+            11,
+            37,
+            10,
+            27,
+            2,
+            38,
+            40,
+            1,
+            38,
+            15,
+            121,
+            3,
+            37,
+            13,
+            25,
+            26,
+            1,
+            0,
+            1,
+            0,
+            13,
+            2,
+            2,
+            6,
+            1,
+            6,
+            3,
+            38,
+            15,
+            98,
+            4,
+            37,
+            22,
+            39,
+            3,
+            3,
+            21,
+            37,
+            20,
+            37,
+            19,
+            37,
+            18,
+            5,
+            37,
+            14,
+            27,
+            8,
+            38,
+            15,
+            31,
+            3,
+            37,
+            16,
+            37,
+            15,
+            27,
+            0,
+            38,
+            38,
+            15,
+            16,
+            4,
+            37,
+            17,
+            27,
+            10,
+            38,
+            15,
+            4,
+            4,
+            36,
+            4,
+            1,
+            1,
+            8,
+            3,
+            7,
+            3,
+            8,
+            2,
+            7,
+            3,
+            6,
+            7,
+            3,
+            38,
+            38,
+            14,
+            2,
+            0,
+            6,
+            2,
+            38,
+            40,
+            3,
+            38,
+            37,
+            23,
+            25,
+            26,
+            2,
+            0,
+            2,
+            2,
+            0,
+            13,
+            2,
+            2,
+            6,
+            1,
+            6,
+            3,
+            38,
+            15,
+            8,
+            4,
+            24,
+            4,
+            26,
+            3,
+            5,
+            2,
+            3,
+            1,
+            8,
+            4,
+            7,
+            3,
+            8,
+            2,
+            7,
+            3,
+            6,
+            7,
+            3,
+            38,
+            38,
+            14,
+            149,
+            0,
+            6,
+            37,
+            41,
+            37,
+            40,
+            5,
+            37,
+            28,
+            39,
+            1,
+            2,
+            27,
+            37,
+            26,
+            27,
+            3,
+            38,
+            40,
+            1,
+            38,
+            15,
+            121,
+            3,
+            37,
+            29,
+            25,
+            26,
+            4,
+            0,
+            1,
+            0,
+            13,
+            2,
+            2,
+            6,
+            1,
+            6,
+            3,
+            38,
+            15,
+            98,
+            4,
+            37,
+            38,
+            39,
+            3,
+            3,
+            37,
+            37,
+            36,
+            37,
+            35,
+            37,
+            34,
+            5,
+            37,
+            30,
+            27,
+            8,
+            38,
+            15,
+            31,
+            3,
+            37,
+            32,
+            37,
+            31,
+            27,
+            0,
+            38,
+            38,
+            15,
+            16,
+            4,
+            37,
+            33,
+            27,
+            10,
+            38,
+            15,
+            4,
+            4,
+            36,
+            4,
+            1,
+            1,
+            8,
+            3,
+            7,
+            3,
+            8,
+            2,
+            7,
+            3,
+            6,
+            7,
+            3,
+            38,
+            38,
+            14,
+            2,
+            0,
+            6,
+            2,
+            38,
+            40,
+            3,
+            38,
+            37,
+            39,
+            25,
+            26,
+            5,
+            0,
+            2,
+            2,
+            0,
+            13,
+            2,
+            2,
+            6,
+            1,
+            6,
+            3,
+            38,
+            15,
+            8,
+            4,
+            24,
+            4,
+            26,
+            6,
+            5,
+            2,
+            3,
+            1,
+            8,
+            4,
+            7,
+            3,
+            8,
+            2,
+            7,
+            3,
+            6,
+            7,
+            3,
+            38,
+            38,
+            38
+         ]
+      },
+      {
+         "type": "rule",
+         "name": "expr",
+         "nameLocation": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5500,
+               "line": 236,
+               "column": 1
+            },
+            "end": {
+               "offset": 5504,
+               "line": 236,
+               "column": 5
+            }
+         },
+         "expression": {
+            "type": "action",
+            "expression": {
+               "type": "sequence",
+               "elements": [
+                  {
+                     "type": "labeled",
+                     "label": "dontSave",
+                     "labelLocation": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5509,
+                           "line": 238,
+                           "column": 4
+                        },
+                        "end": {
+                           "offset": 5517,
+                           "line": 238,
+                           "column": 12
+                        }
+                     },
+                     "expression": {
+                        "type": "optional",
+                        "expression": {
+                           "type": "literal",
+                           "value": "!",
+                           "ignoreCase": false,
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5519,
+                                 "line": 238,
+                                 "column": 14
+                              },
+                              "end": {
+                                 "offset": 5522,
+                                 "line": 238,
+                                 "column": 17
+                              }
+                           },
+                           "match": 0
+                        },
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5519,
+                              "line": 238,
+                              "column": 14
+                           },
+                           "end": {
+                              "offset": 5523,
+                              "line": 238,
+                              "column": 18
+                           }
+                        },
+                        "match": 1
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5509,
+                           "line": 238,
+                           "column": 4
+                        },
+                        "end": {
+                           "offset": 5523,
+                           "line": 238,
+                           "column": 18
+                        }
+                     },
+                     "match": 1
+                  },
+                  {
+                     "type": "labeled",
+                     "label": "optional",
+                     "labelLocation": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5524,
+                           "line": 238,
+                           "column": 19
+                        },
+                        "end": {
+                           "offset": 5532,
+                           "line": 238,
+                           "column": 27
+                        }
+                     },
+                     "expression": {
+                        "type": "optional",
+                        "expression": {
+                           "type": "group",
+                           "expression": {
+                              "type": "sequence",
+                              "elements": [
+                                 {
+                                    "type": "rule_ref",
+                                    "name": "_",
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5535,
+                                          "line": 238,
+                                          "column": 30
+                                       },
+                                       "end": {
+                                          "offset": 5536,
+                                          "line": 238,
+                                          "column": 31
+                                       }
+                                    },
+                                    "match": 1
+                                 },
+                                 {
+                                    "type": "literal",
+                                    "value": "?",
+                                    "ignoreCase": false,
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5537,
+                                          "line": 238,
+                                          "column": 32
+                                       },
+                                       "end": {
+                                          "offset": 5540,
+                                          "line": 238,
+                                          "column": 35
+                                       }
+                                    },
+                                    "match": 0
+                                 }
+                              ],
+                              "location": {
+                                 "source": "src/lib/data-extractor.peggy",
+                                 "start": {
+                                    "offset": 5535,
+                                    "line": 238,
+                                    "column": 30
+                                 },
+                                 "end": {
+                                    "offset": 5540,
+                                    "line": 238,
+                                    "column": 35
+                                 }
+                              },
+                              "match": 0
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5534,
+                                 "line": 238,
+                                 "column": 29
+                              },
+                              "end": {
+                                 "offset": 5541,
+                                 "line": 238,
+                                 "column": 36
+                              }
+                           },
+                           "match": 0
+                        },
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5534,
+                              "line": 238,
+                              "column": 29
+                           },
+                           "end": {
+                              "offset": 5542,
+                              "line": 238,
+                              "column": 37
+                           }
+                        },
+                        "match": 1
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5524,
+                           "line": 238,
+                           "column": 19
+                        },
+                        "end": {
+                           "offset": 5542,
+                           "line": 238,
+                           "column": 37
+                        }
+                     },
+                     "match": 1
+                  },
+                  {
+                     "type": "rule_ref",
+                     "name": "_",
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5543,
+                           "line": 238,
+                           "column": 38
+                        },
+                        "end": {
+                           "offset": 5544,
+                           "line": 238,
+                           "column": 39
+                        }
+                     },
+                     "match": 1
+                  },
+                  {
+                     "type": "labeled",
+                     "label": "lSelectors",
+                     "labelLocation": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5545,
+                           "line": 238,
+                           "column": 40
+                        },
+                        "end": {
+                           "offset": 5555,
+                           "line": 238,
+                           "column": 50
+                        }
+                     },
+                     "expression": {
+                        "type": "repeated",
+                        "min": {
+                           "type": "constant",
+                           "value": 1,
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5563,
+                                 "line": 238,
+                                 "column": 58
+                              },
+                              "end": {
+                                 "offset": 5564,
+                                 "line": 238,
+                                 "column": 59
+                              }
+                           }
+                        },
+                        "max": {
+                           "type": "constant",
+                           "value": null
+                        },
+                        "expression": {
+                           "type": "rule_ref",
+                           "name": "ident",
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5557,
+                                 "line": 238,
+                                 "column": 52
+                              },
+                              "end": {
+                                 "offset": 5562,
+                                 "line": 238,
+                                 "column": 57
+                              }
+                           },
+                           "match": 0
+                        },
+                        "delimiter": {
+                           "type": "literal",
+                           "value": ".",
+                           "ignoreCase": false,
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5568,
+                                 "line": 238,
+                                 "column": 63
+                              },
+                              "end": {
+                                 "offset": 5571,
+                                 "line": 238,
+                                 "column": 66
+                              }
+                           },
+                           "match": 0
+                        },
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5557,
+                              "line": 238,
+                              "column": 52
+                           },
+                           "end": {
+                              "offset": 5572,
+                              "line": 238,
+                              "column": 67
+                           }
+                        },
+                        "match": 0
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5545,
+                           "line": 238,
+                           "column": 40
+                        },
+                        "end": {
+                           "offset": 5572,
+                           "line": 238,
+                           "column": 67
+                        }
+                     },
+                     "match": 0
+                  },
+                  {
+                     "type": "labeled",
+                     "label": "expect",
+                     "labelLocation": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5573,
+                           "line": 238,
+                           "column": 68
+                        },
+                        "end": {
+                           "offset": 5579,
+                           "line": 238,
+                           "column": 74
+                        }
+                     },
+                     "expression": {
+                        "type": "optional",
+                        "expression": {
+                           "type": "group",
+                           "expression": {
+                              "type": "sequence",
+                              "elements": [
+                                 {
+                                    "type": "rule_ref",
+                                    "name": "_",
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5582,
+                                          "line": 238,
+                                          "column": 77
+                                       },
+                                       "end": {
+                                          "offset": 5583,
+                                          "line": 238,
+                                          "column": 78
+                                       }
+                                    },
+                                    "match": 1
+                                 },
+                                 {
+                                    "type": "literal",
+                                    "value": "=",
+                                    "ignoreCase": false,
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5584,
+                                          "line": 238,
+                                          "column": 79
+                                       },
+                                       "end": {
+                                          "offset": 5587,
+                                          "line": 238,
+                                          "column": 82
+                                       }
+                                    },
+                                    "match": 0
+                                 },
+                                 {
+                                    "type": "rule_ref",
+                                    "name": "_",
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5588,
+                                          "line": 238,
+                                          "column": 83
+                                       },
+                                       "end": {
+                                          "offset": 5589,
+                                          "line": 238,
+                                          "column": 84
+                                       }
+                                    },
+                                    "match": 1
+                                 },
+                                 {
+                                    "type": "labeled",
+                                    "label": null,
+                                    "labelLocation": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5590,
+                                          "line": 238,
+                                          "column": 85
+                                       },
+                                       "end": {
+                                          "offset": 5591,
+                                          "line": 238,
+                                          "column": 86
+                                       }
+                                    },
+                                    "pick": true,
+                                    "expression": {
+                                       "type": "rule_ref",
+                                       "name": "string",
+                                       "location": {
+                                          "source": "src/lib/data-extractor.peggy",
+                                          "start": {
+                                             "offset": 5591,
+                                             "line": 238,
+                                             "column": 86
+                                          },
+                                          "end": {
+                                             "offset": 5597,
+                                             "line": 238,
+                                             "column": 92
+                                          }
+                                       },
+                                       "match": 0
+                                    },
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5590,
+                                          "line": 238,
+                                          "column": 85
+                                       },
+                                       "end": {
+                                          "offset": 5597,
+                                          "line": 238,
+                                          "column": 92
+                                       }
+                                    },
+                                    "match": 0
+                                 }
+                              ],
+                              "location": {
+                                 "source": "src/lib/data-extractor.peggy",
+                                 "start": {
+                                    "offset": 5582,
+                                    "line": 238,
+                                    "column": 77
+                                 },
+                                 "end": {
+                                    "offset": 5597,
+                                    "line": 238,
+                                    "column": 92
+                                 }
+                              },
+                              "match": 0
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5581,
+                                 "line": 238,
+                                 "column": 76
+                              },
+                              "end": {
+                                 "offset": 5598,
+                                 "line": 238,
+                                 "column": 93
+                              }
+                           },
+                           "match": 0
+                        },
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5581,
+                              "line": 238,
+                              "column": 76
+                           },
+                           "end": {
+                              "offset": 5599,
+                              "line": 238,
+                              "column": 94
+                           }
+                        },
+                        "match": 1
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5573,
+                           "line": 238,
+                           "column": 68
+                        },
+                        "end": {
+                           "offset": 5599,
+                           "line": 238,
+                           "column": 94
+                        }
+                     },
+                     "match": 1
+                  },
+                  {
+                     "type": "labeled",
+                     "label": "as",
+                     "labelLocation": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5600,
+                           "line": 238,
+                           "column": 95
+                        },
+                        "end": {
+                           "offset": 5602,
+                           "line": 238,
+                           "column": 97
+                        }
+                     },
+                     "expression": {
+                        "type": "optional",
+                        "expression": {
+                           "type": "group",
+                           "expression": {
+                              "type": "sequence",
+                              "elements": [
+                                 {
+                                    "type": "rule_ref",
+                                    "name": "_",
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5605,
+                                          "line": 238,
+                                          "column": 100
+                                       },
+                                       "end": {
+                                          "offset": 5606,
+                                          "line": 238,
+                                          "column": 101
+                                       }
+                                    },
+                                    "match": 1
+                                 },
+                                 {
+                                    "type": "literal",
+                                    "value": "as",
+                                    "ignoreCase": false,
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5607,
+                                          "line": 238,
+                                          "column": 102
+                                       },
+                                       "end": {
+                                          "offset": 5611,
+                                          "line": 238,
+                                          "column": 106
+                                       }
+                                    },
+                                    "match": 0
+                                 },
+                                 {
+                                    "type": "rule_ref",
+                                    "name": "_",
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5612,
+                                          "line": 238,
+                                          "column": 107
+                                       },
+                                       "end": {
+                                          "offset": 5613,
+                                          "line": 238,
+                                          "column": 108
+                                       }
+                                    },
+                                    "match": 1
+                                 },
+                                 {
+                                    "type": "labeled",
+                                    "label": null,
+                                    "labelLocation": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5614,
+                                          "line": 238,
+                                          "column": 109
+                                       },
+                                       "end": {
+                                          "offset": 5615,
+                                          "line": 238,
+                                          "column": 110
+                                       }
+                                    },
+                                    "pick": true,
+                                    "expression": {
+                                       "type": "rule_ref",
+                                       "name": "ident",
+                                       "location": {
+                                          "source": "src/lib/data-extractor.peggy",
+                                          "start": {
+                                             "offset": 5615,
+                                             "line": 238,
+                                             "column": 110
+                                          },
+                                          "end": {
+                                             "offset": 5620,
+                                             "line": 238,
+                                             "column": 115
+                                          }
+                                       },
+                                       "match": 0
+                                    },
+                                    "location": {
+                                       "source": "src/lib/data-extractor.peggy",
+                                       "start": {
+                                          "offset": 5614,
+                                          "line": 238,
+                                          "column": 109
+                                       },
+                                       "end": {
+                                          "offset": 5620,
+                                          "line": 238,
+                                          "column": 115
+                                       }
+                                    },
+                                    "match": 0
+                                 }
+                              ],
+                              "location": {
+                                 "source": "src/lib/data-extractor.peggy",
+                                 "start": {
+                                    "offset": 5605,
+                                    "line": 238,
+                                    "column": 100
+                                 },
+                                 "end": {
+                                    "offset": 5620,
+                                    "line": 238,
+                                    "column": 115
+                                 }
+                              },
+                              "match": 0
+                           },
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5604,
+                                 "line": 238,
+                                 "column": 99
+                              },
+                              "end": {
+                                 "offset": 5621,
+                                 "line": 238,
+                                 "column": 116
+                              }
+                           },
+                           "match": 0
+                        },
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5604,
+                              "line": 238,
+                              "column": 99
+                           },
+                           "end": {
+                              "offset": 5622,
+                              "line": 238,
+                              "column": 117
+                           }
+                        },
+                        "match": 1
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5600,
+                           "line": 238,
+                           "column": 95
+                        },
+                        "end": {
+                           "offset": 5622,
+                           "line": 238,
+                           "column": 117
+                        }
+                     },
+                     "match": 1
+                  }
+               ],
+               "location": {
+                  "source": "src/lib/data-extractor.peggy",
+                  "start": {
+                     "offset": 5509,
+                     "line": 238,
+                     "column": 4
+                  },
+                  "end": {
+                     "offset": 5622,
+                     "line": 238,
+                     "column": 117
+                  }
+               },
+               "match": 0
+            },
+            "code": " return parse__expr__1(dontSave, optional, lSelectors, expect, as); ",
+            "codeLocation": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5626,
+                  "line": 239,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5694,
+                  "line": 239,
+                  "column": 72
+               }
+            },
+            "location": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5509,
+                  "line": 238,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5695,
+                  "line": 239,
+                  "column": 73
+               }
+            },
+            "match": 0
+         },
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5500,
+               "line": 236,
+               "column": 1
+            },
+            "end": {
+               "offset": 5696,
+               "line": 240,
+               "column": 1
+            }
+         },
+         "match": 0,
+         "bytecode": [
+            37,
+            82,
+            37,
+            81,
+            5,
+            37,
+            46,
+            39,
+            1,
+            5,
+            45,
+            37,
+            44,
+            37,
+            43,
+            18,
+            4,
+            2,
+            2,
+            22,
+            4,
+            23,
+            1,
+            38,
+            14,
+            2,
+            0,
+            6,
+            2,
+            38,
+            40,
+            1,
+            38,
+            37,
+            53,
+            39,
+            2,
+            7,
+            52,
+            37,
+            51,
+            37,
+            50,
+            37,
+            49,
+            5,
+            37,
+            47,
+            27,
+            6,
+            38,
+            37,
+            48,
+            18,
+            6,
+            2,
+            2,
+            22,
+            6,
+            23,
+            2,
+            38,
+            15,
+            3,
+            4,
+            11,
+            2,
+            9,
+            8,
+            2,
+            7,
+            3,
+            38,
+            38,
+            14,
+            2,
+            0,
+            6,
+            2,
+            38,
+            40,
+            2,
+            38,
+            37,
+            54,
+            27,
+            6,
+            38,
+            37,
+            60,
+            39,
+            4,
+            9,
+            59,
+            37,
+            58,
+            5,
+            4,
+            37,
+            55,
+            27,
+            4,
+            38,
+            16,
+            30,
+            10,
+            5,
+            37,
+            57,
+            18,
+            8,
+            2,
+            2,
+            22,
+            8,
+            23,
+            3,
+            38,
+            15,
+            13,
+            1,
+            6,
+            37,
+            56,
+            27,
+            4,
+            38,
+            14,
+            3,
+            1,
+            6,
+            7,
+            3,
+            9,
+            9,
+            6,
+            30,
+            1,
+            3,
+            1,
+            6,
+            7,
+            3,
+            9,
+            38,
+            40,
+            4,
+            38,
+            15,
+            153,
+            4,
+            37,
+            70,
+            39,
+            5,
+            11,
+            69,
+            37,
+            68,
+            37,
+            67,
+            37,
+            66,
+            5,
+            37,
+            61,
+            27,
+            6,
+            38,
+            37,
+            62,
+            18,
+            10,
+            2,
+            2,
+            22,
+            10,
+            23,
+            4,
+            38,
+            15,
+            24,
+            4,
+            37,
+            63,
+            27,
+            6,
+            38,
+            37,
+            65,
+            37,
+            64,
+            27,
+            5,
+            38,
+            38,
+            15,
+            4,
+            4,
+            36,
+            5,
+            1,
+            0,
+            8,
+            4,
+            7,
+            3,
+            8,
+            2,
+            7,
+            3,
+            38,
+            38,
+            14,
+            2,
+            0,
+            6,
+            2,
+            38,
+            40,
+            5,
+            38,
+            37,
+            80,
+            39,
+            6,
+            12,
+            79,
+            37,
+            78,
+            37,
+            77,
+            37,
+            76,
+            5,
+            37,
+            71,
+            27,
+            6,
+            38,
+            37,
+            72,
+            18,
+            12,
+            2,
+            2,
+            22,
+            12,
+            23,
+            5,
+            38,
+            15,
+            24,
+            4,
+            37,
+            73,
+            27,
+            6,
+            38,
+            37,
+            75,
+            37,
+            74,
+            27,
+            4,
+            38,
+            38,
+            15,
+            4,
+            4,
+            36,
+            5,
+            1,
+            0,
+            8,
+            4,
+            7,
+            3,
+            8,
+            2,
+            7,
+            3,
+            38,
+            38,
+            14,
+            2,
+            0,
+            6,
+            2,
+            38,
+            40,
+            6,
+            38,
+            24,
+            6,
+            26,
+            7,
+            7,
+            5,
+            5,
+            4,
+            2,
+            1,
+            0,
+            8,
+            4,
+            7,
+            3,
+            38,
+            38
+         ]
+      },
+      {
+         "type": "rule",
+         "name": "listexpr",
+         "nameLocation": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5697,
+               "line": 241,
+               "column": 1
+            },
+            "end": {
+               "offset": 5705,
+               "line": 241,
+               "column": 9
+            }
+         },
+         "expression": {
+            "type": "action",
+            "expression": {
+               "type": "sequence",
+               "elements": [
+                  {
+                     "type": "literal",
+                     "value": "[",
+                     "ignoreCase": false,
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5710,
+                           "line": 243,
+                           "column": 4
+                        },
+                        "end": {
+                           "offset": 5713,
+                           "line": 243,
+                           "column": 7
+                        }
+                     },
+                     "match": 0
+                  },
+                  {
+                     "type": "labeled",
+                     "label": "result",
+                     "labelLocation": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5714,
+                           "line": 243,
+                           "column": 8
+                        },
+                        "end": {
+                           "offset": 5720,
+                           "line": 243,
+                           "column": 14
+                        }
+                     },
+                     "expression": {
+                        "type": "rule_ref",
+                        "name": "expr",
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5722,
+                              "line": 243,
+                              "column": 16
+                           },
+                           "end": {
+                              "offset": 5726,
+                              "line": 243,
+                              "column": 20
+                           }
+                        },
+                        "match": 0
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5714,
+                           "line": 243,
+                           "column": 8
+                        },
+                        "end": {
+                           "offset": 5726,
+                           "line": 243,
+                           "column": 20
+                        }
+                     },
+                     "match": 0
+                  },
+                  {
+                     "type": "literal",
+                     "value": "]",
+                     "ignoreCase": false,
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5727,
+                           "line": 243,
+                           "column": 21
+                        },
+                        "end": {
+                           "offset": 5730,
+                           "line": 243,
+                           "column": 24
+                        }
+                     },
+                     "match": 0
+                  }
+               ],
+               "location": {
+                  "source": "src/lib/data-extractor.peggy",
+                  "start": {
+                     "offset": 5710,
+                     "line": 243,
+                     "column": 4
+                  },
+                  "end": {
+                     "offset": 5730,
+                     "line": 243,
+                     "column": 24
+                  }
+               },
+               "match": 0
+            },
+            "code": " return parse__listexpr__1(result); ",
+            "codeLocation": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5734,
+                  "line": 244,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5770,
+                  "line": 244,
+                  "column": 40
+               }
+            },
+            "location": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5710,
+                  "line": 243,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5771,
+                  "line": 244,
+                  "column": 41
+               }
+            },
+            "match": 0
+         },
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5697,
+               "line": 241,
+               "column": 1
+            },
+            "end": {
+               "offset": 5772,
+               "line": 245,
+               "column": 1
+            }
+         },
+         "match": 0,
+         "bytecode": [
+            37,
+            89,
+            37,
+            88,
+            5,
+            37,
+            83,
+            18,
+            13,
+            2,
+            2,
+            22,
+            13,
+            23,
+            6,
+            38,
+            15,
+            46,
+            3,
+            37,
+            86,
+            39,
+            2,
+            2,
+            85,
+            37,
+            84,
+            27,
+            2,
+            38,
+            40,
+            2,
+            38,
+            15,
+            25,
+            4,
+            37,
+            87,
+            18,
+            14,
+            2,
+            2,
+            22,
+            14,
+            23,
+            7,
+            38,
+            15,
+            7,
+            4,
+            24,
+            3,
+            26,
+            8,
+            4,
+            1,
+            1,
+            8,
+            3,
+            7,
+            3,
+            8,
+            2,
+            7,
+            3,
+            6,
+            7,
+            3,
+            38,
+            38
+         ]
+      },
+      {
+         "type": "rule",
+         "name": "ident",
+         "nameLocation": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5773,
+               "line": 246,
+               "column": 1
+            },
+            "end": {
+               "offset": 5778,
+               "line": 246,
+               "column": 6
+            }
+         },
+         "expression": {
+            "type": "action",
+            "expression": {
+               "type": "labeled",
+               "label": "str",
+               "labelLocation": {
+                  "source": "src/lib/data-extractor.peggy",
+                  "start": {
+                     "offset": 5783,
+                     "line": 248,
+                     "column": 4
+                  },
+                  "end": {
+                     "offset": 5786,
+                     "line": 248,
+                     "column": 7
+                  }
+               },
+               "expression": {
+                  "type": "text",
+                  "expression": {
+                     "type": "group",
+                     "expression": {
+                        "type": "sequence",
+                        "elements": [
+                           {
+                              "type": "class",
+                              "parts": [
+                                 [
+                                    "A",
+                                    "Z"
+                                 ],
+                                 [
+                                    "a",
+                                    "z"
+                                 ],
+                                 "_"
+                              ],
+                              "inverted": false,
+                              "ignoreCase": false,
+                              "location": {
+                                 "source": "src/lib/data-extractor.peggy",
+                                 "start": {
+                                    "offset": 5791,
+                                    "line": 248,
+                                    "column": 12
+                                 },
+                                 "end": {
+                                    "offset": 5800,
+                                    "line": 248,
+                                    "column": 21
+                                 }
+                              },
+                              "match": 0
+                           },
+                           {
+                              "type": "zero_or_more",
+                              "expression": {
+                                 "type": "class",
+                                 "parts": [
+                                    [
+                                       "A",
+                                       "Z"
+                                    ],
+                                    [
+                                       "a",
+                                       "z"
+                                    ],
+                                    [
+                                       "0",
+                                       "9"
+                                    ],
+                                    "_"
+                                 ],
+                                 "inverted": false,
+                                 "ignoreCase": false,
+                                 "location": {
+                                    "source": "src/lib/data-extractor.peggy",
+                                    "start": {
+                                       "offset": 5800,
+                                       "line": 248,
+                                       "column": 21
+                                    },
+                                    "end": {
+                                       "offset": 5812,
+                                       "line": 248,
+                                       "column": 33
+                                    }
+                                 },
+                                 "match": 0
+                              },
+                              "location": {
+                                 "source": "src/lib/data-extractor.peggy",
+                                 "start": {
+                                    "offset": 5800,
+                                    "line": 248,
+                                    "column": 21
+                                 },
+                                 "end": {
+                                    "offset": 5813,
+                                    "line": 248,
+                                    "column": 34
+                                 }
+                              },
+                              "match": 1
+                           }
+                        ],
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5791,
+                              "line": 248,
+                              "column": 12
+                           },
+                           "end": {
+                              "offset": 5813,
+                              "line": 248,
+                              "column": 34
+                           }
+                        },
+                        "match": 0
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5790,
+                           "line": 248,
+                           "column": 11
+                        },
+                        "end": {
+                           "offset": 5814,
+                           "line": 248,
+                           "column": 35
+                        }
+                     },
+                     "match": 0
+                  },
+                  "location": {
+                     "source": "src/lib/data-extractor.peggy",
+                     "start": {
+                        "offset": 5788,
+                        "line": 248,
+                        "column": 9
+                     },
+                     "end": {
+                        "offset": 5814,
+                        "line": 248,
+                        "column": 35
+                     }
+                  },
+                  "match": 0
+               },
+               "location": {
+                  "source": "src/lib/data-extractor.peggy",
+                  "start": {
+                     "offset": 5783,
+                     "line": 248,
+                     "column": 4
+                  },
+                  "end": {
+                     "offset": 5814,
+                     "line": 248,
+                     "column": 35
+                  }
+               },
+               "match": 0
+            },
+            "code": " return parse__ident__1(str); ",
+            "codeLocation": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5818,
+                  "line": 249,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5848,
+                  "line": 249,
+                  "column": 34
+               }
+            },
+            "location": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5783,
+                  "line": 248,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5849,
+                  "line": 249,
+                  "column": 35
+               }
+            },
+            "match": 0
+         },
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5773,
+               "line": 246,
+               "column": 1
+            },
+            "end": {
+               "offset": 5850,
+               "line": 250,
+               "column": 1
+            }
+         },
+         "match": 0,
+         "bytecode": [
+            37,
+            98,
+            5,
+            37,
+            97,
+            39,
+            1,
+            15,
+            96,
+            37,
+            95,
+            5,
+            37,
+            94,
+            37,
+            93,
+            5,
+            37,
+            90,
+            20,
+            0,
+            2,
+            2,
+            21,
+            1,
+            23,
+            8,
+            38,
+            15,
+            33,
+            3,
+            37,
+            92,
+            4,
+            37,
+            91,
+            20,
+            1,
+            2,
+            2,
+            21,
+            1,
+            23,
+            9,
+            38,
+            16,
+            12,
+            10,
+            37,
+            91,
+            20,
+            1,
+            2,
+            2,
+            21,
+            1,
+            23,
+            9,
+            38,
+            6,
+            38,
+            11,
+            2,
+            9,
+            6,
+            7,
+            3,
+            38,
+            38,
+            15,
+            2,
+            1,
+            6,
+            12,
+            9,
+            38,
+            40,
+            1,
+            38,
+            15,
+            7,
+            0,
+            24,
+            1,
+            26,
+            9,
+            1,
+            1,
+            0,
+            9,
+            38
+         ]
+      },
+      {
+         "type": "rule",
+         "name": "string",
+         "nameLocation": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5851,
+               "line": 251,
+               "column": 1
+            },
+            "end": {
+               "offset": 5857,
+               "line": 251,
+               "column": 7
+            }
+         },
+         "expression": {
+            "type": "action",
+            "expression": {
+               "type": "sequence",
+               "elements": [
+                  {
+                     "type": "literal",
+                     "value": "\"",
+                     "ignoreCase": false,
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5862,
+                           "line": 253,
+                           "column": 4
+                        },
+                        "end": {
+                           "offset": 5865,
+                           "line": 253,
+                           "column": 7
+                        }
+                     },
+                     "match": 0
+                  },
+                  {
+                     "type": "labeled",
+                     "label": "lChars",
+                     "labelLocation": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5866,
+                           "line": 253,
+                           "column": 8
+                        },
+                        "end": {
+                           "offset": 5872,
+                           "line": 253,
+                           "column": 14
+                        }
+                     },
+                     "expression": {
+                        "type": "zero_or_more",
+                        "expression": {
+                           "type": "class",
+                           "parts": [
+                              "\""
+                           ],
+                           "inverted": true,
+                           "ignoreCase": false,
+                           "location": {
+                              "source": "src/lib/data-extractor.peggy",
+                              "start": {
+                                 "offset": 5873,
+                                 "line": 253,
+                                 "column": 15
+                              },
+                              "end": {
+                                 "offset": 5877,
+                                 "line": 253,
+                                 "column": 19
+                              }
+                           },
+                           "match": 0
+                        },
+                        "location": {
+                           "source": "src/lib/data-extractor.peggy",
+                           "start": {
+                              "offset": 5873,
+                              "line": 253,
+                              "column": 15
+                           },
+                           "end": {
+                              "offset": 5878,
+                              "line": 253,
+                              "column": 20
+                           }
+                        },
+                        "match": 1
+                     },
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5866,
+                           "line": 253,
+                           "column": 8
+                        },
+                        "end": {
+                           "offset": 5878,
+                           "line": 253,
+                           "column": 20
+                        }
+                     },
+                     "match": 1
+                  },
+                  {
+                     "type": "literal",
+                     "value": "\"",
+                     "ignoreCase": false,
+                     "location": {
+                        "source": "src/lib/data-extractor.peggy",
+                        "start": {
+                           "offset": 5879,
+                           "line": 253,
+                           "column": 21
+                        },
+                        "end": {
+                           "offset": 5882,
+                           "line": 253,
+                           "column": 24
+                        }
+                     },
+                     "match": 0
+                  }
+               ],
+               "location": {
+                  "source": "src/lib/data-extractor.peggy",
+                  "start": {
+                     "offset": 5862,
+                     "line": 253,
+                     "column": 4
+                  },
+                  "end": {
+                     "offset": 5882,
+                     "line": 253,
+                     "column": 24
+                  }
+               },
+               "match": 0
+            },
+            "code": " return parse__string__1(lChars); ",
+            "codeLocation": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5886,
+                  "line": 254,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5920,
+                  "line": 254,
+                  "column": 38
+               }
+            },
+            "location": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5862,
+                  "line": 253,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5921,
+                  "line": 254,
+                  "column": 39
+               }
+            },
+            "match": 0
+         },
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5851,
+               "line": 251,
+               "column": 1
+            },
+            "end": {
+               "offset": 5922,
+               "line": 255,
+               "column": 1
+            }
+         },
+         "match": 0,
+         "bytecode": [
+            37,
+            106,
+            37,
+            105,
+            5,
+            37,
+            99,
+            18,
+            16,
+            2,
+            2,
+            22,
+            16,
+            23,
+            10,
+            38,
+            15,
+            64,
+            3,
+            37,
+            103,
+            39,
+            2,
+            17,
+            102,
+            37,
+            101,
+            4,
+            37,
+            100,
+            20,
+            2,
+            2,
+            2,
+            21,
+            1,
+            23,
+            11,
+            38,
+            16,
+            12,
+            10,
+            37,
+            100,
+            20,
+            2,
+            2,
+            2,
+            21,
+            1,
+            23,
+            11,
+            38,
+            6,
+            38,
+            40,
+            2,
+            38,
+            37,
+            104,
+            18,
+            16,
+            2,
+            2,
+            22,
+            16,
+            23,
+            10,
+            38,
+            15,
+            7,
+            4,
+            24,
+            3,
+            26,
+            10,
+            4,
+            1,
+            1,
+            8,
+            3,
+            7,
+            3,
+            6,
+            7,
+            3,
+            38,
+            38
+         ]
+      },
+      {
+         "type": "rule",
+         "name": "_",
+         "nameLocation": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5923,
+               "line": 256,
+               "column": 1
+            },
+            "end": {
+               "offset": 5924,
+               "line": 256,
+               "column": 2
+            }
+         },
+         "expression": {
+            "type": "zero_or_more",
+            "expression": {
+               "type": "literal",
+               "value": " ",
+               "ignoreCase": false,
+               "location": {
+                  "source": "src/lib/data-extractor.peggy",
+                  "start": {
+                     "offset": 5929,
+                     "line": 258,
+                     "column": 4
+                  },
+                  "end": {
+                     "offset": 5932,
+                     "line": 258,
+                     "column": 7
+                  }
+               },
+               "match": 0
+            },
+            "location": {
+               "source": "src/lib/data-extractor.peggy",
+               "start": {
+                  "offset": 5929,
+                  "line": 258,
+                  "column": 4
+               },
+               "end": {
+                  "offset": 5933,
+                  "line": 258,
+                  "column": 8
+               }
+            },
+            "match": 1
+         },
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5923,
+               "line": 256,
+               "column": 1
+            },
+            "end": {
+               "offset": 5933,
+               "line": 258,
+               "column": 8
+            }
+         },
+         "match": 1,
+         "bytecode": [
+            37,
+            108,
+            4,
+            37,
+            107,
+            18,
+            18,
+            2,
+            2,
+            22,
+            18,
+            23,
+            12,
+            38,
+            16,
+            12,
+            10,
+            37,
+            107,
+            18,
+            18,
+            2,
+            2,
+            22,
+            18,
+            23,
+            12,
+            38,
+            6,
+            38
+         ]
+      },
       {
          "type": "rule",
          "name": "SEP",
@@ -224,29 +3622,29 @@
          "match": 0,
          "bytecode": [
             37,
+            114,
+            37,
+            113,
             5,
             37,
-            4,
-            5,
-            37,
-            2,
+            111,
             39,
             1,
-            0,
-            1,
+            19,
+            110,
             37,
-            0,
+            109,
             27,
-            4,
+            11,
             38,
             40,
             1,
             38,
             37,
-            3,
+            112,
             25,
             26,
-            0,
+            11,
             0,
             1,
             0,
@@ -264,7 +3662,7 @@
             24,
             2,
             26,
-            1,
+            12,
             3,
             1,
             1,
@@ -438,29 +3836,29 @@
          "match": 0,
          "bytecode": [
             37,
-            11,
+            120,
             37,
-            10,
+            119,
             5,
             37,
-            8,
+            117,
             39,
             1,
-            0,
-            7,
+            19,
+            116,
             37,
-            6,
+            115,
             27,
-            4,
+            11,
             38,
             40,
             1,
             38,
             37,
-            9,
+            118,
             25,
             26,
-            2,
+            13,
             0,
             1,
             0,
@@ -478,7 +3876,7 @@
             24,
             2,
             26,
-            3,
+            14,
             3,
             1,
             1,
@@ -652,29 +4050,29 @@
          "match": 0,
          "bytecode": [
             37,
-            17,
+            126,
             37,
-            16,
+            125,
             5,
             37,
-            14,
+            123,
             39,
             1,
-            0,
-            13,
+            19,
+            122,
             37,
-            12,
+            121,
             27,
-            4,
+            11,
             38,
             40,
             1,
             38,
             37,
-            15,
+            124,
             25,
             26,
-            4,
+            15,
             0,
             1,
             0,
@@ -692,7 +4090,7 @@
             24,
             2,
             26,
-            5,
+            16,
             3,
             1,
             1,
@@ -866,29 +4264,29 @@
          "match": 0,
          "bytecode": [
             37,
-            23,
+            132,
             37,
-            22,
+            131,
             5,
             37,
-            20,
+            129,
             39,
             1,
-            0,
             19,
+            128,
             37,
-            18,
+            127,
             27,
-            4,
+            11,
             38,
             40,
             1,
             38,
             37,
-            21,
+            130,
             25,
             26,
-            6,
+            17,
             0,
             1,
             0,
@@ -906,7 +4304,7 @@
             24,
             2,
             26,
-            7,
+            18,
             3,
             1,
             1,
@@ -1300,33 +4698,33 @@
          "match": 1,
          "bytecode": [
             37,
-            41,
+            150,
             5,
             37,
-            40,
+            149,
             39,
             1,
-            4,
-            39,
+            22,
+            148,
             37,
-            38,
+            147,
             37,
+            146,
             37,
-            37,
-            36,
+            145,
             5,
             37,
-            25,
+            134,
             37,
-            24,
+            133,
             18,
-            1,
+            20,
             2,
             2,
             22,
-            1,
+            20,
             23,
-            0,
+            13,
             38,
             14,
             2,
@@ -1335,67 +4733,67 @@
             2,
             38,
             37,
-            26,
+            135,
             18,
-            2,
+            1,
             2,
             2,
             22,
-            2,
-            23,
             1,
+            23,
+            0,
             38,
             15,
             161,
             4,
             37,
-            32,
+            141,
             4,
             37,
-            31,
+            140,
             37,
-            30,
+            139,
             5,
             37,
-            28,
+            137,
             4,
             37,
-            27,
+            136,
             20,
-            0,
+            3,
             2,
             2,
             21,
             1,
             23,
-            2,
+            14,
             38,
             16,
             12,
             10,
             37,
-            27,
+            136,
             20,
-            0,
+            3,
             2,
             2,
             21,
             1,
             23,
-            2,
+            14,
             38,
             6,
             38,
             37,
-            29,
+            138,
             18,
-            2,
+            1,
             2,
             2,
             22,
-            2,
-            23,
             1,
+            23,
+            0,
             38,
             15,
             3,
@@ -1413,50 +4811,50 @@
             59,
             10,
             37,
-            31,
+            140,
             37,
-            30,
+            139,
             5,
             37,
-            28,
+            137,
             4,
             37,
-            27,
+            136,
             20,
-            0,
+            3,
             2,
             2,
             21,
             1,
             23,
-            2,
+            14,
             38,
             16,
             12,
             10,
             37,
-            27,
+            136,
             20,
-            0,
+            3,
             2,
             2,
             21,
             1,
             23,
-            2,
+            14,
             38,
             6,
             38,
             37,
-            29,
+            138,
             18,
-            2,
+            1,
             2,
             2,
             22,
-            2,
-            23,
             1,
+            23,
+            0,
             38,
             15,
             3,
@@ -1473,34 +4871,34 @@
             6,
             38,
             37,
-            35,
+            144,
             37,
-            34,
+            143,
             4,
             37,
-            33,
+            142,
             18,
-            3,
+            21,
             2,
             2,
             22,
-            3,
+            21,
             23,
-            3,
+            15,
             38,
             16,
             12,
             10,
             37,
-            33,
+            142,
             18,
-            3,
+            21,
             2,
             2,
             22,
-            3,
+            21,
             23,
-            3,
+            15,
             38,
             6,
             38,
@@ -1527,7 +4925,7 @@
             24,
             1,
             26,
-            8,
+            19,
             1,
             1,
             0,
@@ -1537,26 +4935,85 @@
       }
    ],
    "location": {
-      "source": "src/lib/PLL.peggy",
+      "source": "src/lib/data-extractor.peggy",
       "start": {
          "offset": 0,
          "line": 1,
          "column": 1
       },
       "end": {
-         "offset": 2156,
-         "line": 103,
-         "column": 43
+         "offset": 5933,
+         "line": 258,
+         "column": 8
       }
    },
    "literals": [
+      "lDesc",
+      "\n",
+      "result",
+      "hData",
+      "!",
+      "dontSave",
+      "?",
+      "optional",
+      ".",
+      "lSelectors",
+      "=",
+      "expect",
+      "as",
+      "[",
+      "]",
+      "str",
+      "\"",
+      "lChars",
+      " ",
       "hInfo",
       "\r",
-      "\n",
       "\t",
       "lTabs"
    ],
    "classes": [
+      {
+         "value": [
+            [
+               "A",
+               "Z"
+            ],
+            [
+               "a",
+               "z"
+            ],
+            "_"
+         ],
+         "inverted": false,
+         "ignoreCase": false
+      },
+      {
+         "value": [
+            [
+               "A",
+               "Z"
+            ],
+            [
+               "a",
+               "z"
+            ],
+            [
+               "0",
+               "9"
+            ],
+            "_"
+         ],
+         "inverted": false,
+         "ignoreCase": false
+      },
+      {
+         "value": [
+            "\""
+         ],
+         "inverted": true,
+         "ignoreCase": false
+      },
       {
          "value": [
             " ",
@@ -1569,12 +5026,101 @@
    "expectations": [
       {
          "type": "literal",
-         "value": "\r",
+         "value": "\n",
          "ignoreCase": false
       },
       {
          "type": "literal",
-         "value": "\n",
+         "value": "!",
+         "ignoreCase": false
+      },
+      {
+         "type": "literal",
+         "value": "?",
+         "ignoreCase": false
+      },
+      {
+         "type": "literal",
+         "value": ".",
+         "ignoreCase": false
+      },
+      {
+         "type": "literal",
+         "value": "=",
+         "ignoreCase": false
+      },
+      {
+         "type": "literal",
+         "value": "as",
+         "ignoreCase": false
+      },
+      {
+         "type": "literal",
+         "value": "[",
+         "ignoreCase": false
+      },
+      {
+         "type": "literal",
+         "value": "]",
+         "ignoreCase": false
+      },
+      {
+         "type": "class",
+         "value": [
+            [
+               "A",
+               "Z"
+            ],
+            [
+               "a",
+               "z"
+            ],
+            "_"
+         ],
+         "inverted": false,
+         "ignoreCase": false
+      },
+      {
+         "type": "class",
+         "value": [
+            [
+               "A",
+               "Z"
+            ],
+            [
+               "a",
+               "z"
+            ],
+            [
+               "0",
+               "9"
+            ],
+            "_"
+         ],
+         "inverted": false,
+         "ignoreCase": false
+      },
+      {
+         "type": "literal",
+         "value": "\"",
+         "ignoreCase": false
+      },
+      {
+         "type": "class",
+         "value": [
+            "\""
+         ],
+         "inverted": true,
+         "ignoreCase": false
+      },
+      {
+         "type": "literal",
+         "value": " ",
+         "ignoreCase": false
+      },
+      {
+         "type": "literal",
+         "value": "\r",
          "ignoreCase": false
       },
       {
@@ -1594,6 +5140,234 @@
    ],
    "importedNames": [],
    "functions": [
+      {
+         "predicate": false,
+         "params": [
+            "lDesc"
+         ],
+         "body": " return parse__data__1(lDesc); ",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5100,
+               "line": 226,
+               "column": 4
+            },
+            "end": {
+               "offset": 5131,
+               "line": 226,
+               "column": 35
+            }
+         }
+      },
+      {
+         "predicate": true,
+         "params": [
+            "result"
+         ],
+         "body": " contextStack.add(result[1]) ;return true;",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5159,
+               "line": 230,
+               "column": 20
+            },
+            "end": {
+               "offset": 5201,
+               "line": 230,
+               "column": 62
+            }
+         }
+      },
+      {
+         "predicate": true,
+         "params": [
+            "result",
+            "hData"
+         ],
+         "body": " contextStack.pop() ;return true;",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5238,
+               "line": 230,
+               "column": 99
+            },
+            "end": {
+               "offset": 5271,
+               "line": 230,
+               "column": 132
+            }
+         }
+      },
+      {
+         "predicate": false,
+         "params": [
+            "result",
+            "hData"
+         ],
+         "body": " return parse__desc__1(result, hData); ",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5276,
+               "line": 231,
+               "column": 4
+            },
+            "end": {
+               "offset": 5315,
+               "line": 231,
+               "column": 43
+            }
+         }
+      },
+      {
+         "predicate": true,
+         "params": [
+            "result"
+         ],
+         "body": " contextStack.add(result[1]) ;return true;",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5341,
+               "line": 233,
+               "column": 24
+            },
+            "end": {
+               "offset": 5383,
+               "line": 233,
+               "column": 66
+            }
+         }
+      },
+      {
+         "predicate": true,
+         "params": [
+            "result",
+            "hData"
+         ],
+         "body": " contextStack.pop() ;return true;",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5420,
+               "line": 233,
+               "column": 103
+            },
+            "end": {
+               "offset": 5453,
+               "line": 233,
+               "column": 136
+            }
+         }
+      },
+      {
+         "predicate": false,
+         "params": [
+            "result",
+            "hData"
+         ],
+         "body": " return parse__desc__2(result, hData); ",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5458,
+               "line": 234,
+               "column": 4
+            },
+            "end": {
+               "offset": 5497,
+               "line": 234,
+               "column": 43
+            }
+         }
+      },
+      {
+         "predicate": false,
+         "params": [
+            "dontSave",
+            "optional",
+            "lSelectors",
+            "expect",
+            "as"
+         ],
+         "body": " return parse__expr__1(dontSave, optional, lSelectors, expect, as); ",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5626,
+               "line": 239,
+               "column": 4
+            },
+            "end": {
+               "offset": 5694,
+               "line": 239,
+               "column": 72
+            }
+         }
+      },
+      {
+         "predicate": false,
+         "params": [
+            "result"
+         ],
+         "body": " return parse__listexpr__1(result); ",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5734,
+               "line": 244,
+               "column": 4
+            },
+            "end": {
+               "offset": 5770,
+               "line": 244,
+               "column": 40
+            }
+         }
+      },
+      {
+         "predicate": false,
+         "params": [
+            "str"
+         ],
+         "body": " return parse__ident__1(str); ",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5818,
+               "line": 249,
+               "column": 4
+            },
+            "end": {
+               "offset": 5848,
+               "line": 249,
+               "column": 34
+            }
+         }
+      },
+      {
+         "predicate": false,
+         "params": [
+            "lChars"
+         ],
+         "body": " return parse__string__1(lChars); ",
+         "location": {
+            "source": "src/lib/data-extractor.peggy",
+            "start": {
+               "offset": 5886,
+               "line": 254,
+               "column": 4
+            },
+            "end": {
+               "offset": 5920,
+               "line": 254,
+               "column": 38
+            }
+         }
+      },
       {
          "predicate": true,
          "params": [
@@ -1776,6 +5550,1423 @@
       }
    ],
    "locations": [
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5075,
+            "line": 225,
+            "column": 11
+         },
+         "end": {
+            "offset": 5079,
+            "line": 225,
+            "column": 15
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5075,
+            "line": 225,
+            "column": 11
+         },
+         "end": {
+            "offset": 5079,
+            "line": 225,
+            "column": 15
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5086,
+            "line": 225,
+            "column": 22
+         },
+         "end": {
+            "offset": 5089,
+            "line": 225,
+            "column": 25
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5075,
+            "line": 225,
+            "column": 11
+         },
+         "end": {
+            "offset": 5090,
+            "line": 225,
+            "column": 26
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5068,
+            "line": 225,
+            "column": 4
+         },
+         "end": {
+            "offset": 5073,
+            "line": 225,
+            "column": 9
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5068,
+            "line": 225,
+            "column": 4
+         },
+         "end": {
+            "offset": 5090,
+            "line": 225,
+            "column": 26
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5091,
+            "line": 225,
+            "column": 27
+         },
+         "end": {
+            "offset": 5095,
+            "line": 225,
+            "column": 31
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5091,
+            "line": 225,
+            "column": 27
+         },
+         "end": {
+            "offset": 5096,
+            "line": 225,
+            "column": 32
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5068,
+            "line": 225,
+            "column": 4
+         },
+         "end": {
+            "offset": 5096,
+            "line": 225,
+            "column": 32
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5068,
+            "line": 225,
+            "column": 4
+         },
+         "end": {
+            "offset": 5132,
+            "line": 226,
+            "column": 36
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5151,
+            "line": 230,
+            "column": 12
+         },
+         "end": {
+            "offset": 5155,
+            "line": 230,
+            "column": 16
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5143,
+            "line": 230,
+            "column": 4
+         },
+         "end": {
+            "offset": 5149,
+            "line": 230,
+            "column": 10
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5143,
+            "line": 230,
+            "column": 4
+         },
+         "end": {
+            "offset": 5155,
+            "line": 230,
+            "column": 16
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5156,
+            "line": 230,
+            "column": 17
+         },
+         "end": {
+            "offset": 5202,
+            "line": 230,
+            "column": 63
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5212,
+            "line": 230,
+            "column": 73
+         },
+         "end": {
+            "offset": 5218,
+            "line": 230,
+            "column": 79
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5220,
+            "line": 230,
+            "column": 81
+         },
+         "end": {
+            "offset": 5224,
+            "line": 230,
+            "column": 85
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5219,
+            "line": 230,
+            "column": 80
+         },
+         "end": {
+            "offset": 5224,
+            "line": 230,
+            "column": 85
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5225,
+            "line": 230,
+            "column": 86
+         },
+         "end": {
+            "offset": 5231,
+            "line": 230,
+            "column": 92
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5212,
+            "line": 230,
+            "column": 73
+         },
+         "end": {
+            "offset": 5231,
+            "line": 230,
+            "column": 92
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5210,
+            "line": 230,
+            "column": 71
+         },
+         "end": {
+            "offset": 5232,
+            "line": 230,
+            "column": 93
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5210,
+            "line": 230,
+            "column": 71
+         },
+         "end": {
+            "offset": 5234,
+            "line": 230,
+            "column": 95
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5203,
+            "line": 230,
+            "column": 64
+         },
+         "end": {
+            "offset": 5208,
+            "line": 230,
+            "column": 69
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5203,
+            "line": 230,
+            "column": 64
+         },
+         "end": {
+            "offset": 5234,
+            "line": 230,
+            "column": 95
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5235,
+            "line": 230,
+            "column": 96
+         },
+         "end": {
+            "offset": 5272,
+            "line": 230,
+            "column": 133
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5143,
+            "line": 230,
+            "column": 4
+         },
+         "end": {
+            "offset": 5272,
+            "line": 230,
+            "column": 133
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5143,
+            "line": 230,
+            "column": 4
+         },
+         "end": {
+            "offset": 5316,
+            "line": 231,
+            "column": 44
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5329,
+            "line": 233,
+            "column": 12
+         },
+         "end": {
+            "offset": 5337,
+            "line": 233,
+            "column": 20
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5321,
+            "line": 233,
+            "column": 4
+         },
+         "end": {
+            "offset": 5327,
+            "line": 233,
+            "column": 10
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5321,
+            "line": 233,
+            "column": 4
+         },
+         "end": {
+            "offset": 5337,
+            "line": 233,
+            "column": 20
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5338,
+            "line": 233,
+            "column": 21
+         },
+         "end": {
+            "offset": 5384,
+            "line": 233,
+            "column": 67
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5394,
+            "line": 233,
+            "column": 77
+         },
+         "end": {
+            "offset": 5400,
+            "line": 233,
+            "column": 83
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5402,
+            "line": 233,
+            "column": 85
+         },
+         "end": {
+            "offset": 5406,
+            "line": 233,
+            "column": 89
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5401,
+            "line": 233,
+            "column": 84
+         },
+         "end": {
+            "offset": 5406,
+            "line": 233,
+            "column": 89
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5407,
+            "line": 233,
+            "column": 90
+         },
+         "end": {
+            "offset": 5413,
+            "line": 233,
+            "column": 96
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5394,
+            "line": 233,
+            "column": 77
+         },
+         "end": {
+            "offset": 5413,
+            "line": 233,
+            "column": 96
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5392,
+            "line": 233,
+            "column": 75
+         },
+         "end": {
+            "offset": 5414,
+            "line": 233,
+            "column": 97
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5392,
+            "line": 233,
+            "column": 75
+         },
+         "end": {
+            "offset": 5416,
+            "line": 233,
+            "column": 99
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5385,
+            "line": 233,
+            "column": 68
+         },
+         "end": {
+            "offset": 5390,
+            "line": 233,
+            "column": 73
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5385,
+            "line": 233,
+            "column": 68
+         },
+         "end": {
+            "offset": 5416,
+            "line": 233,
+            "column": 99
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5417,
+            "line": 233,
+            "column": 100
+         },
+         "end": {
+            "offset": 5454,
+            "line": 233,
+            "column": 137
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5321,
+            "line": 233,
+            "column": 4
+         },
+         "end": {
+            "offset": 5454,
+            "line": 233,
+            "column": 137
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5321,
+            "line": 233,
+            "column": 4
+         },
+         "end": {
+            "offset": 5498,
+            "line": 234,
+            "column": 44
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5143,
+            "line": 230,
+            "column": 4
+         },
+         "end": {
+            "offset": 5498,
+            "line": 234,
+            "column": 44
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5519,
+            "line": 238,
+            "column": 14
+         },
+         "end": {
+            "offset": 5522,
+            "line": 238,
+            "column": 17
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5519,
+            "line": 238,
+            "column": 14
+         },
+         "end": {
+            "offset": 5523,
+            "line": 238,
+            "column": 18
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5509,
+            "line": 238,
+            "column": 4
+         },
+         "end": {
+            "offset": 5517,
+            "line": 238,
+            "column": 12
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5509,
+            "line": 238,
+            "column": 4
+         },
+         "end": {
+            "offset": 5523,
+            "line": 238,
+            "column": 18
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5535,
+            "line": 238,
+            "column": 30
+         },
+         "end": {
+            "offset": 5536,
+            "line": 238,
+            "column": 31
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5537,
+            "line": 238,
+            "column": 32
+         },
+         "end": {
+            "offset": 5540,
+            "line": 238,
+            "column": 35
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5535,
+            "line": 238,
+            "column": 30
+         },
+         "end": {
+            "offset": 5540,
+            "line": 238,
+            "column": 35
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5534,
+            "line": 238,
+            "column": 29
+         },
+         "end": {
+            "offset": 5541,
+            "line": 238,
+            "column": 36
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5534,
+            "line": 238,
+            "column": 29
+         },
+         "end": {
+            "offset": 5542,
+            "line": 238,
+            "column": 37
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5524,
+            "line": 238,
+            "column": 19
+         },
+         "end": {
+            "offset": 5532,
+            "line": 238,
+            "column": 27
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5524,
+            "line": 238,
+            "column": 19
+         },
+         "end": {
+            "offset": 5542,
+            "line": 238,
+            "column": 37
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5543,
+            "line": 238,
+            "column": 38
+         },
+         "end": {
+            "offset": 5544,
+            "line": 238,
+            "column": 39
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5557,
+            "line": 238,
+            "column": 52
+         },
+         "end": {
+            "offset": 5562,
+            "line": 238,
+            "column": 57
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5557,
+            "line": 238,
+            "column": 52
+         },
+         "end": {
+            "offset": 5562,
+            "line": 238,
+            "column": 57
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5568,
+            "line": 238,
+            "column": 63
+         },
+         "end": {
+            "offset": 5571,
+            "line": 238,
+            "column": 66
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5557,
+            "line": 238,
+            "column": 52
+         },
+         "end": {
+            "offset": 5572,
+            "line": 238,
+            "column": 67
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5545,
+            "line": 238,
+            "column": 40
+         },
+         "end": {
+            "offset": 5555,
+            "line": 238,
+            "column": 50
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5545,
+            "line": 238,
+            "column": 40
+         },
+         "end": {
+            "offset": 5572,
+            "line": 238,
+            "column": 67
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5582,
+            "line": 238,
+            "column": 77
+         },
+         "end": {
+            "offset": 5583,
+            "line": 238,
+            "column": 78
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5584,
+            "line": 238,
+            "column": 79
+         },
+         "end": {
+            "offset": 5587,
+            "line": 238,
+            "column": 82
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5588,
+            "line": 238,
+            "column": 83
+         },
+         "end": {
+            "offset": 5589,
+            "line": 238,
+            "column": 84
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5591,
+            "line": 238,
+            "column": 86
+         },
+         "end": {
+            "offset": 5597,
+            "line": 238,
+            "column": 92
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5590,
+            "line": 238,
+            "column": 85
+         },
+         "end": {
+            "offset": 5597,
+            "line": 238,
+            "column": 92
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5582,
+            "line": 238,
+            "column": 77
+         },
+         "end": {
+            "offset": 5597,
+            "line": 238,
+            "column": 92
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5581,
+            "line": 238,
+            "column": 76
+         },
+         "end": {
+            "offset": 5598,
+            "line": 238,
+            "column": 93
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5581,
+            "line": 238,
+            "column": 76
+         },
+         "end": {
+            "offset": 5599,
+            "line": 238,
+            "column": 94
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5573,
+            "line": 238,
+            "column": 68
+         },
+         "end": {
+            "offset": 5579,
+            "line": 238,
+            "column": 74
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5573,
+            "line": 238,
+            "column": 68
+         },
+         "end": {
+            "offset": 5599,
+            "line": 238,
+            "column": 94
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5605,
+            "line": 238,
+            "column": 100
+         },
+         "end": {
+            "offset": 5606,
+            "line": 238,
+            "column": 101
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5607,
+            "line": 238,
+            "column": 102
+         },
+         "end": {
+            "offset": 5611,
+            "line": 238,
+            "column": 106
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5612,
+            "line": 238,
+            "column": 107
+         },
+         "end": {
+            "offset": 5613,
+            "line": 238,
+            "column": 108
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5615,
+            "line": 238,
+            "column": 110
+         },
+         "end": {
+            "offset": 5620,
+            "line": 238,
+            "column": 115
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5614,
+            "line": 238,
+            "column": 109
+         },
+         "end": {
+            "offset": 5620,
+            "line": 238,
+            "column": 115
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5605,
+            "line": 238,
+            "column": 100
+         },
+         "end": {
+            "offset": 5620,
+            "line": 238,
+            "column": 115
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5604,
+            "line": 238,
+            "column": 99
+         },
+         "end": {
+            "offset": 5621,
+            "line": 238,
+            "column": 116
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5604,
+            "line": 238,
+            "column": 99
+         },
+         "end": {
+            "offset": 5622,
+            "line": 238,
+            "column": 117
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5600,
+            "line": 238,
+            "column": 95
+         },
+         "end": {
+            "offset": 5602,
+            "line": 238,
+            "column": 97
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5600,
+            "line": 238,
+            "column": 95
+         },
+         "end": {
+            "offset": 5622,
+            "line": 238,
+            "column": 117
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5509,
+            "line": 238,
+            "column": 4
+         },
+         "end": {
+            "offset": 5622,
+            "line": 238,
+            "column": 117
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5509,
+            "line": 238,
+            "column": 4
+         },
+         "end": {
+            "offset": 5695,
+            "line": 239,
+            "column": 73
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5710,
+            "line": 243,
+            "column": 4
+         },
+         "end": {
+            "offset": 5713,
+            "line": 243,
+            "column": 7
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5722,
+            "line": 243,
+            "column": 16
+         },
+         "end": {
+            "offset": 5726,
+            "line": 243,
+            "column": 20
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5714,
+            "line": 243,
+            "column": 8
+         },
+         "end": {
+            "offset": 5720,
+            "line": 243,
+            "column": 14
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5714,
+            "line": 243,
+            "column": 8
+         },
+         "end": {
+            "offset": 5726,
+            "line": 243,
+            "column": 20
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5727,
+            "line": 243,
+            "column": 21
+         },
+         "end": {
+            "offset": 5730,
+            "line": 243,
+            "column": 24
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5710,
+            "line": 243,
+            "column": 4
+         },
+         "end": {
+            "offset": 5730,
+            "line": 243,
+            "column": 24
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5710,
+            "line": 243,
+            "column": 4
+         },
+         "end": {
+            "offset": 5771,
+            "line": 244,
+            "column": 41
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5791,
+            "line": 248,
+            "column": 12
+         },
+         "end": {
+            "offset": 5800,
+            "line": 248,
+            "column": 21
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5800,
+            "line": 248,
+            "column": 21
+         },
+         "end": {
+            "offset": 5812,
+            "line": 248,
+            "column": 33
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5800,
+            "line": 248,
+            "column": 21
+         },
+         "end": {
+            "offset": 5813,
+            "line": 248,
+            "column": 34
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5791,
+            "line": 248,
+            "column": 12
+         },
+         "end": {
+            "offset": 5813,
+            "line": 248,
+            "column": 34
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5790,
+            "line": 248,
+            "column": 11
+         },
+         "end": {
+            "offset": 5814,
+            "line": 248,
+            "column": 35
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5788,
+            "line": 248,
+            "column": 9
+         },
+         "end": {
+            "offset": 5814,
+            "line": 248,
+            "column": 35
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5783,
+            "line": 248,
+            "column": 4
+         },
+         "end": {
+            "offset": 5786,
+            "line": 248,
+            "column": 7
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5783,
+            "line": 248,
+            "column": 4
+         },
+         "end": {
+            "offset": 5814,
+            "line": 248,
+            "column": 35
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5783,
+            "line": 248,
+            "column": 4
+         },
+         "end": {
+            "offset": 5849,
+            "line": 249,
+            "column": 35
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5862,
+            "line": 253,
+            "column": 4
+         },
+         "end": {
+            "offset": 5865,
+            "line": 253,
+            "column": 7
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5873,
+            "line": 253,
+            "column": 15
+         },
+         "end": {
+            "offset": 5877,
+            "line": 253,
+            "column": 19
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5873,
+            "line": 253,
+            "column": 15
+         },
+         "end": {
+            "offset": 5878,
+            "line": 253,
+            "column": 20
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5866,
+            "line": 253,
+            "column": 8
+         },
+         "end": {
+            "offset": 5872,
+            "line": 253,
+            "column": 14
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5866,
+            "line": 253,
+            "column": 8
+         },
+         "end": {
+            "offset": 5878,
+            "line": 253,
+            "column": 20
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5879,
+            "line": 253,
+            "column": 21
+         },
+         "end": {
+            "offset": 5882,
+            "line": 253,
+            "column": 24
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5862,
+            "line": 253,
+            "column": 4
+         },
+         "end": {
+            "offset": 5882,
+            "line": 253,
+            "column": 24
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5862,
+            "line": 253,
+            "column": 4
+         },
+         "end": {
+            "offset": 5921,
+            "line": 254,
+            "column": 39
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5929,
+            "line": 258,
+            "column": 4
+         },
+         "end": {
+            "offset": 5932,
+            "line": 258,
+            "column": 7
+         }
+      },
+      {
+         "source": "src/lib/data-extractor.peggy",
+         "start": {
+            "offset": 5929,
+            "line": 258,
+            "column": 4
+         },
+         "end": {
+            "offset": 5933,
+            "line": 258,
+            "column": 8
+         }
+      },
       {
          "source": "src/lib/PLL.peggy",
          "start": {
