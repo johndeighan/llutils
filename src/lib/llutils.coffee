@@ -626,15 +626,33 @@ export untabify = (str, numSpaces=3) =>
 
 # ---------------------------------------------------------------------------
 
+log_level = 0
+
+export LOG_indent = () =>
+
+	log_level += 1
+	return
+
+# ---------------------------------------------------------------------------
+
+export LOG_undent = () =>
+
+	log_level -= 1
+	return
+
+# ---------------------------------------------------------------------------
+
 export LOG = (item, hOptions={}) =>
 
-	hOptions = getOptions hOptions, {
+	{depth} = getOptions hOptions, {
 		depth: null
 		}
+	if (log_level > 0)
+		item = "\t".repeat(log_level) + item
 	if isString(item)
 		console.log untabify(item)
 	else
-		console.dir item, hOptions
+		console.dir item, {depth}
 
 # ---------------------------------------------------------------------------
 

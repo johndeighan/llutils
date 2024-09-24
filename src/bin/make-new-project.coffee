@@ -19,8 +19,8 @@ import {
 import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
-	lValidTypes, setProjType, promptForProjType, makeProjDir,
-	typeSpecificSetup, checkIfInstalled, NodeEnv,
+	lValidTypes, promptForProjType, makeProjDir,
+	typeSpecificSetup, checkIfInstalled, NodeEnv, basicSetUp,
 	} from '@jdeighan/llutils/proj-utils'
 
 # ---------------------------------------------------------------------------
@@ -49,45 +49,18 @@ main = () =>
 		type = await promptForProjType()
 
 	[type, subtype] = type.split('/', 2)
-	setProjType(type, subtype)
-	console.log "type = #{OL(type)}"
-	console.log "subtype = #{OL(subtype)}"
+	if defined(subtype)
+		console.log "type = #{OL(type + '/' + subtype)}"
+	else
+		console.log "type = #{OL(type)}"
 
 	dirname = lNonOptions[0] || type
-	console.log "make-new-project #{type} in dir #{lNonOptions[0]}"
+	console.log "make-new-project #{OL(type)} in dir #{OL(dirname)}"
 
-	makeProjDir dirname, {clear}   # also cd's to proj dir
-
-	execCmd "git init"
-	execCmd "git branch -m main"
-	execCmd "npm init -y"
-
-	nodeEnv = new NodeEnv('fixPkgJson')
-	nodeEnv.addDependency '@jdeighan/llutils'
-	nodeEnv.addDevDependency 'concurrently'
-	nodeEnv.setField 'description', "A #{type} app"
-	nodeEnv.setField 'packageManager', 'yarn@1.22.22'
-	nodeEnv.addFile 'README.md'
-	nodeEnv.addFile '.gitignore'
-	nodeEnv.addFile '.npmrc'
-
-	# === Install libraries specified via env vars
-
-	env_installs = process.env.PROJECT_INSTALLS
-	if nonEmpty(env_installs)
-		for pkg in words(env_installs)
-			nodeEnv.addDependency pkg
-
-	env_dev_installs = process.env.PROJECT_DEV_INSTALLS
-	if nonEmpty(env_dev_installs)
-		for pkg in words(env_dev_installs)
-			nodeEnv.addDevDependency pkg
-
-	nodeEnv.addDevDependency 'coffeescript'
-	nodeEnv.addDevDependency 'ava'
-
-	typeSpecificSetup(nodeEnv)
+	nodeEnv = basicSetUp dirname, {clear, type, subtype}
+	typeSpecificSetup(nodeEnv, type, subtype)
 	nodeEnv.write_pkg_json()
+
 	console.log """
 		Please run:
 			cd ../#{dirname}

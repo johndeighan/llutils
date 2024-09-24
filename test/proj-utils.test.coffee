@@ -11,10 +11,6 @@ Object.assign(global, lib2)
 succeeds () => checkIfInstalled('node')
 succeeds () => checkIfInstalled('npm')
 
-setProjType('parcel')
-truthy isOfType('parcel')
-truthy isOfType('website')
-
 env = new NodeEnv('!echo')
 equal env.name(), "@jdeighan/llutils"
 equal env.getField('license'), 'MIT'

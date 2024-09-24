@@ -3,8 +3,9 @@
 import prompts from 'prompts'
 
 import {
-	undef, defined, notdefined, OL, getOptions,
-	assert, croak, words, isEmpty, nonEmpty, hasKey
+	undef, defined, notdefined, OL, LOG, getOptions,
+	assert, croak, words, isEmpty, nonEmpty, hasKey,
+	LOG_indent, LOG_undent, isArray,
 	} from '@jdeighan/llutils'
 import {
 	execCmd, execCmdY,
@@ -24,8 +25,6 @@ export lValidTypes = [
 	'vite'
 	'none'
 	]
-type = 'none'
-subtype = undef
 
 # ---------------------------------------------------------------------------
 
@@ -36,35 +35,8 @@ export checkIfInstalled = (...lCmds) =>
 			output = execCmd "#{cmd} --version"
 			return output
 		catch err
-			console.log "ERROR #{cmd} is not installed"
+			LOG "ERROR: #{cmd} is not installed"
 			process.exit()
-
-# ---------------------------------------------------------------------------
-
-export setProjType = (t, subt) =>
-
-	if (t == 'website')
-		type = 'parcel'    # default web site type
-	assert defined(t), "type is undef"
-	assert lValidTypes.includes(t), "Bad type: #{OL(t)}"
-	type = t
-	subtype = if nonEmpty(subt) then subt else undef
-	return
-
-# ---------------------------------------------------------------------------
-# --- For example, isType('electron') will return true
-#     when type is 'codemirror'
-
-export isOfType = (t) =>
-
-	switch t
-		when 'electron'
-			lMembers = ['electron','codemirror']
-		when 'website'
-			lMembers = ['parcel','vite']
-		else
-			lMembers = [t]
-	return lMembers.includes(type)
 
 # ---------------------------------------------------------------------------
 
@@ -102,7 +74,6 @@ export promptForProjType = () =>
 				}
 			],
 		});
-	setProjType hResponse.type
 	return type
 
 # ---------------------------------------------------------------------------
@@ -115,7 +86,7 @@ export makeProjDir = (dirname, hOptions={}) =>
 
 	rootDir = process.env.PROJECT_ROOT_DIR
 	if ! isDir(rootDir)
-		console.log """
+		LOG """
 			Please set env var PROJECT_ROOT_DIR to a valid directory
 			"""
 		process.exit()
@@ -125,14 +96,14 @@ export makeProjDir = (dirname, hOptions={}) =>
 	newDir = mkpath(rootDir, dirname)
 	if isDir(newDir)
 		if clear
-			console.log "Directory #{OL(newDir)} exists, clearing it out"
+			LOG "Directory #{OL(newDir)} exists, clearing it out"
 			clearDir newDir
 		else
-			console.log "Directory #{OL(newDir)} already exists"
-			console.log "Aborting..."
+			LOG "Directory #{OL(newDir)} already exists"
+			LOG "Aborting..."
 			process.exit()
 	else
-		console.log "Creating directory #{newDir}"
+		LOG "Creating directory #{newDir}"
 		mkDir newDir
 
 	process.chdir newDir
@@ -143,21 +114,17 @@ export makeProjDir = (dirname, hOptions={}) =>
 
 make_dirs = () =>
 
-	console.log "Making directories"
-	console.log "   ./src"
+	LOG "Making directories"
+	LOG "   ./src"
 	mkDir './src'
 
-	console.log "   ./src/lib"
+	LOG "   ./src/lib"
 	mkDir './src/lib'
 
-	console.log "   ./src/bin"
+	LOG "   ./src/bin"
 	mkDir './src/bin'
 
-	if isOfType('website')
-		console.log "   ./src/elements"
-		mkDir './src/elements'
-
-	console.log "   ./test"
+	LOG "   ./test"
 	mkDir './test'
 	return
 
@@ -180,7 +147,7 @@ export promptForNames = (prompt, valFunc=undef) =>
 		name = hResponse.name
 		if name
 			if validFunc && (msg = validFunc(name))
-				console.log msg
+				LOG msg
 			else
 				lNames.push name
 		else
@@ -188,29 +155,53 @@ export promptForNames = (prompt, valFunc=undef) =>
 
 # ---------------------------------------------------------------------------
 
-export typeSpecificSetup = (nodeEnv) =>
+export basicSetUp = (dirname, hOptions={}) =>
 
-	if isOfType('website')
-		setUpWebSite(nodeEnv)
-	if isOfType('elm')
-		setUpElm(nodeEnv)
-	if isOfType('parcel')
-		setUpParcel(nodeEnv)
-	if isOfType('vite')
-		setUpVite(nodeEnv)
-	if isOfType('electron')
-		setUpElectron(nodeEnv)
-	if isOfType('codemirror')
-		setUpCodeMirror(nodeEnv)
-	return
+	{clear, type, subtype} = getOptions hOptions, {
+		clear: false
+		type: undef
+		subtype: undef
+		}
+	makeProjDir dirname, {clear}   # also cd's to proj dir
+	execCmd "git init"
+	execCmd "git branch -m main"
+	execCmd "npm init -y"
+
+	nodeEnv = new NodeEnv('fixPkgJson')
+	nodeEnv.addDependency '@jdeighan/llutils'
+	nodeEnv.addDevDependency 'concurrently'
+	nodeEnv.setField 'description', "A #{type} app"
+	nodeEnv.setField 'packageManager', 'yarn@1.22.22'
+	nodeEnv.addFile 'README.md'
+	nodeEnv.addFile '.gitignore'
+	nodeEnv.addFile '.npmrc'
+
+	# === Install libraries specified via env vars
+
+	env_installs = process.env.PROJECT_INSTALLS
+	if nonEmpty(env_installs)
+		for pkg in words(env_installs)
+			nodeEnv.addDependency pkg
+
+	env_dev_installs = process.env.PROJECT_DEV_INSTALLS
+	if nonEmpty(env_dev_installs)
+		for pkg in words(env_dev_installs)
+			nodeEnv.addDevDependency pkg
+
+	nodeEnv.addDevDependency 'coffeescript'
+	nodeEnv.addDevDependency 'ava'
+	return nodeEnv
 
 # ---------------------------------------------------------------------------
 
-setUpWebSite = (nodeEnv) =>
+setUpWebSite = (nodeEnv, subtype=undef) =>
+
+	LOG "mkdir ./src/elements"
+	mkDir './src/elements'
 
 	nodeEnv.addDevDependency 'svelte'
 
-	console.log "Creating src/index.html"
+	LOG "Creating src/index.html"
 	barf """
 		<!DOCTYPE html>
 		<html lang="en">
@@ -232,7 +223,7 @@ setUpWebSite = (nodeEnv) =>
 		# --- main.coffee
 
 		import {escapeStr} from '@jdeighan/llutils'
-		console.log escapeStr("\t\tabc\r\n")
+		LOG escapeStr("\t\tabc\r\n")
 		""", "./src/main.coffee"
 	return
 
@@ -249,32 +240,34 @@ export importCustomElement = (name) =>
 
 # ---------------------------------------------------------------------------
 
-setUpElm = (nodeEnv) =>
+setUpElm = (nodeEnv, subtype=undef) =>
 
 	checkIfInstalled 'elm'
 	checkIfInstalled 'elm-live'
 
-	console.log "setUpElm(): subtype = #{OL(subtype)}"
+	LOG "mkdir ./src/elements"
+	mkDir './src/elements'
 
 	nodeEnv.addDevDependency 'svelte'
 
-	nodeEnv.addScript 'build',  "npm run build:coffee && elm make src/Main.elm --output=main.js"
-	nodeEnv.addScript 'dev',    "npm run build:coffee && elm-live src/Main.elm -- --debug --output=main.js"
+	nodeEnv.addScript 'build',  "npm run build:all && elm make src/Main.elm --output=main.js"
+	nodeEnv.addScript 'dev',    "npm run build:all && elm-live src/Main.elm -- --debug --output=main.js"
 
-	console.log "initializing elm"
+	LOG "initializing elm"
 	execCmdY "elm init"
-	console.log "elm is initialized"
+	LOG "elm is initialized"
 	for lib in [
 			"elm/http"
 			"elm/json"
 			"elm/regex"
 			"mdgriffith/elm-ui"
-			"krisajenkins/remotedata"
-			"phollyer/elm-ui-colors"
 			]
-		console.log "installing elm lib #{lib}"
+		LOG "installing elm lib #{lib}"
 		execCmdY "elm install #{lib}"
 
+	nodeEnv.addFile "./global.css", """
+		/* Put your global styles here */
+		"""
 
 	nodeEnv.addFile "./index.html",  """
 		<!DOCTYPE html>
@@ -284,6 +277,7 @@ setUpElm = (nodeEnv) =>
 			<meta http-equiv="X-UA-Compatible" content="IE=edge">
 			<meta name="viewport" content="width=device-width">
 			<title>Elm Web Site</title>
+			<link rel="stylesheet" href="global.css">
 			<script src="main.js"></script>
 		</head>
 
@@ -303,7 +297,10 @@ setUpElm = (nodeEnv) =>
 		"""
 
 	if (subtype == 'json')
-		console.log "Creating elm site 'json'"
+		LOG "installing elm lib krisajenkins/remotedata"
+		execCmdY "elm install /krisajenkins/remotedata"
+
+		LOG "Creating elm site 'json'"
 		nodeEnv.addFile "./src/Main.elm", """
 			module Main exposing (..)
 
@@ -401,7 +398,7 @@ setUpElm = (nodeEnv) =>
 				Json.Decode.field "title" Json.Decode.string
 		"""
 	else
-		console.log "Creating bare elm site"
+		LOG "Creating bare elm site"
 		nodeEnv.addFile "./src/Main.elm", """
 			module Main exposing(main)
 
@@ -442,7 +439,7 @@ setUpElm = (nodeEnv) =>
 			vDevice model =
 				( el [Font.size 18] (text ("(device: " ++ model.kind ++ ")")))
 
-			vMain: Model -> Html msg
+			vMain: Model -> Html Msg
 			vMain model = layout
 				[]
 				(row
@@ -473,7 +470,7 @@ setUpElm = (nodeEnv) =>
 			updateFunc msg model =
 				case msg of
 
-					EmptyMsg ->
+					EmptyMessage ->
 						(model, Cmd.none)
 
 					WindowResized w h ->
@@ -531,7 +528,7 @@ setUpElm = (nodeEnv) =>
 
 # ---------------------------------------------------------------------------
 
-setUpParcel = (nodeEnv) =>
+setUpParcel = (nodeEnv, subtype=undef) =>
 
 	nodeEnv.addDevDependency 'parcel'
 	nodeEnv.setField  'source', 'src/index.html'
@@ -541,7 +538,7 @@ setUpParcel = (nodeEnv) =>
 
 # ---------------------------------------------------------------------------
 
-setUpVite = (nodeEnv) =>
+setUpVite = (nodeEnv, subtype=undef) =>
 
 	nodeEnv.addDevDependency 'vite'
 	nodeEnv.addDevDependency 'vite-plugin-top-level-await'
@@ -567,15 +564,15 @@ setUpVite = (nodeEnv) =>
 
 # ---------------------------------------------------------------------------
 
-setUpElectron = (nodeEnv) =>
+setUpElectron = (nodeEnv, subtype=undef) =>
 
 	nodeEnv.setField 'main', 'src/main.js'
 	nodeEnv.addScript 'start', 'npm run build && electron .'
 
-	console.log "Installing (dev) \"electron\""
+	LOG "Installing (dev) \"electron\""
 	nodeEnv.addDevDependency 'electron'
 
-	console.log "Creating src/main.coffee"
+	LOG "Creating src/main.coffee"
 	barf """
 		import pathLib from 'node:path'
 		import {app, BrowserWindow} from 'electron'
@@ -595,7 +592,7 @@ setUpElectron = (nodeEnv) =>
 
 	# ..........................................................
 
-	console.log "Creating src/index.html"
+	LOG "Creating src/index.html"
 	barf """
 		<!DOCTYPE html>
 		<html lang="en">
@@ -618,7 +615,7 @@ setUpElectron = (nodeEnv) =>
 
 	# ..........................................................
 
-	console.log "Creating src/preload.coffee"
+	LOG "Creating src/preload.coffee"
 	barf """
 		# --- preload.coffee has access to window,
 		#     document and NodeJS globals
@@ -636,7 +633,7 @@ setUpElectron = (nodeEnv) =>
 
 	# ..........................................................
 
-	console.log "Creating src/renderer.coffee"
+	LOG "Creating src/renderer.coffee"
 	barf """
 		# --- preload.coffee has access to window and document
 
@@ -644,14 +641,14 @@ setUpElectron = (nodeEnv) =>
 		if elem
 			elem.innerText = '#{author}'
 		else
-			console.log "No element with id 'myname'"
+			LOG "No element with id 'myname'"
 		""", "./src/renderer.coffee"
 
 	return
 
 # ---------------------------------------------------------------------------
 
-setUpCodeMirror = (nodeEnv) =>
+setUpCodeMirror = (nodeEnv, subtype=undef) =>
 
 	return
 
@@ -710,7 +707,7 @@ export class NodeEnv
 
 		@hJson[name] = value
 		if @echo
-			console.log "   SET #{name} = #{OL(value)}"
+			LOG "   SET #{name} = #{OL(value)}"
 		return
 
 	# ..........................................................
@@ -721,7 +718,7 @@ export class NodeEnv
 			@hJson.scripts = {}
 		@hJson.scripts[name] = str
 		if @echo
-			console.log "   ADD SCRIPT #{name} = #{OL(str)}"
+			LOG "   ADD SCRIPT #{OL(name)}"
 		return
 
 	# ..........................................................
@@ -732,7 +729,7 @@ export class NodeEnv
 			@hJson.exports = {}
 		@hJson.exports[name] = str
 		if @echo
-			console.log "   ADD EXPORT #{name} = #{OL(str)}"
+			LOG "   ADD EXPORT #{OL(name)}"
 		return
 
 	# ..........................................................
@@ -749,7 +746,7 @@ export class NodeEnv
 			@hJson.bin = {}
 		@hJson.bin[name] = "./src/bin/#{name}.js"
 		if @echo
-			console.log "   ADD BIN #{name}"
+			LOG "   ADD BIN #{OL(name)}"
 		return
 
 	# ..........................................................
@@ -780,7 +777,7 @@ export class NodeEnv
 			@hJson.bin = {}
 		@hJson.bin[name] = "./src/bin/#{name}.js"
 		if @echo
-			console.log "   ADD BIN #{name}"
+			LOG "   ADD BIN #{name}"
 		return
 
 	# ..........................................................
@@ -796,7 +793,7 @@ export class NodeEnv
 
 		@addExport "./#{name}", "./src/elements/#{name}.js"
 		if @echo
-			console.log "   ADD ELEMENT #{name}"
+			LOG "   ADD ELEMENT #{name}"
 		return
 
 	# ..........................................................
@@ -837,7 +834,7 @@ export class NodeEnv
 		version = getVersion(pkg)
 		@hJson.dependencies[pkg] = version
 		if @echo
-			console.log "   DEP #{pkg} = #{OL(version)}"
+			LOG "   DEP #{pkg} = #{OL(version)}"
 		return
 
 	# ..........................................................
@@ -850,7 +847,7 @@ export class NodeEnv
 		version = getVersion(pkg)
 		@hJson.devDependencies[pkg] = version
 		if @echo
-			console.log "   DEV DEP #{pkg} = #{OL(version)}"
+			LOG "   DEV DEP #{pkg} = #{OL(version)}"
 		return
 
 	# ..........................................................
@@ -873,7 +870,7 @@ export class NodeEnv
 	addFile: (fileName, contents=undef) ->
 
 		if @echo
-			console.log "ADD FILE #{OL(fileName)}"
+			LOG "ADD FILE #{OL(fileName)}"
 
 		if defined(contents)
 			if (fileExt(fileName) == '.elm')
@@ -920,6 +917,28 @@ export class NodeEnv
 			else
 				croak "addFile #{OL(fileName)} not implemented"
 		return
+
+# ---------------------------------------------------------------------------
+
+hSetUpFuncs = {
+	website:    [setUpWebSite]
+	elm:        [setUpElm]
+	parcel:     [setUpWebSite, setUpParcel]
+	vite:       [setUpWebSite, setUpVite]
+	electron:   [setUpElectron]
+	codemirror: [setUpElectron, setUpCodeMirror]
+	}
+
+export typeSpecificSetup = (nodeEnv, type, subtype=undef) =>
+
+	lFuncs = hSetUpFuncs[type]
+	if isArray(lFuncs)
+		for func in lFuncs
+			LOG "SET UP #{OL(type)}"
+			LOG_indent()
+			func(nodeEnv, subtype)
+			LOG_undent()
+	return
 
 # ---------------------------------------------------------------------------
 

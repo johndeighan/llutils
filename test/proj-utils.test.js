@@ -22,12 +22,6 @@ succeeds(() => {
   return checkIfInstalled('npm');
 });
 
-setProjType('parcel');
-
-truthy(isOfType('parcel'));
-
-truthy(isOfType('website'));
-
 env = new NodeEnv('!echo');
 
 equal(env.name(), "@jdeighan/llutils");

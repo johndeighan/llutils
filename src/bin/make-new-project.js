@@ -34,17 +34,17 @@ import {
 
 import {
   lValidTypes,
-  setProjType,
   promptForProjType,
   makeProjDir,
   typeSpecificSetup,
   checkIfInstalled,
-  NodeEnv
+  NodeEnv,
+  basicSetUp
 } from '@jdeighan/llutils/proj-utils';
 
 // ---------------------------------------------------------------------------
 main = async() => {
-  var clear, dirname, env_dev_installs, env_installs, hArgs, i, j, lNonOptions, len, len1, nodeEnv, pkg, ref, ref1, subtype, type;
+  var clear, dirname, hArgs, lNonOptions, nodeEnv, subtype, type;
   checkIfInstalled('node', 'yarn');
   hArgs = getArgs({
     _: {
@@ -71,43 +71,15 @@ main = async() => {
     type = (await promptForProjType());
   }
   [type, subtype] = type.split('/', 2);
-  setProjType(type, subtype);
-  console.log(`type = ${OL(type)}`);
-  console.log(`subtype = ${OL(subtype)}`);
+  if (defined(subtype)) {
+    console.log(`type = ${OL(type + '/' + subtype)}`);
+  } else {
+    console.log(`type = ${OL(type)}`);
+  }
   dirname = lNonOptions[0] || type;
-  console.log(`make-new-project ${type} in dir ${lNonOptions[0]}`);
-  makeProjDir(dirname, {clear}); // also cd's to proj dir
-  execCmd("git init");
-  execCmd("git branch -m main");
-  execCmd("npm init -y");
-  nodeEnv = new NodeEnv('fixPkgJson');
-  nodeEnv.addDependency('@jdeighan/llutils');
-  nodeEnv.addDevDependency('concurrently');
-  nodeEnv.setField('description', `A ${type} app`);
-  nodeEnv.setField('packageManager', 'yarn@1.22.22');
-  nodeEnv.addFile('README.md');
-  nodeEnv.addFile('.gitignore');
-  nodeEnv.addFile('.npmrc');
-  // === Install libraries specified via env vars
-  env_installs = process.env.PROJECT_INSTALLS;
-  if (nonEmpty(env_installs)) {
-    ref = words(env_installs);
-    for (i = 0, len = ref.length; i < len; i++) {
-      pkg = ref[i];
-      nodeEnv.addDependency(pkg);
-    }
-  }
-  env_dev_installs = process.env.PROJECT_DEV_INSTALLS;
-  if (nonEmpty(env_dev_installs)) {
-    ref1 = words(env_dev_installs);
-    for (j = 0, len1 = ref1.length; j < len1; j++) {
-      pkg = ref1[j];
-      nodeEnv.addDevDependency(pkg);
-    }
-  }
-  nodeEnv.addDevDependency('coffeescript');
-  nodeEnv.addDevDependency('ava');
-  typeSpecificSetup(nodeEnv);
+  console.log(`make-new-project ${OL(type)} in dir ${OL(dirname)}`);
+  nodeEnv = basicSetUp(dirname, {clear, type, subtype});
+  typeSpecificSetup(nodeEnv, type, subtype);
   nodeEnv.write_pkg_json();
   return console.log(`Please run:
 	cd ../${dirname}

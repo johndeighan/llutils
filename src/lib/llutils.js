@@ -1,5 +1,5 @@
   // llutils.coffee
-var deepEqual, module, warnOnly,
+var deepEqual, log_level, module, warnOnly,
   hasProp = {}.hasOwnProperty;
 
 import YAML from 'yaml';
@@ -717,14 +717,30 @@ export var untabify = (str, numSpaces = 3) => {
 };
 
 // ---------------------------------------------------------------------------
+log_level = 0;
+
+export var LOG_indent = () => {
+  log_level += 1;
+};
+
+// ---------------------------------------------------------------------------
+export var LOG_undent = () => {
+  log_level -= 1;
+};
+
+// ---------------------------------------------------------------------------
 export var LOG = (item, hOptions = {}) => {
-  hOptions = getOptions(hOptions, {
+  var depth;
+  ({depth} = getOptions(hOptions, {
     depth: null
-  });
+  }));
+  if (log_level > 0) {
+    item = "\t".repeat(log_level) + item;
+  }
   if (isString(item)) {
     return console.log(untabify(item));
   } else {
-    return console.dir(item, hOptions);
+    return console.dir(item, {depth});
   }
 };
 

@@ -1,5 +1,5 @@
 // proj-utils.coffee
-var getVersion, make_dirs, setUpCodeMirror, setUpElectron, setUpElm, setUpParcel, setUpVite, setUpWebSite, subtype, type;
+var getVersion, hSetUpFuncs, make_dirs, setUpCodeMirror, setUpElectron, setUpElm, setUpParcel, setUpVite, setUpWebSite;
 
 import prompts from 'prompts';
 
@@ -8,13 +8,17 @@ import {
   defined,
   notdefined,
   OL,
+  LOG,
   getOptions,
   assert,
   croak,
   words,
   isEmpty,
   nonEmpty,
-  hasKey
+  hasKey,
+  LOG_indent,
+  LOG_undent,
+  isArray
 } from '@jdeighan/llutils';
 
 import {
@@ -44,10 +48,6 @@ import {
 
 export var lValidTypes = ['electron', 'codemirror', 'elm', 'parcel', 'vite', 'none'];
 
-type = 'none';
-
-subtype = undef;
-
 // ---------------------------------------------------------------------------
 export var checkIfInstalled = (...lCmds) => {
   var cmd, err, i, len, output;
@@ -58,39 +58,10 @@ export var checkIfInstalled = (...lCmds) => {
       return output;
     } catch (error) {
       err = error;
-      console.log(`ERROR ${cmd} is not installed`);
+      LOG(`ERROR: ${cmd} is not installed`);
       process.exit();
     }
   }
-};
-
-// ---------------------------------------------------------------------------
-export var setProjType = (t, subt) => {
-  if (t === 'website') {
-    type = 'parcel'; // default web site type
-  }
-  assert(defined(t), "type is undef");
-  assert(lValidTypes.includes(t), `Bad type: ${OL(t)}`);
-  type = t;
-  subtype = nonEmpty(subt) ? subt : undef;
-};
-
-// ---------------------------------------------------------------------------
-// --- For example, isType('electron') will return true
-//     when type is 'codemirror'
-export var isOfType = (t) => {
-  var lMembers;
-  switch (t) {
-    case 'electron':
-      lMembers = ['electron', 'codemirror'];
-      break;
-    case 'website':
-      lMembers = ['parcel', 'vite'];
-      break;
-    default:
-      lMembers = [t];
-  }
-  return lMembers.includes(type);
 };
 
 // ---------------------------------------------------------------------------
@@ -128,7 +99,6 @@ export var promptForProjType = async() => {
       }
     ]
   }));
-  setProjType(hResponse.type);
   return type;
 };
 
@@ -140,22 +110,22 @@ export var makeProjDir = (dirname, hOptions = {}) => {
   }));
   rootDir = process.env.PROJECT_ROOT_DIR;
   if (!isDir(rootDir)) {
-    console.log(`Please set env var PROJECT_ROOT_DIR to a valid directory`);
+    LOG(`Please set env var PROJECT_ROOT_DIR to a valid directory`);
     process.exit();
   }
   // === Create the new directory and cd to it
   newDir = mkpath(rootDir, dirname);
   if (isDir(newDir)) {
     if (clear) {
-      console.log(`Directory ${OL(newDir)} exists, clearing it out`);
+      LOG(`Directory ${OL(newDir)} exists, clearing it out`);
       clearDir(newDir);
     } else {
-      console.log(`Directory ${OL(newDir)} already exists`);
-      console.log("Aborting...");
+      LOG(`Directory ${OL(newDir)} already exists`);
+      LOG("Aborting...");
       process.exit();
     }
   } else {
-    console.log(`Creating directory ${newDir}`);
+    LOG(`Creating directory ${newDir}`);
     mkDir(newDir);
   }
   process.chdir(newDir);
@@ -164,18 +134,14 @@ export var makeProjDir = (dirname, hOptions = {}) => {
 
 // ---------------------------------------------------------------------------
 make_dirs = () => {
-  console.log("Making directories");
-  console.log("   ./src");
+  LOG("Making directories");
+  LOG("   ./src");
   mkDir('./src');
-  console.log("   ./src/lib");
+  LOG("   ./src/lib");
   mkDir('./src/lib');
-  console.log("   ./src/bin");
+  LOG("   ./src/bin");
   mkDir('./src/bin');
-  if (isOfType('website')) {
-    console.log("   ./src/elements");
-    mkDir('./src/elements');
-  }
-  console.log("   ./test");
+  LOG("   ./test");
   mkDir('./test');
 };
 
@@ -197,7 +163,7 @@ export var promptForNames = async(prompt, valFunc = undef) => {
     name = hResponse.name;
     if (name) {
       if (validFunc && (msg = validFunc(name))) {
-        console.log(msg);
+        LOG(msg);
       } else {
         lNames.push(name);
       }
@@ -208,31 +174,53 @@ export var promptForNames = async(prompt, valFunc = undef) => {
 };
 
 // ---------------------------------------------------------------------------
-export var typeSpecificSetup = (nodeEnv) => {
-  if (isOfType('website')) {
-    setUpWebSite(nodeEnv);
+export var basicSetUp = (dirname, hOptions = {}) => {
+  var clear, env_dev_installs, env_installs, i, j, len, len1, nodeEnv, pkg, ref, ref1, subtype, type;
+  ({clear, type, subtype} = getOptions(hOptions, {
+    clear: false,
+    type: undef,
+    subtype: undef
+  }));
+  makeProjDir(dirname, {clear}); // also cd's to proj dir
+  execCmd("git init");
+  execCmd("git branch -m main");
+  execCmd("npm init -y");
+  nodeEnv = new NodeEnv('fixPkgJson');
+  nodeEnv.addDependency('@jdeighan/llutils');
+  nodeEnv.addDevDependency('concurrently');
+  nodeEnv.setField('description', `A ${type} app`);
+  nodeEnv.setField('packageManager', 'yarn@1.22.22');
+  nodeEnv.addFile('README.md');
+  nodeEnv.addFile('.gitignore');
+  nodeEnv.addFile('.npmrc');
+  // === Install libraries specified via env vars
+  env_installs = process.env.PROJECT_INSTALLS;
+  if (nonEmpty(env_installs)) {
+    ref = words(env_installs);
+    for (i = 0, len = ref.length; i < len; i++) {
+      pkg = ref[i];
+      nodeEnv.addDependency(pkg);
+    }
   }
-  if (isOfType('elm')) {
-    setUpElm(nodeEnv);
+  env_dev_installs = process.env.PROJECT_DEV_INSTALLS;
+  if (nonEmpty(env_dev_installs)) {
+    ref1 = words(env_dev_installs);
+    for (j = 0, len1 = ref1.length; j < len1; j++) {
+      pkg = ref1[j];
+      nodeEnv.addDevDependency(pkg);
+    }
   }
-  if (isOfType('parcel')) {
-    setUpParcel(nodeEnv);
-  }
-  if (isOfType('vite')) {
-    setUpVite(nodeEnv);
-  }
-  if (isOfType('electron')) {
-    setUpElectron(nodeEnv);
-  }
-  if (isOfType('codemirror')) {
-    setUpCodeMirror(nodeEnv);
-  }
+  nodeEnv.addDevDependency('coffeescript');
+  nodeEnv.addDevDependency('ava');
+  return nodeEnv;
 };
 
 // ---------------------------------------------------------------------------
-setUpWebSite = (nodeEnv) => {
+setUpWebSite = (nodeEnv, subtype = undef) => {
+  LOG("mkdir ./src/elements");
+  mkDir('./src/elements');
   nodeEnv.addDevDependency('svelte');
-  console.log("Creating src/index.html");
+  LOG("Creating src/index.html");
   barf(`<!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -250,7 +238,7 @@ setUpWebSite = (nodeEnv) => {
   barf(`# --- main.coffee
 
 import {escapeStr} from '@jdeighan/llutils'
-console.log escapeStr("\t\tabc\r\n")`, "./src/main.coffee");
+LOG escapeStr("\t\tabc\r\n")`, "./src/main.coffee");
 };
 
 // ---------------------------------------------------------------------------
@@ -259,23 +247,25 @@ export var importCustomElement = (name) => {
 };
 
 // ---------------------------------------------------------------------------
-setUpElm = (nodeEnv) => {
+setUpElm = (nodeEnv, subtype = undef) => {
   var i, len, lib, ref;
   checkIfInstalled('elm');
   checkIfInstalled('elm-live');
-  console.log(`setUpElm(): subtype = ${OL(subtype)}`);
+  LOG("mkdir ./src/elements");
+  mkDir('./src/elements');
   nodeEnv.addDevDependency('svelte');
-  nodeEnv.addScript('build', "npm run build:coffee && elm make src/Main.elm --output=main.js");
-  nodeEnv.addScript('dev', "npm run build:coffee && elm-live src/Main.elm -- --debug --output=main.js");
-  console.log("initializing elm");
+  nodeEnv.addScript('build', "npm run build:all && elm make src/Main.elm --output=main.js");
+  nodeEnv.addScript('dev', "npm run build:all && elm-live src/Main.elm -- --debug --output=main.js");
+  LOG("initializing elm");
   execCmdY("elm init");
-  console.log("elm is initialized");
-  ref = ["elm/http", "elm/json", "elm/regex", "mdgriffith/elm-ui", "krisajenkins/remotedata", "phollyer/elm-ui-colors"];
+  LOG("elm is initialized");
+  ref = ["elm/http", "elm/json", "elm/regex", "mdgriffith/elm-ui"];
   for (i = 0, len = ref.length; i < len; i++) {
     lib = ref[i];
-    console.log(`installing elm lib ${lib}`);
+    LOG(`installing elm lib ${lib}`);
     execCmdY(`elm install ${lib}`);
   }
+  nodeEnv.addFile("./global.css", `/* Put your global styles here */`);
   nodeEnv.addFile("./index.html", `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -283,6 +273,7 @@ setUpElm = (nodeEnv) => {
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width">
 	<title>Elm Web Site</title>
+	<link rel="stylesheet" href="global.css">
 	<script src="main.js"></script>
 </head>
 
@@ -300,7 +291,9 @@ setUpElm = (nodeEnv) => {
 </body>
 </html>`);
   if (subtype === 'json') {
-    console.log("Creating elm site 'json'");
+    LOG("installing elm lib krisajenkins/remotedata");
+    execCmdY("elm install /krisajenkins/remotedata");
+    LOG("Creating elm site 'json'");
     nodeEnv.addFile("./src/Main.elm", `module Main exposing (..)
 
 import Browser exposing(element)
@@ -396,7 +389,7 @@ dataTitleDecoder : Json.Decode.Decoder String
 dataTitleDecoder =
 	Json.Decode.field "title" Json.Decode.string`);
   } else {
-    console.log("Creating bare elm site");
+    LOG("Creating bare elm site");
     nodeEnv.addFile("./src/Main.elm", `module Main exposing(main)
 
 import Browser exposing(element)
@@ -436,7 +429,7 @@ vDevice: Model -> Element Msg
 vDevice model =
 	( el [Font.size 18] (text ("(device: " ++ model.kind ++ ")")))
 
-vMain: Model -> Html msg
+vMain: Model -> Html Msg
 vMain model = layout
 	[]
 	(row
@@ -467,7 +460,7 @@ updateFunc : Msg -> Model -> (Model, Cmd arg)
 updateFunc msg model =
 	case msg of
 
-		EmptyMsg ->
+		EmptyMessage ->
 			(model, Cmd.none)
 
 		WindowResized w h ->
@@ -520,7 +513,7 @@ deviceKind width height =
 };
 
 // ---------------------------------------------------------------------------
-setUpParcel = (nodeEnv) => {
+setUpParcel = (nodeEnv, subtype = undef) => {
   nodeEnv.addDevDependency('parcel');
   nodeEnv.setField('source', 'src/index.html');
   nodeEnv.addScript('dev', 'concurrently --kill-others "llb -w" "parcel"');
@@ -528,7 +521,7 @@ setUpParcel = (nodeEnv) => {
 };
 
 // ---------------------------------------------------------------------------
-setUpVite = (nodeEnv) => {
+setUpVite = (nodeEnv, subtype = undef) => {
   nodeEnv.addDevDependency('vite');
   nodeEnv.addDevDependency('vite-plugin-top-level-await');
   nodeEnv.setField('source', 'src/index.html');
@@ -550,12 +543,12 @@ export default {
 };
 
 // ---------------------------------------------------------------------------
-setUpElectron = (nodeEnv) => {
+setUpElectron = (nodeEnv, subtype = undef) => {
   nodeEnv.setField('main', 'src/main.js');
   nodeEnv.addScript('start', 'npm run build && electron .');
-  console.log("Installing (dev) \"electron\"");
+  LOG("Installing (dev) \"electron\"");
   nodeEnv.addDevDependency('electron');
-  console.log("Creating src/main.coffee");
+  LOG("Creating src/main.coffee");
   barf(`import pathLib from 'node:path'
 import {app, BrowserWindow} from 'electron'
 
@@ -571,7 +564,7 @@ app.on 'ready', () =>
 	# --- win.loadFile('src/index.html')
 	win.loadURL("file://${import.meta.dirname}/index.html")`, "./src/main.coffee");
   // ..........................................................
-  console.log("Creating src/index.html");
+  LOG("Creating src/index.html");
   barf(`<!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -590,7 +583,7 @@ app.on 'ready', () =>
 	</body>
 </html>`, "./src/index.html");
   // ..........................................................
-  console.log("Creating src/preload.coffee");
+  LOG("Creating src/preload.coffee");
   barf(`# --- preload.coffee has access to window,
 #     document and NodeJS globals
 
@@ -604,18 +597,18 @@ window.addEventListener 'DOMContentLoaded', () =>
 		str = "\#{dep} version \#{process.versions[dep]}"
 		replaceText "\#{dep}-version", str`, "./src/preload.coffee");
   // ..........................................................
-  console.log("Creating src/renderer.coffee");
+  LOG("Creating src/renderer.coffee");
   barf(`# --- preload.coffee has access to window and document
 
 elem = document.getElementById('myname')
 if elem
 	elem.innerText = '${author}'
 else
-	console.log "No element with id 'myname'"`, "./src/renderer.coffee");
+	LOG "No element with id 'myname'"`, "./src/renderer.coffee");
 };
 
 // ---------------------------------------------------------------------------
-setUpCodeMirror = (nodeEnv) => {};
+setUpCodeMirror = (nodeEnv, subtype = undef) => {};
 
 // ---------------------------------------------------------------------------
 // --- 1. Read in current package.json
@@ -673,7 +666,7 @@ export var NodeEnv = class NodeEnv {
   setField(name, value) {
     this.hJson[name] = value;
     if (this.echo) {
-      console.log(`   SET ${name} = ${OL(value)}`);
+      LOG(`   SET ${name} = ${OL(value)}`);
     }
   }
 
@@ -684,7 +677,7 @@ export var NodeEnv = class NodeEnv {
     }
     this.hJson.scripts[name] = str;
     if (this.echo) {
-      console.log(`   ADD SCRIPT ${name} = ${OL(str)}`);
+      LOG(`   ADD SCRIPT ${OL(name)}`);
     }
   }
 
@@ -695,7 +688,7 @@ export var NodeEnv = class NodeEnv {
     }
     this.hJson.exports[name] = str;
     if (this.echo) {
-      console.log(`   ADD EXPORT ${name} = ${OL(str)}`);
+      LOG(`   ADD EXPORT ${OL(name)}`);
     }
   }
 
@@ -709,7 +702,7 @@ export var NodeEnv = class NodeEnv {
     }
     this.hJson.bin[name] = `./src/bin/${name}.js`;
     if (this.echo) {
-      console.log(`   ADD BIN ${name}`);
+      LOG(`   ADD BIN ${OL(name)}`);
     }
   }
 
@@ -733,7 +726,7 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
     }
     this.hJson.bin[name] = `./src/bin/${name}.js`;
     if (this.echo) {
-      console.log(`   ADD BIN ${name}`);
+      LOG(`   ADD BIN ${name}`);
     }
   }
 
@@ -745,7 +738,7 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
 `, `./src/elements/${name}.svelte`);
     this.addExport(`./${name}`, `./src/elements/${name}.js`);
     if (this.echo) {
-      console.log(`   ADD ELEMENT ${name}`);
+      LOG(`   ADD ELEMENT ${name}`);
     }
   }
 
@@ -787,7 +780,7 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
     version = getVersion(pkg);
     this.hJson.dependencies[pkg] = version;
     if (this.echo) {
-      console.log(`   DEP ${pkg} = ${OL(version)}`);
+      LOG(`   DEP ${pkg} = ${OL(version)}`);
     }
   }
 
@@ -801,7 +794,7 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
     version = getVersion(pkg);
     this.hJson.devDependencies[pkg] = version;
     if (this.echo) {
-      console.log(`   DEV DEP ${pkg} = ${OL(version)}`);
+      LOG(`   DEV DEP ${pkg} = ${OL(version)}`);
     }
   }
 
@@ -819,7 +812,7 @@ equal 2+2, 4`, `./test/${name}.test.coffee`);
   // ..........................................................
   addFile(fileName, contents = undef) {
     if (this.echo) {
-      console.log(`ADD FILE ${OL(fileName)}`);
+      LOG(`ADD FILE ${OL(fileName)}`);
     }
     if (defined(contents)) {
       if (fileExt(fileName) === '.elm') {
@@ -862,6 +855,30 @@ loglevel=silent`, "./.npmrc");
     }
   }
 
+};
+
+// ---------------------------------------------------------------------------
+hSetUpFuncs = {
+  website: [setUpWebSite],
+  elm: [setUpElm],
+  parcel: [setUpWebSite, setUpParcel],
+  vite: [setUpWebSite, setUpVite],
+  electron: [setUpElectron],
+  codemirror: [setUpElectron, setUpCodeMirror]
+};
+
+export var typeSpecificSetup = (nodeEnv, type, subtype = undef) => {
+  var func, i, lFuncs, len;
+  lFuncs = hSetUpFuncs[type];
+  if (isArray(lFuncs)) {
+    for (i = 0, len = lFuncs.length; i < len; i++) {
+      func = lFuncs[i];
+      LOG(`SET UP ${OL(type)}`);
+      LOG_indent();
+      func(nodeEnv, subtype);
+      LOG_undent();
+    }
+  }
 };
 
 // ---------------------------------------------------------------------------
