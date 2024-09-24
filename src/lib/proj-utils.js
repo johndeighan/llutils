@@ -265,7 +265,7 @@ setUpElm = (nodeEnv, subtype = undef) => {
     LOG(`installing elm lib ${lib}`);
     execCmdY(`elm install ${lib}`);
   }
-  nodeEnv.addFile("./global.css", `/* Put your global styles here */`);
+  nodeEnv.addFile("src/global.css", `/* Put your global styles here */`);
   nodeEnv.addFile("./index.html", `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -273,7 +273,7 @@ setUpElm = (nodeEnv, subtype = undef) => {
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width">
 	<title>Elm Web Site</title>
-	<link rel="stylesheet" href="global.css">
+	<link rel="stylesheet" href="src/global.css">
 	<script src="main.js"></script>
 </head>
 
@@ -396,7 +396,6 @@ import Browser exposing(element)
 import Browser.Events exposing(..)
 import Html exposing(Html)
 import Element exposing(..)
-import Element.Font as Font
 import Utils exposing(..)
 
 --------------------------------------
@@ -404,13 +403,12 @@ import Utils exposing(..)
 type alias Model = {
 	width: Int,
 	height: Int,
-	kind: String,
+	deviceKind: String,
 	title: String
 	}
 
 type Msg =
-	  EmptyMessage
-	| WindowResized Int Int
+	  WindowResized Int Int
 
 --------------------------------------
 
@@ -425,20 +423,30 @@ main =
 
 --------------------------------------
 
-vDevice: Model -> Element Msg
-vDevice model =
-	( el [Font.size 18] (text ("(device: " ++ model.kind ++ ")")))
-
 vMain: Model -> Html Msg
 vMain model = layout
 	[]
 	(row
 		[centerX, spacing 25]
 		[
-			(el [centerX, Font.size 32] (text model.title)),
+			(el
+				[centerX, fontSize 32]
+				(text model.title)
+				),
 			(vDevice model)
 			]
 		)
+
+vDevice: Model -> Element Msg
+vDevice model =
+	( el
+		[fontSize 18]
+		(txtDevice model)
+		)
+
+txtDevice: Model -> Element msg
+txtDevice model =
+	(text ("(device: " ++ model.deviceKind ++ ")" ) )
 
 --------------------------------------
 
@@ -448,8 +456,8 @@ init f =
 		{
 			width = f.width,
 			height = f.height,
-			kind = deviceKind f.width f.height,
-			title = "Hello"
+			deviceKind = deviceKind f.width f.height,
+			title = "Hello there"
 			},
 		Cmd.none
 		)
@@ -459,16 +467,12 @@ init f =
 updateFunc : Msg -> Model -> (Model, Cmd arg)
 updateFunc msg model =
 	case msg of
-
-		EmptyMessage ->
-			(model, Cmd.none)
-
 		WindowResized w h ->
 			(
 				{model |
 					width = w,
 					height = h,
-					kind = deviceKind w h
+					deviceKind = deviceKind w h
 					},
 				Cmd.none
 				)
@@ -477,18 +481,21 @@ updateFunc msg model =
 
 subscriptions: Model -> (Sub Msg)
 subscriptions model =
-	onResize WindowResized
-
---------------------------------------
-
-txtDevice: Model -> Element msg
-txtDevice model =
-	(text ("(device: " ++ model.kind ++ ")" ) )
-
-`);
+	onResize WindowResized`);
     nodeEnv.addFile("./src/Utils.elm", `module Utils exposing(..)
 
 import Element exposing(..)
+import Html.Attributes
+import Element.Font as Font
+
+id: String -> Attribute msg
+id theID = htmlAttribute (Html.Attributes.id theID)
+
+class: String -> Attribute msg
+class theClass = htmlAttribute (Html.Attributes.class theClass)
+
+fontSize: Int -> Attribute msg
+fontSize = Font.size
 
 ------------------------------
 
