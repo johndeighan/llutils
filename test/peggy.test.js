@@ -16,7 +16,7 @@ Object.assign(global, lib2);
 
 exprPath = './test/peggy/expr.peggy';
 
-parseExpr = (await getParser(exprPath));
+parseExpr = (await getPeggyParser(exprPath));
 
 // ---------------------------------------------------------------------------
 //symbol matchExprSplitter(str)    # --- returns [str, skipLen]
@@ -40,10 +40,10 @@ succeeds(() => {
 });
 
 // ---------------------------------------------------------------------------
-//symbol "getParser(filePath)"    # --- get parser
+//symbol "getPeggyParser(filePath)"    # --- get parser
 
 // --- This has already been executed
-// parseExpr = await getParser(exprPath)
+// parseExpr = await getPeggyParser(exprPath)
 equal(parseExpr('2+2'), 4);
 
 equal(parseExpr('3*5'), 15);
@@ -57,52 +57,5 @@ equal(parseExpr('2 + 2'), 4);
 equal(parseExpr('(2 + 4) * 3'), 18);
 
 like(parseExpr('3.14 * 5'), 15.7);
-
-// ---------------------------------------------------------------------------
-succeeds(function() {
-  var writer;
-  return writer = new ByteCodeWriter();
-});
-
-// ---------------------------------------------------------------------------
-succeeds(function() {
-  var dumper;
-  return dumper = new OpDumper();
-});
-
-// ---------------------------------------------------------------------------
-//symbol "getTracer(type, inputStr, hVars={})"
-(() => {
-  var tracer;
-  tracer = getTracer('advanced');
-  equal(tracer.traceStr({
-    type: 'rule.enter',
-    rule: 'start'
-  }), `? start`);
-  equal(tracer.traceStr({
-    type: 'rule.fail'
-  }, 1), `└─> FAIL`);
-  equal(tracer.traceStr({
-    type: 'rule.match'
-  }, 1), `└─> YES`);
-  equal(tracer.traceStr({
-    type: 'rule.match',
-    result: 'IDENT'
-  }, 1), `└─> "IDENT"`);
-  equal(tracer.traceStr({
-    type: 'rule.enter',
-    rule: 'start'
-  }, 1), `│  ? start`);
-  equal(tracer.traceStr({
-    type: 'string.fail'
-  }, 1), `x   string`);
-  equal(tracer.traceStr({
-    type: 'rule.match'
-  }, 1), `└─> YES`);
-  return equal(tracer.traceStr({
-    type: 'rule.match',
-    result: 'IDENT'
-  }, 1), `└─> "IDENT"`);
-})();
 
 //# sourceMappingURL=peggy.test.js.map

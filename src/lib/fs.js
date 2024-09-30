@@ -14,7 +14,7 @@ import {
 import NReadLines from 'n-readlines';
 
 import {
-  temporaryFile
+  temporaryFile as tempFile
 } from 'tempy';
 
 import {
@@ -41,6 +41,10 @@ import {
   isMetaDataStart,
   convertMetaData
 } from '@jdeighan/llutils/meta-data';
+
+import {
+  execCmd
+} from '@jdeighan/llutils/exec-utils';
 
 export var lStatFields = words('dev ino mode nlink uid gid rdev size blksize blocks', 'atimeMs mtimeMs ctimeMs birthtimeMs', 'atime mtime ctime birthtime');
 
@@ -644,7 +648,7 @@ export var TextFileWriter = class TextFileWriter {
   constructor(filePath1 = undef) {
     this.filePath = filePath1;
     if (!this.filePath) {
-      this.filePath = temporaryFile();
+      this.filePath = tempFile();
     }
     this.writer = fs.createWriteStream(this.filePath, {
       flags: 'w'
@@ -844,6 +848,18 @@ export var barfPkgJSON = (hJson, filePath = './package.json') => {
     }
   }
   barfJSON(hJson2, filePath);
+};
+
+// ---------------------------------------------------------------------------
+export var barfDebugFile = (contents, orgFilePath, purpose) => {
+  var filePath;
+  if (defined(orgFilePath)) {
+    filePath = withExt(orgFilePath, `.${purpose}.txt`);
+  } else {
+    filePath = `./test/temp.${purpose}.txt`;
+  }
+  barf(contents, filePath);
+  return filePath;
 };
 
 //# sourceMappingURL=fs.js.map

@@ -44,14 +44,6 @@ import {
 } from '@jdeighan/llutils/fs';
 
 import {
-  LineFetcher
-} from '@jdeighan/llutils/fetcher';
-
-import {
-  replaceHereDocs
-} from '@jdeighan/llutils/heredoc';
-
-import {
   procCoffee,
   toAST,
   toASTFile

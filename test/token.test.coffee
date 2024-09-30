@@ -1,6 +1,6 @@
 # token.test.coffee
 
-import {BaseTracer} from '@jdeighan/llutils/peggy'
+import {BaseTracer} from '@jdeighan/llutils/peggy-utils'
 import * as lib from '@jdeighan/llutils/token'
 Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'

@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "config.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "src\\lib\\config.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAe;AAEf,OAAA;EAAQ,KAAR;EAAe,OAAf;CAAA,MAAA;;AACA,OAAA;EAAQ,MAAR;EAAgB,KAAhB;CAAA,MAAA;;AACA,OAAA;EAAQ,UAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,SAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,UAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,SAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,eAAR;CAAA,MAAA;;AACA,OAAA;EAAQ,OAAR;CAAA,MAAA,0BATe;;;;;;;;;AAmBf,OAAA,IAAO,OAAA,GAAU;EAChB,MAAA,EAAQ,IADQ;EAGhB,SAAA,EAAW;IAAE,OAAA,EAAW,UAAb;IAA2B,MAAA,EAAQ;EAAnC,CAHK;EAIhB,QAAA,EAAW;IAAE,OAAA,EAAW,SAAb;IAA2B,MAAA,EAAQ;EAAnC,CAJK;EAKhB,QAAA,EAAW;IAAE,OAAA,EAAW,SAAb;IAA2B,MAAA,EAAQ;EAAnC,CALK;EAMhB,QAAA,EAAW;IAAE,QAAA,EAAW,eAAb;IAA+B,MAAA,EAAQ;EAAvC,CANK;EAOhB,SAAA,EAAW;IAAE,OAAA,EAAW,UAAb;IAA2B,MAAA,EAAQ;EAAnC,CAPK;EAQhB,MAAA,EAAW;IAAE,OAAA,EAAW,OAAb;IAA2B,MAAA,EAAQ;EAAnC;AARK,EAnBF;;;AAgCf,OAAA,IAAO,SAAA,GAAY,CAAA,CAAA,GAAA;AAEnB,MAAA;EAAC,QAAA,GAAW;EACX,IAAG,MAAA,CAAO,QAAP,CAAH;AACC,WAAO,IAAI,CAAC,KAAL,CAAW,KAAA,CAAM,QAAN,CAAX,EADR;GAAA,MAAA;AAGC,WAAO,QAHR;;AAHkB",
+  "sourcesContent": [
+    "# config.coffee\r\n\r\nimport {undef, defined} from '@jdeighan/llutils'\r\nimport {isFile, slurp} from '@jdeighan/llutils/fs'\r\nimport {procCoffee} from '@jdeighan/llutils/llcoffee'\r\nimport {procCielo} from '@jdeighan/llutils/cielo'\r\nimport {procSvelte} from '@jdeighan/llutils/svelte'\r\nimport {procPeggy} from '@jdeighan/llutils/peggy'\r\nimport {procNearleyFile} from '@jdeighan/llutils/nearley'\r\nimport {procDot} from '@jdeighan/llutils/lldot'\r\n\r\n# ---------------------------------------------------------------------------\r\n# --- strFunc must be:\r\n#        (code, hMetaData, filePath, hOptions)\r\n#     fileFunc must be:\r\n#        (filePath, hOptions)\r\n#     returning\r\n#        { code, lUses, sourceMap?, hOtherFiles? }\r\n\r\nexport hConfig = {\r\n\t'echo': true\r\n\r\n\t'.coffee': { strFunc:   procCoffee,   outExt: '.js' }\r\n\t'.cielo':  { strFunc:   procCielo,    outExt: '.js' }\r\n\t'.peggy':  { strFunc:   procPeggy,    outExt: '.js' }\r\n\t'.ne   ':  { fileFunc:  procNearleyFile,  outExt: '.js' }\r\n\t'.svelte': { strFunc:   procSvelte,   outExt: '.js' }\r\n\t'.dot':    { strFunc:   procDot,      outExt: '.png'}\r\n\t}\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nexport getConfig = () =>\r\n\r\n\tfilePath = './low-level-config.json'\r\n\tif isFile(filePath)\r\n\t\treturn JSON.parse(slurp(filePath))\r\n\telse\r\n\t\treturn hConfig\r\n"
+  ]
+}

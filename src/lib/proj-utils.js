@@ -254,12 +254,13 @@ setUpElm = (nodeEnv, subtype = undef) => {
   LOG("mkdir ./src/elements");
   mkDir('./src/elements');
   nodeEnv.addDevDependency('svelte');
+  // --- NOTE: script build:all was defined in baseSetUp()
   nodeEnv.addScript('build', "npm run build:all && elm make src/Main.elm --output=main.js");
   nodeEnv.addScript('dev', "npm run build:all && elm-live src/Main.elm -- --debug --output=main.js");
   LOG("initializing elm");
   execCmdY("elm init");
   LOG("elm is initialized");
-  ref = ["elm/http", "elm/json", "elm/regex", "mdgriffith/elm-ui"];
+  ref = ["elm/http", "elm/json", "elm/regex", "mdgriffith/elm-ui", "phollyer/elm-ui-colors"];
   for (i = 0, len = ref.length; i < len; i++) {
     lib = ref[i];
     LOG(`installing elm lib ${lib}`);
@@ -290,122 +291,26 @@ setUpElm = (nodeEnv, subtype = undef) => {
 	</script>
 </body>
 </html>`);
-  if (subtype === 'json') {
-    LOG("installing elm lib krisajenkins/remotedata");
-    execCmdY("elm install /krisajenkins/remotedata");
-    LOG("Creating elm site 'json'");
-    nodeEnv.addFile("./src/Main.elm", `module Main exposing (..)
-
-import Browser exposing(element)
-import Html exposing(text)
-import Http
-import Json.Decode
-import RemoteData exposing (RemoteData)
-
-
-main : Program () Model Msg
-main =
-	element
-		{ init = initModel
-		, view = view
-		, update = update
-		, subscriptions = subscriptions
-		}
-
-
-initModel : () -> ( Model, Cmd Msg )
-initModel _ =
-	( { result = RemoteData.NotAsked }, getTitle )
-
-
-view : Model -> Html.Html msg
-view model =
-	case model.result of
-		RemoteData.Failure error ->
-			text (getErrorMessage error)
-
-		RemoteData.Success title ->
-			text title
-
-		RemoteData.Loading ->
-			text "Loading ..."
-
-		RemoteData.NotAsked ->
-			text "Where everything starts"
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-	case msg of
-		MsgGotTitle result ->
-			( { model | result = result }, Cmd.none )
-
-
-getErrorMessage errorDetail =
-	case errorDetail of
-		Http.NetworkError ->
-			"Connection error"
-
-		Http.BadStatus errorStatus ->
-			"Invalid server response " ++ String.fromInt errorStatus
-
-		Http.Timeout ->
-			"Request time out"
-
-		Http.BadUrl reasonError ->
-			"Invalid request URL " ++ reasonError
-
-		Http.BadBody invalidData ->
-			"Invalid data " ++ invalidData
-
-
-subscriptions : Model -> Sub msg
-subscriptions _ =
-	Sub.none
-
-
-type alias Model =
-	{ result : RemoteData Http.Error String
-	}
-
-
-type Msg
-	= MsgGotTitle (RemoteData Http.Error String)
-
-
-getTitle : Cmd Msg
-getTitle =
-	Http.get
-		{ url = "https://jsonplaceholder.typicode.com/posts/2"
-		, expect = Http.expectJson upgradeToRemoteData dataTitleDecoder
-		}
-
-
-upgradeToRemoteData result =
-	MsgGotTitle (RemoteData.fromResult result)
-
-
-dataTitleDecoder : Json.Decode.Decoder String
-dataTitleDecoder =
-	Json.Decode.field "title" Json.Decode.string`);
-  } else {
-    LOG("Creating bare elm site");
-    nodeEnv.addFile("./src/Main.elm", `module Main exposing(main)
-
-import Browser exposing(element)
-import Browser.Events exposing(..)
-import Html exposing(Html)
-import Element exposing(..)
-import Utils exposing(..)
-
---------------------------------------
+  nodeEnv.addFile("./src/Model.elm", `module Model exposing(..)
 
 type alias Model = {
 	width: Int,
 	height: Int,
 	deviceKind: String,
 	title: String
-	}
+	}`);
+  nodeEnv.addFile("./src/Main.elm", `module Main exposing(main)
+
+import Browser exposing(element)
+import Browser.Events exposing(onResize)
+import Html exposing(Html)
+import Element exposing(..)
+import Element.Events exposing(..)
+import Element.Input as Input
+import Model exposing(..)
+import Utils exposing(..)
+
+--------------------------------------
 
 type Msg =
 	  WindowResized Int Int
@@ -482,7 +387,7 @@ updateFunc msg model =
 subscriptions: Model -> (Sub Msg)
 subscriptions model =
 	onResize WindowResized`);
-    nodeEnv.addFile("./src/Utils.elm", `module Utils exposing(..)
+  nodeEnv.addFile("./src/Utils.elm", `module Utils exposing(..)
 
 import Element exposing(..)
 import Html.Attributes
@@ -516,7 +421,18 @@ deviceKind width height =
 		"tablet"
 	else
 		"cell phone"`);
-  }
+  nodeEnv.addFile("./src/Ports.elm", `port module Ports exposing (..)
+
+port storeModel : String -> Cmd msg
+
+import Json.Encode as Encode
+import Model exposing(..)
+
+encodeModel : Model -> Cmd msg
+encodeModel model =
+	Encode.object postEncoder posts
+		|> Encode.encode 0
+		|> Ports.storeModel`);
 };
 
 // ---------------------------------------------------------------------------

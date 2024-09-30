@@ -20,24 +20,39 @@ import {
   gen2block
 } from '@jdeighan/llutils';
 
+import {
+  isFile,
+  readTextFile
+} from '@jdeighan/llutils/fs';
+
 // ---------------------------------------------------------------------------
 export var procSvelte = (code, hMetaData = {}, filePath = undef) => {
-  var elem, hResult, str;
-  hMetaData.filename = filePath;
-  elem = hMetaData.customElement;
-  if (isString(elem, 'nonempty')) {
-    checkCustomElemName(elem);
-    hMetaData.customElement = true;
-    str = `<svelte:options customElement=${OL(elem)}/>`;
+  var customElement, hResult, hSvelteOptions, str;
+  hSvelteOptions = {
+    filename: filePath
+  };
+  ({customElement} = hMetaData);
+  if (isString(customElement, 'nonempty')) {
+    checkCustomElemName(customElement);
+    hSvelteOptions.customElement = true;
+    str = `<svelte:options customElement=${OL(customElement)}/>`;
     code = str + "\n" + code;
   }
-  hResult = compileSvelte(code, hMetaData);
+  hResult = compileSvelte(code, hSvelteOptions);
   return {
     code: hResult.js.code,
     sourceMap: undef,
     lUses: [],
     hOtherFiles: {}
   };
+};
+
+// ---------------------------------------------------------------------------
+export var procSvelteFile = function(filePath, hOptions = {}) {
+  var contents, hMetaData;
+  assert(isFile(filePath), `No such file: ${OL(filePath)}`);
+  ({hMetaData, contents} = readTextFile(filePath, 'eager'));
+  return procSvelte(contents, hMetaData, filePath, hOptions);
 };
 
 // ---------------------------------------------------------------------------

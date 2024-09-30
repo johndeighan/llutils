@@ -1,10 +1,9 @@
 {{
 	var getTracer;
 
-	({getTracer} = (await import('@jdeighan/llutils/peggy')));
+	({getTracer} = (await import('@jdeighan/llutils/peggy-utils')));
 
 	export var ulmusAST = (input, tracerType = 'none') => {
-	  debugger;
 	  return peg$parse(input, {
 	    tracer: getTracer(tracerType)
 	  });

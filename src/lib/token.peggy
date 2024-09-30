@@ -5,6 +5,7 @@ type: coffee
 GLOBAL
 
 	import {undef, nonEmpty} from '@jdeighan/llutils'
+	import {DUMP} from '@jdeighan/llutils/dump'
 
 token
 	boolean

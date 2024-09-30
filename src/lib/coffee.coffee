@@ -14,8 +14,6 @@ import {DUMP} from '@jdeighan/llutils/dump'
 import {
 	barf, withExt, isFile,
 	} from '@jdeighan/llutils/fs'
-import {LineFetcher} from '@jdeighan/llutils/fetcher'
-import {replaceHereDocs} from '@jdeighan/llutils/heredoc'
 import {
 	procCoffee, toAST, toASTFile,
 	} from '@jdeighan/llutils/llcoffee'

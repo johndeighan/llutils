@@ -7,25 +7,38 @@ import {
 	isString, isFunction, isArray, isHash,
 	assert, croak, keys, hasKey, nonEmpty, gen2block,
 	} from '@jdeighan/llutils'
+import {
+	isFile, readTextFile,
+	} from '@jdeighan/llutils/fs'
 
 # ---------------------------------------------------------------------------
 
 export procSvelte = (code, hMetaData={}, filePath=undef) =>
 
-	hMetaData.filename = filePath
-	elem = hMetaData.customElement
-	if isString(elem, 'nonempty')
-		checkCustomElemName(elem)
-		hMetaData.customElement = true
-		str = "<svelte:options customElement=#{OL(elem)}/>"
+	hSvelteOptions = {
+		filename: filePath
+		}
+	{customElement} = hMetaData
+	if isString(customElement, 'nonempty')
+		checkCustomElemName(customElement)
+		hSvelteOptions.customElement = true
+		str = "<svelte:options customElement=#{OL(customElement)}/>"
 		code = str + "\n" + code
-	hResult = compileSvelte code, hMetaData
+	hResult = compileSvelte code, hSvelteOptions
 	return {
 		code: hResult.js.code
 		sourceMap: undef
 		lUses: []
 		hOtherFiles: {}
 		}
+
+# ---------------------------------------------------------------------------
+
+export procSvelteFile = (filePath, hOptions={}) ->
+
+	assert isFile(filePath), "No such file: #{OL(filePath)}"
+	{hMetaData, contents} = readTextFile(filePath, 'eager')
+	return procSvelte(contents, hMetaData, filePath, hOptions)
 
 # ---------------------------------------------------------------------------
 

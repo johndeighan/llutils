@@ -32,11 +32,6 @@ import {
   barf
 } from '@jdeighan/llutils/fs';
 
-import {
-  DUMP,
-  BOX
-} from '@jdeighan/llutils/dump';
-
 // --- cache to hold previously fetched file contents
 hSourceMaps = {}; // --- { filepath => hMap, ... }
 

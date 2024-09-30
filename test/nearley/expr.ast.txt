@@ -1,0 +1,35 @@
+[
+   {
+      "config": "preprocessor",
+      "value": "coffee"
+   },
+   {
+      "name": "expr",
+      "rules": [
+         {
+            "tokens": [
+               "number",
+               {
+                  "literal": "+"
+               },
+               "number"
+            ],
+            "postprocess": "\n   (data) =>\n      return {\n         op: \"sum\"\n         left:  data[0]\n         right: data[2]\n         }\n   "
+         }
+      ]
+   },
+   {
+      "name": "number",
+      "rules": [
+         {
+            "tokens": [
+               {
+                  "ebnf": {},
+                  "modifier": ":+"
+               }
+            ],
+            "postprocess": "\n   (data) =>\n      parseInt(data[0].join(\"\"))\n   "
+         }
+      ]
+   }
+]

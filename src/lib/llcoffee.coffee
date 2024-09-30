@@ -6,7 +6,6 @@ import {
 	undef, defined, OL, isString, getOptions, removeKeys, words,
 	assert, croak, isEmpty, nonEmpty, blockToArray,
 	} from '@jdeighan/llutils'
-import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {
 	isFile, readTextFile,
 	} from '@jdeighan/llutils/fs'

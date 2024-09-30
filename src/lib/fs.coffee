@@ -5,7 +5,7 @@ import urlLib from 'url'
 import fs from 'node:fs'
 import {globSync as glob} from 'glob'
 import NReadLines from 'n-readlines'
-import {temporaryFile} from 'tempy'
+import {temporaryFile as tempFile} from 'tempy'
 
 import {
 	undef, defined, notdefined, words, OL, keys, hasKey,
@@ -15,6 +15,7 @@ import {
 import {
 	isMetaDataStart, convertMetaData,
 	} from '@jdeighan/llutils/meta-data'
+import {execCmd} from '@jdeighan/llutils/exec-utils'
 
 export lStatFields = words(
 	'dev ino mode nlink uid gid rdev size blksize blocks',
@@ -616,7 +617,7 @@ export class TextFileWriter
 	constructor: (@filePath=undef) ->
 
 		if !@filePath
-			@filePath = temporaryFile()
+			@filePath = tempFile()
 		@writer = fs.createWriteStream(@filePath, {flags: 'w'})
 
 	write: (str) ->
@@ -798,3 +799,14 @@ export barfPkgJSON = (hJson, filePath='./package.json') =>
 
 	barfJSON hJson2, filePath
 	return
+
+# ---------------------------------------------------------------------------
+
+export barfDebugFile = (contents, orgFilePath, purpose) =>
+
+	if defined(orgFilePath)
+		filePath = withExt(orgFilePath, ".#{purpose}.txt")
+	else
+		filePath = "./test/temp.#{purpose}.txt"
+	barf contents, filePath
+	return filePath

@@ -627,6 +627,12 @@ equal(splitPrefix("   abc"), ["   ", "abc"]);
 equal(splitPrefix("\t\tabc"), ["\t\t", "abc"]);
 
 // ---------------------------------------------------------------------------
+//symbol "substrCount(str, substr)"
+equal(substrCount('   abc', ' '), 3);
+
+equal(substrCount('abcabcabc', 'ab'), 3);
+
+// ---------------------------------------------------------------------------
 //symbol "tabify(str)"    # --- convert leading spaces to TABs
 str = `abc
   def

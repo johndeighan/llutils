@@ -620,12 +620,6 @@ export listdiff = (lItems, lToRemove) =>
 
 # ---------------------------------------------------------------------------
 
-export untabify = (str, numSpaces=3) =>
-
-	return str.replace(/\t/g, ' '.repeat(numSpaces))
-
-# ---------------------------------------------------------------------------
-
 log_level = 0
 
 export LOG_indent = () =>
@@ -650,7 +644,7 @@ export LOG = (item, hOptions={}) =>
 	if (log_level > 0)
 		item = "\t".repeat(log_level) + item
 	if isString(item)
-		console.log untabify(item)
+		console.log untabify(item, '!strict')
 	else
 		console.dir item, {depth}
 
@@ -663,12 +657,22 @@ export splitPrefix = (line) =>
 	return [lMatches[1], lMatches[2]]
 
 # ---------------------------------------------------------------------------
+
+export substrCount = (str, char) =>
+
+	return (str.match(///#{char}///g)||[]).length
+
+# ---------------------------------------------------------------------------
 #    tabify - convert leading spaces to TAB characters
 #             if numSpaces is not defined, then the first line
 #             that contains at least one space sets it
 
-export tabify = (str, numSpaces=undef) =>
+export tabify = (str, hOptions={}) =>
 
+	{numSpaces, strict} = getOptions hOptions, {
+		numSpaces: undef
+		strict: true
+		}
 	lLines = []
 	for str in blockToArray(str)
 		[prefix, theRest] = splitPrefix(str)
@@ -676,12 +680,39 @@ export tabify = (str, numSpaces=undef) =>
 		if prefixLen == 0
 			lLines.push theRest
 		else
-			assert (prefix.indexOf('\t') == -1), "found TAB"
-			if numSpaces == undef
-				numSpaces = prefixLen
-			assert (prefixLen % numSpaces == 0), "Bad prefix"
-			level = prefixLen / numSpaces
-			lLines.push '\t'.repeat(level) + theRest
+			if strict
+				assert (prefix.indexOf('\t') == -1), "unexpected TAB"
+			if (numSpaces == undef)
+				numSpaces = substrCount(prefix, ' ')
+			spaces = ' '.repeat(numSpaces)
+			prefix = prefix.replaceAll(spaces, "\t")
+			lLines.push "#{prefix}#{theRest}"
+	return arrayToBlock(lLines)
+
+# ---------------------------------------------------------------------------
+#    tabify - convert leading spaces to TAB characters
+#             if numSpaces is not defined, then the first line
+#             that contains at least one space sets it
+
+export untabify = (str, hOptions={}) =>
+
+	{numSpaces, strict} = getOptions hOptions, {
+		numSpaces: 3
+		strict: true
+		}
+	assert isInteger(numSpaces), "bad numSpaces: #{OL(numSpaces)}"
+	spaces = ' '.repeat(numSpaces)
+	lLines = []
+	for str in blockToArray(str)
+		[prefix, theRest] = splitPrefix(str)
+		prefixLen = prefix.length
+		if prefixLen == 0
+			lLines.push theRest
+		else
+			if strict
+				assert (prefix.indexOf(' ') == -1), "unexpected space char"
+			prefix = prefix.replaceAll("\t", spaces)
+			lLines.push "#{prefix}#{theRest}"
 	return arrayToBlock(lLines)
 
 # ---------------------------------------------------------------------------
@@ -900,7 +931,7 @@ export fromTAML = (block) ->
 	hOptions = {
 		skipInvalid: true
 		}
-	return YAML.parse(untabify(rest, 2), hOptions)
+	return YAML.parse(untabify(rest, {numSpaces:2}), hOptions)
 
 # ---------------------------------------------------------------------------
 
@@ -1119,6 +1150,7 @@ export setsAreEqual = (a, b) =>
 		&& [...a].every((val) => b.has(val))
 
 # ---------------------------------------------------------------------------
+# --- ASYNC !
 
 export sleep = (sec) =>
 

@@ -4,6 +4,7 @@ import {
 	undef, defined, notdefined, OL, isArray, isHash,
 	assert, croak,
 	} from '@jdeighan/llutils'
+import {DUMP} from '@jdeighan/llutils/dump'
 
 # ---------------------------------------------------------------------------
 

@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "config.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\config.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAoB;AAEpB,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;CAAA,MAAA;;AAGA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EARoB;;;AAYpB,QAAA,CAAS,CAAA,CAAA,GAAA;SAAM,SAAA,CAAA;AAAN,CAAT",
+  "sourcesContent": [
+    "# config.test.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined,\r\n\t} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/config'\r\nObject.assign(global, lib)\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nsucceeds () => getConfig()\r\n"
+  ]
+}

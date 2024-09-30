@@ -43,7 +43,7 @@ export var TextBlock = class TextBlock {
     for (j = 0, len = ref.length; j < len; j++) {
       str = ref[j];
       if (this.hOptions.untabify) {
-        str = untabify(str);
+        str = untabify(str, '!strict');
       }
       if (str.length > this.maxLen) {
         this.maxLen = str.length;

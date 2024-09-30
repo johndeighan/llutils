@@ -6,7 +6,7 @@ execAsync = promisify(exec)
 
 import {
 	undef, defined, notdefined, getOptions, chomp,
-	assert, croak, OL, stripCR,
+	assert, croak, OL, stripCR, isEmpty,
 	} from '@jdeighan/llutils'
 
 # ---------------------------------------------------------------------------
@@ -62,3 +62,10 @@ export npmLogLevel = () =>
 	result = execCmd('npm config get loglevel')
 	return chomp(result)
 
+# ---------------------------------------------------------------------------
+
+export checkJS = (filePath) =>
+
+	result = execCmd "node -c #{filePath}"
+	assert isEmpty(result), "ERROR: #{result}"
+	return true

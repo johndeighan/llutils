@@ -25,6 +25,8 @@
 		"./section-map": "./src/lib/section-map.js",
 		"./utest": "./src/lib/utest.js",
 		"./peggy": "./src/lib/peggy.js",
+		"./peggy-utils": "./src/lib/peggy-utils.js",
+		"./nearley": "./src/lib/nearley.js",
 		"./cmd-args": "./src/lib/cmd-args.js",
 		"./heredoc": "./src/lib/heredoc.js",
 		"./to-nice": "./src/lib/to-nice.js",
@@ -42,7 +44,7 @@
 		"./elm-doc": "./src/lib/elm-doc.js",
 		"./ulmus": "./src/lib/ulmus.js",
 		"./digraph": "./src/lib/digraph.js",
-		"./config": "./low-level-build.config.js",
+		"./config": "./src/lib/config.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {

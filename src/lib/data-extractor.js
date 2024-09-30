@@ -100,7 +100,7 @@
 
 	import {
 	  getTracer
-	} from '@jdeighan/llutils/peggy';
+	} from '@jdeighan/llutils/peggy-utils';
 
 	import {
 	  ContextStack

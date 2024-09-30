@@ -712,11 +712,6 @@ export var listdiff = (lItems, lToRemove) => {
 };
 
 // ---------------------------------------------------------------------------
-export var untabify = (str, numSpaces = 3) => {
-  return str.replace(/\t/g, ' '.repeat(numSpaces));
-};
-
-// ---------------------------------------------------------------------------
 log_level = 0;
 
 export var LOG_indent = () => {
@@ -738,7 +733,7 @@ export var LOG = (item, hOptions = {}) => {
     item = "\t".repeat(log_level) + item;
   }
   if (isString(item)) {
-    return console.log(untabify(item));
+    return console.log(untabify(item, '!strict'));
   } else {
     return console.dir(item, {depth});
   }
@@ -753,11 +748,20 @@ export var splitPrefix = (line) => {
 };
 
 // ---------------------------------------------------------------------------
+export var substrCount = (str, char) => {
+  return (str.match(RegExp(`${char}`, "g")) || []).length;
+};
+
+// ---------------------------------------------------------------------------
 //    tabify - convert leading spaces to TAB characters
 //             if numSpaces is not defined, then the first line
 //             that contains at least one space sets it
-export var tabify = (str, numSpaces = undef) => {
-  var j, lLines, len1, level, prefix, prefixLen, ref, theRest;
+export var tabify = (str, hOptions = {}) => {
+  var j, lLines, len1, numSpaces, prefix, prefixLen, ref, spaces, strict, theRest;
+  ({numSpaces, strict} = getOptions(hOptions, {
+    numSpaces: undef,
+    strict: true
+  }));
   lLines = [];
   ref = blockToArray(str);
   for (j = 0, len1 = ref.length; j < len1; j++) {
@@ -767,13 +771,46 @@ export var tabify = (str, numSpaces = undef) => {
     if (prefixLen === 0) {
       lLines.push(theRest);
     } else {
-      assert(prefix.indexOf('\t') === -1, "found TAB");
-      if (numSpaces === undef) {
-        numSpaces = prefixLen;
+      if (strict) {
+        assert(prefix.indexOf('\t') === -1, "unexpected TAB");
       }
-      assert(prefixLen % numSpaces === 0, "Bad prefix");
-      level = prefixLen / numSpaces;
-      lLines.push('\t'.repeat(level) + theRest);
+      if (numSpaces === undef) {
+        numSpaces = substrCount(prefix, ' ');
+      }
+      spaces = ' '.repeat(numSpaces);
+      prefix = prefix.replaceAll(spaces, "\t");
+      lLines.push(`${prefix}${theRest}`);
+    }
+  }
+  return arrayToBlock(lLines);
+};
+
+// ---------------------------------------------------------------------------
+//    tabify - convert leading spaces to TAB characters
+//             if numSpaces is not defined, then the first line
+//             that contains at least one space sets it
+export var untabify = (str, hOptions = {}) => {
+  var j, lLines, len1, numSpaces, prefix, prefixLen, ref, spaces, strict, theRest;
+  ({numSpaces, strict} = getOptions(hOptions, {
+    numSpaces: 3,
+    strict: true
+  }));
+  assert(isInteger(numSpaces), `bad numSpaces: ${OL(numSpaces)}`);
+  spaces = ' '.repeat(numSpaces);
+  lLines = [];
+  ref = blockToArray(str);
+  for (j = 0, len1 = ref.length; j < len1; j++) {
+    str = ref[j];
+    [prefix, theRest] = splitPrefix(str);
+    prefixLen = prefix.length;
+    if (prefixLen === 0) {
+      lLines.push(theRest);
+    } else {
+      if (strict) {
+        assert(prefix.indexOf(' ') === -1, "unexpected space char");
+      }
+      prefix = prefix.replaceAll("\t", spaces);
+      lLines.push(`${prefix}${theRest}`);
     }
   }
   return arrayToBlock(lLines);
@@ -1000,7 +1037,9 @@ export var fromTAML = function(block) {
   hOptions = {
     skipInvalid: true
   };
-  return YAML.parse(untabify(rest, 2), hOptions);
+  return YAML.parse(untabify(rest, {
+    numSpaces: 2
+  }), hOptions);
 };
 
 // ---------------------------------------------------------------------------
@@ -1242,6 +1281,7 @@ export var setsAreEqual = (a, b) => {
 };
 
 // ---------------------------------------------------------------------------
+// --- ASYNC !
 export var sleep = async(sec) => {
   await new Promise((r) => {
     return setTimeout(r, 1000 * sec);

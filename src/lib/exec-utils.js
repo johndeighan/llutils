@@ -21,7 +21,8 @@ import {
   assert,
   croak,
   OL,
-  stripCR
+  stripCR,
+  isEmpty
 } from '@jdeighan/llutils';
 
 // ---------------------------------------------------------------------------
@@ -72,6 +73,14 @@ export var npmLogLevel = () => {
   var result;
   result = execCmd('npm config get loglevel');
   return chomp(result);
+};
+
+// ---------------------------------------------------------------------------
+export var checkJS = (filePath) => {
+  var result;
+  result = execCmd(`node -c ${filePath}`);
+  assert(isEmpty(result), `ERROR: ${result}`);
+  return true;
 };
 
 //# sourceMappingURL=exec-utils.js.map

@@ -11,6 +11,10 @@
 	  nonEmpty
 	} from '@jdeighan/llutils';
 
+	import {
+	  DUMP
+	} from '@jdeighan/llutils/dump';
+
 	// --------------------------------------------------------------
 	parse__boolean__1 = () => {
 	  return {
@@ -144,10 +148,9 @@
 
 	var getTracer;
 
-	({getTracer} = (await import('@jdeighan/llutils/peggy')));
+	({getTracer} = (await import('@jdeighan/llutils/peggy-utils')));
 
 	export var ulmusAST = (input, tracerType = 'none') => {
-	  debugger;
 	  return peg$parse(input, {
 	    tracer: getTracer(tracerType)
 	  });

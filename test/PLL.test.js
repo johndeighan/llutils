@@ -6,7 +6,7 @@ import {
 
 import {
   BaseTracer
-} from '@jdeighan/llutils/peggy';
+} from '@jdeighan/llutils/peggy-utils';
 
 import {
   parse

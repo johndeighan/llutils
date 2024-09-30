@@ -9,17 +9,17 @@ import {
 } from '@jdeighan/llutils';
 
 import {
+  indented,
+  splitLine
+} from '@jdeighan/llutils/indent';
+
+import {
   procCoffee
 } from '@jdeighan/llutils/llcoffee';
 
 import {
   LineFetcher
 } from '@jdeighan/llutils/fetcher';
-
-import {
-  indented,
-  splitLine
-} from '@jdeighan/llutils/indent';
 
 import {
   replaceHereDocs

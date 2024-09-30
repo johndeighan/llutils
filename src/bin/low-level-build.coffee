@@ -8,16 +8,14 @@ import {
 	undef, defined, notdefined, assert, hasKey, keys,
 	isEmpty, nonEmpty, add_s, OL, gen2block, tla,
 	} from '@jdeighan/llutils'
-import {execCmd} from '@jdeighan/llutils/exec-utils'
 import {getArgs} from '@jdeighan/llutils/cmd-args'
 import {
 	isProjRoot, barf, barfPkgJSON, slurpPkgJSON, mkpath,
 	fileExt, withExt, allFilesMatching, readTextFile,
 	} from '@jdeighan/llutils/fs'
 import {
-	procFiles, procOneFile,
+	procFiles, procOneFile, removeOutFile,
 	} from '@jdeighan/llutils/file-processor'
-import {hConfig} from '@jdeighan/llutils/config'
 
 echo = true
 doLog = (str) =>
@@ -75,7 +73,7 @@ for filePath in keys(hUses)
 			if ! lProcessed.includes filePath
 				console.log "ALSO PROCESS: #{OL(filePath)}"
 				procOneFile filePath
-				lProcessed.push filePath, hConfig
+				lProcessed.push filePath
 
 # --- log number of files processed
 hFiles = {}
@@ -85,6 +83,7 @@ for file in lProcessed
 		hFiles[ext].push file
 	else
 		hFiles[ext] = [file]
+
 for ext in keys(hFiles).sort()
 	n = hFiles[ext].length
 	console.log "#{n} *#{ext} file#{add_s(n)} compiled"
@@ -134,13 +133,11 @@ if watch
 			}
 		}
 	chokidar.watch(glob, hOptions).on 'all', (eventType, path) =>
-		if path.match(/node_modules/)
+		if filePath.match(/\bnode_modules\b/)
 			return
-		path = mkpath(path)
-		ext = fileExt(path)
-		{func, outExt} = hConfig[ext]
+		filePath = mkpath(path)
 		switch eventType
 			when 'add','change'
-				procOneFile path
+				procOneFile filePath
 			when 'unlink'
-				execCmd "rm #{withExt(path, outExt)}"
+				removeOutFile filePath

@@ -22,10 +22,6 @@ import {
 } from '@jdeighan/llutils';
 
 import {
-  execCmd
-} from '@jdeighan/llutils/exec-utils';
-
-import {
   getArgs
 } from '@jdeighan/llutils/cmd-args';
 
@@ -43,12 +39,9 @@ import {
 
 import {
   procFiles,
-  procOneFile
+  procOneFile,
+  removeOutFile
 } from '@jdeighan/llutils/file-processor';
-
-import {
-  hConfig
-} from '@jdeighan/llutils/config';
 
 echo = true;
 
@@ -126,7 +119,7 @@ for (i = 0, len = ref.length; i < len; i++) {
       if (!lProcessed.includes(filePath)) {
         console.log(`ALSO PROCESS: ${OL(filePath)}`);
         procOneFile(filePath);
-        lProcessed.push(filePath, hConfig);
+        lProcessed.push(filePath);
       }
     }
   }
@@ -205,19 +198,16 @@ if (watch) {
     }
   };
   chokidar.watch(glob, hOptions).on('all', (eventType, path) => {
-    var func, outExt;
-    if (path.match(/node_modules/)) {
+    if (filePath.match(/\bnode_modules\b/)) {
       return;
     }
-    path = mkpath(path);
-    ext = fileExt(path);
-    ({func, outExt} = hConfig[ext]);
+    filePath = mkpath(path);
     switch (eventType) {
       case 'add':
       case 'change':
-        return procOneFile(path);
+        return procOneFile(filePath);
       case 'unlink':
-        return execCmd(`rm ${withExt(path, outExt)}`);
+        return removeOutFile(filePath);
     }
   });
 }

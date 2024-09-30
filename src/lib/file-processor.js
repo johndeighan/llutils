@@ -1,4 +1,6 @@
-  // file-processor.coffee
+// file-processor.coffee
+var hConfig;
+
 import {
   compile as compileCoffee
 } from 'coffeescript';
@@ -27,9 +29,8 @@ import {
 } from '@jdeighan/llutils';
 
 import {
-  splitLine,
-  indented
-} from '@jdeighan/llutils/indent';
+  execCmd
+} from '@jdeighan/llutils/exec-utils';
 
 import {
   isProjRoot,
@@ -47,16 +48,20 @@ import {
 } from '@jdeighan/llutils/fs';
 
 import {
-  LineFetcher
-} from '@jdeighan/llutils/fetcher';
-
-import {
-  replaceHereDocs
-} from '@jdeighan/llutils/heredoc';
-
-import {
-  hConfig
+  getConfig
 } from '@jdeighan/llutils/config';
+
+hConfig = getConfig();
+
+// ---------------------------------------------------------------------------
+export var removeOutFile = (filePath) => {
+  var ext, outExt;
+  ext = fileExt(filePath);
+  ({outExt} = hConfig[ext]);
+  if (defined(outExt)) {
+    execCmd(`rm ${withExt(filePath, outExt)}`);
+  }
+};
 
 // ---------------------------------------------------------------------------
 // --- processes all files with file ext in hConfig
@@ -108,7 +113,7 @@ export var procFiles = (pattern = "./{*.*,**/*.*}", hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
-// --- func must have the following signature:
+// --- strFunc must have the following signature:
 //        params: (code, hMetaData, filePath)
 //        return value:
 //           either a string (e.g. code)
@@ -118,17 +123,17 @@ export var procFiles = (pattern = "./{*.*,**/*.*}", hOptions = {}) => {
 //              lUses - an array, possibly empty
 // ---------------------------------------------------------------------------
 export var procOneFile = (filePath, hOptions = {}) => {
-  var code, contents, debug, echo, ext, func, hMetaData, hOtherFiles, hResult, i, lUses, len, logOnly, outExt, ref, relPath, sourceMap;
-  ext = fileExt(filePath);
-  [func, outExt] = extractConfig(hConfig, ext);
-  if (!defined(func, outExt)) {
+  var code, contents, debug, echo, ext, fileFunc, hMetaData, hOtherFiles, hResult, i, lUses, len, logOnly, outExt, ref, relPath, sourceMap, strFunc;
+  assert(isFile(filePath), `No such file: ${OL(filePath)}`);
+  ({strFunc, fileFunc, outExt} = hConfig[fileExt(filePath)]);
+  if (notdefined(outExt)) {
     return {
       processed: false,
       lUses: []
     };
   }
-  assert(isFunction(func), `Bad config: ${OL(hConfig)}`);
   assert(isString(outExt) && outExt.startsWith('.'), `Bad config: ${OL(hConfig)}`);
+  assert(isFunction(strFunc) || isFunction(fileFunc), "neither strFunc or fileFunc is a function");
   ({debug, logOnly, echo} = getOptions(hOptions, {
     debug: false,
     logOnly: false,
@@ -144,13 +149,15 @@ export var procOneFile = (filePath, hOptions = {}) => {
       lUses: []
     };
   }
-  // --- get file contents, including meta data
-  ({hMetaData, contents} = readTextFile(filePath, 'eager'));
-  assert(isString(contents), `contents not a string: ${OL(contents)}`);
-  assert(nonEmpty(contents), `empty contents: ${OL(contents)}`);
-  lUses = [];
-  sourceMap = undef;
-  hResult = func(contents, hMetaData, relPath, hOptions);
+  if (isFunction(fileFunc)) {
+    hResult = fileFunc(filePath, hOptions);
+  } else {
+    // --- get file contents, including meta data
+    ({hMetaData, contents} = readTextFile(filePath, 'eager'));
+    assert(isString(contents), `contents not a string: ${OL(contents)}`);
+    assert(nonEmpty(contents), `empty contents: ${OL(contents)}`);
+    hResult = strFunc(contents, hMetaData, relPath, hOptions);
+  }
   assert(isHash(hResult), `result not a hash: ${OL(hResult)}`);
   ({code, sourceMap, hOtherFiles, lUses} = hResult);
   // --- Write out main output file
@@ -171,19 +178,8 @@ export var procOneFile = (filePath, hOptions = {}) => {
   }
   return {
     processed: true,
-    lUses
+    lUses: lUses || {}
   };
-};
-
-// ---------------------------------------------------------------------------
-export var extractConfig = function(hConfig, ext) {
-  var h;
-  h = hConfig[ext];
-  if (defined(h) && isHash(h)) {
-    return [h.func, h.outExt];
-  } else {
-    return [undef, undef];
-  }
 };
 
 // ---------------------------------------------------------------------------

@@ -250,6 +250,7 @@ setUpElm = (nodeEnv, subtype=undef) =>
 
 	nodeEnv.addDevDependency 'svelte'
 
+	# --- NOTE: script build:all was defined in baseSetUp()
 	nodeEnv.addScript 'build',  "npm run build:all && elm make src/Main.elm --output=main.js"
 	nodeEnv.addScript 'dev',    "npm run build:all && elm-live src/Main.elm -- --debug --output=main.js"
 
@@ -261,6 +262,7 @@ setUpElm = (nodeEnv, subtype=undef) =>
 			"elm/json"
 			"elm/regex"
 			"mdgriffith/elm-ui"
+			"phollyer/elm-ui-colors"
 			]
 		LOG "installing elm lib #{lib}"
 		execCmdY "elm install #{lib}"
@@ -296,240 +298,159 @@ setUpElm = (nodeEnv, subtype=undef) =>
 		</html>
 		"""
 
-	if (subtype == 'json')
-		LOG "installing elm lib krisajenkins/remotedata"
-		execCmdY "elm install /krisajenkins/remotedata"
+	nodeEnv.addFile "./src/Model.elm", """
+		module Model exposing(..)
 
-		LOG "Creating elm site 'json'"
-		nodeEnv.addFile "./src/Main.elm", """
-			module Main exposing (..)
-
-			import Browser exposing(element)
-			import Html exposing(text)
-			import Http
-			import Json.Decode
-			import RemoteData exposing (RemoteData)
-
-
-			main : Program () Model Msg
-			main =
-				element
-					{ init = initModel
-					, view = view
-					, update = update
-					, subscriptions = subscriptions
-					}
-
-
-			initModel : () -> ( Model, Cmd Msg )
-			initModel _ =
-				( { result = RemoteData.NotAsked }, getTitle )
-
-
-			view : Model -> Html.Html msg
-			view model =
-				case model.result of
-					RemoteData.Failure error ->
-						text (getErrorMessage error)
-
-					RemoteData.Success title ->
-						text title
-
-					RemoteData.Loading ->
-						text "Loading ..."
-
-					RemoteData.NotAsked ->
-						text "Where everything starts"
-
-
-			update : Msg -> Model -> ( Model, Cmd Msg )
-			update msg model =
-				case msg of
-					MsgGotTitle result ->
-						( { model | result = result }, Cmd.none )
-
-
-			getErrorMessage errorDetail =
-				case errorDetail of
-					Http.NetworkError ->
-						"Connection error"
-
-					Http.BadStatus errorStatus ->
-						"Invalid server response " ++ String.fromInt errorStatus
-
-					Http.Timeout ->
-						"Request time out"
-
-					Http.BadUrl reasonError ->
-						"Invalid request URL " ++ reasonError
-
-					Http.BadBody invalidData ->
-						"Invalid data " ++ invalidData
-
-
-			subscriptions : Model -> Sub msg
-			subscriptions _ =
-				Sub.none
-
-
-			type alias Model =
-				{ result : RemoteData Http.Error String
-				}
-
-
-			type Msg
-				= MsgGotTitle (RemoteData Http.Error String)
-
-
-			getTitle : Cmd Msg
-			getTitle =
-				Http.get
-					{ url = "https://jsonplaceholder.typicode.com/posts/2"
-					, expect = Http.expectJson upgradeToRemoteData dataTitleDecoder
-					}
-
-
-			upgradeToRemoteData result =
-				MsgGotTitle (RemoteData.fromResult result)
-
-
-			dataTitleDecoder : Json.Decode.Decoder String
-			dataTitleDecoder =
-				Json.Decode.field "title" Json.Decode.string
+		type alias Model = {
+			width: Int,
+			height: Int,
+			deviceKind: String,
+			title: String
+			}
 		"""
-	else
-		LOG "Creating bare elm site"
-		nodeEnv.addFile "./src/Main.elm", """
-			module Main exposing(main)
 
-			import Browser exposing(element)
-			import Browser.Events exposing(..)
-			import Html exposing(Html)
-			import Element exposing(..)
-			import Utils exposing(..)
+	nodeEnv.addFile "./src/Main.elm", """
+		module Main exposing(main)
 
-			--------------------------------------
+		import Browser exposing(element)
+		import Browser.Events exposing(onResize)
+		import Html exposing(Html)
+		import Element exposing(..)
+		import Element.Events exposing(..)
+		import Element.Input as Input
+		import Model exposing(..)
+		import Utils exposing(..)
 
-			type alias Model = {
-				width: Int,
-				height: Int,
-				deviceKind: String,
-				title: String
+		--------------------------------------
+
+		type Msg =
+			  WindowResized Int Int
+
+		--------------------------------------
+
+		main : Program Flags Model Msg
+		main =
+			element {
+				init = init,
+				view = vMain,
+				update = updateFunc,
+				subscriptions = subscriptions
 				}
 
-			type Msg =
-				  WindowResized Int Int
+		--------------------------------------
 
-			--------------------------------------
+		vMain: Model -> Html Msg
+		vMain model = layout
+			[]
+			(row
+				[centerX, spacing 25]
+				[
+					(el
+						[centerX, fontSize 32]
+						(text model.title)
+						),
+					(vDevice model)
+					]
+				)
 
-			main : Program Flags Model Msg
-			main =
-				element {
-					init = init,
-					view = vMain,
-					update = updateFunc,
-					subscriptions = subscriptions
-					}
+		vDevice: Model -> Element Msg
+		vDevice model =
+			( el
+				[fontSize 18]
+				(txtDevice model)
+				)
 
-			--------------------------------------
+		txtDevice: Model -> Element msg
+		txtDevice model =
+			(text ("(device: " ++ model.deviceKind ++ ")" ) )
 
-			vMain: Model -> Html Msg
-			vMain model = layout
-				[]
-				(row
-					[centerX, spacing 25]
-					[
-						(el
-							[centerX, fontSize 32]
-							(text model.title)
-							),
-						(vDevice model)
-						]
-					)
+		--------------------------------------
 
-			vDevice: Model -> Element Msg
-			vDevice model =
-				( el
-					[fontSize 18]
-					(txtDevice model)
-					)
+		init: Flags -> (Model, Cmd arg)
+		init f =
+			(
+				{
+					width = f.width,
+					height = f.height,
+					deviceKind = deviceKind f.width f.height,
+					title = "Hello there"
+					},
+				Cmd.none
+				)
 
-			txtDevice: Model -> Element msg
-			txtDevice model =
-				(text ("(device: " ++ model.deviceKind ++ ")" ) )
+		--------------------------------------
 
-			--------------------------------------
+		updateFunc : Msg -> Model -> (Model, Cmd arg)
+		updateFunc msg model =
+			case msg of
+				WindowResized w h ->
+					(
+						{model |
+							width = w,
+							height = h,
+							deviceKind = deviceKind w h
+							},
+						Cmd.none
+						)
 
-			init: Flags -> (Model, Cmd arg)
-			init f =
-				(
-					{
-						width = f.width,
-						height = f.height,
-						deviceKind = deviceKind f.width f.height,
-						title = "Hello there"
-						},
-					Cmd.none
-					)
+		--------------------------------------
 
-			--------------------------------------
+		subscriptions: Model -> (Sub Msg)
+		subscriptions model =
+			onResize WindowResized
+		"""
 
-			updateFunc : Msg -> Model -> (Model, Cmd arg)
-			updateFunc msg model =
-				case msg of
-					WindowResized w h ->
-						(
-							{model |
-								width = w,
-								height = h,
-								deviceKind = deviceKind w h
-								},
-							Cmd.none
-							)
+	nodeEnv.addFile "./src/Utils.elm", """
+		module Utils exposing(..)
 
-			--------------------------------------
+		import Element exposing(..)
+		import Html.Attributes
+		import Element.Font as Font
 
-			subscriptions: Model -> (Sub Msg)
-			subscriptions model =
-				onResize WindowResized
-			"""
+		id: String -> Attribute msg
+		id theID = htmlAttribute (Html.Attributes.id theID)
 
-		nodeEnv.addFile "./src/Utils.elm", """
-			module Utils exposing(..)
+		class: String -> Attribute msg
+		class theClass = htmlAttribute (Html.Attributes.class theClass)
 
-			import Element exposing(..)
-			import Html.Attributes
-			import Element.Font as Font
+		fontSize: Int -> Attribute msg
+		fontSize = Font.size
 
-			id: String -> Attribute msg
-			id theID = htmlAttribute (Html.Attributes.id theID)
+		------------------------------
 
-			class: String -> Attribute msg
-			class theClass = htmlAttribute (Html.Attributes.class theClass)
+		type alias Flags = {
+			height: Int,
+			width: Int
+			}
 
-			fontSize: Int -> Attribute msg
-			fontSize = Font.size
+		------------------------------
 
-			------------------------------
+		deviceKind: Int -> Int -> String
+		deviceKind width height =
+			if (width > 2000) then
+				"big desktop"
+			else if (width > 1200) then
+				"desktop"
+			else if (width > 700) then
+				"tablet"
+			else
+				"cell phone"
+		"""
 
-			type alias Flags = {
-				height: Int,
-				width: Int
-				}
+	nodeEnv.addFile "./src/Ports.elm", """
+		port module Ports exposing (..)
 
-			------------------------------
+		port storeModel : String -> Cmd msg
 
-			deviceKind: Int -> Int -> String
-			deviceKind width height =
-				if (width > 2000) then
-					"big desktop"
-				else if (width > 1200) then
-					"desktop"
-				else if (width > 700) then
-					"tablet"
-				else
-					"cell phone"
-			"""
+		import Json.Encode as Encode
+		import Model exposing(..)
+
+		encodeModel : Model -> Cmd msg
+		encodeModel model =
+			Encode.object postEncoder posts
+				|> Encode.encode 0
+				|> Ports.storeModel
+		"""
 
 	return
 

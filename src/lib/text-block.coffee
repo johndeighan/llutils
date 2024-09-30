@@ -28,7 +28,7 @@ export class TextBlock
 		assert isString(block), "Not a string: #{OL(block)}"
 		for str in toArray(block)
 			if @hOptions.untabify
-				str = untabify(str)
+				str = untabify(str, '!strict')
 			if (str.length > @maxLen)
 				@maxLen = str.length
 			@lLines.push str

@@ -1,7 +1,7 @@
 # PLL.test.coffee
 
 import {undef, fromTAML} from '@jdeighan/llutils'
-import {BaseTracer} from '@jdeighan/llutils/peggy'
+import {BaseTracer} from '@jdeighan/llutils/peggy-utils'
 import {parse} from './PLL/tree.js'
 import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)

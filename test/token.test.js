@@ -1,7 +1,7 @@
   // token.test.coffee
 import {
   BaseTracer
-} from '@jdeighan/llutils/peggy';
+} from '@jdeighan/llutils/peggy-utils';
 
 import * as lib from '@jdeighan/llutils/token';
 

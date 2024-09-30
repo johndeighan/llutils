@@ -10,6 +10,10 @@ import {
   croak
 } from '@jdeighan/llutils';
 
+import {
+  DUMP
+} from '@jdeighan/llutils/dump';
+
 // ---------------------------------------------------------------------------
 export var ContextStack = class ContextStack {
   constructor(obj) {

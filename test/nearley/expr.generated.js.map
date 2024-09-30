@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "expr.generated.js",
+  "sourceRoot": "..\\..\\",
+  "sources": [
+    "test\\nearley\\expr.generated.coffee"
+  ],
+  "names": [],
+  "mappings": "AACuC;;AACpC,CAAA,QAAA,CAAA,CAAA;AACH,MAAA,OAAA,EAAA;EAAE,EAAA,GAAK,QAAA,CAAC,CAAD,CAAA;WAAO,CAAC,CAAC,CAAD;EAAR;EAEL,OAAA,GAAU;IACR,KAAA,EAAO,MADC;IAER,WAAA,EAAa;MACP;QAAC,MAAA,EAAQ,MAAT;QAAiB,SAAA,EAAW;UAAC,QAAD;UAAW;YAAC,SAAA,EAAU;UAAX,CAAX;UAA4B,QAA5B;SAA5B;QAAmE,aAAA,EAC/D,CAAC,IAAD,CAAA,GAAA;AACG,iBAAO;YACJ,EAAA,EAAI,KADA;YAEJ,IAAA,EAAO,IAAI,CAAC,CAAD,CAFP;YAGJ,KAAA,EAAO,IAAI,CAAC,CAAD;UAHP;QADV;MADJ,CADO;MASP;QAAC,MAAA,EAAQ,eAAT;QAA0B,SAAA,EAAW,CAAC,OAAD;MAArC,CATO;MAUP;QAAC,MAAA,EAAQ,eAAT;QAA0B,SAAA,EAAW,CAAC,eAAD;MAAkB,OAAlB,CAArC;QAAiE,aAAA,EAAe,QAAA,CAAC,CAAD,CAAA;iBAAO,CAAC,CAAC,CAAD,CAAG,CAAC,MAAL,CAAY,CAAC,CAAC,CAAC,CAAD,CAAF,CAAZ;QAAP;MAAhF,CAVO;MAWP;QAAC,MAAA,EAAQ,QAAT;QAAmB,SAAA,EAAW,CAAC,eAAD,CAA9B;QAAiD,aAAA,EAC7C,CAAC,IAAD,CAAA,GAAA;iBACG,QAAA,CAAS,IAAI,CAAC,CAAD,CAAG,CAAC,IAAR,CAAa,EAAb,CAAT;QADH;MADJ,CAXO;KAFL;IAkBR,WAAA,EAAa;EAlBL;EAoBV,IAAG,OAAO,MAAP,KAAiB,WAAjB,IAAgC,OAAO,MAAM,CAAC,OAAd,KAAyB,WAA5D;WACE,MAAM,CAAC,OAAP,GAAiB,QADnB;GAAA,MAAA;WAGE,MAAM,CAAC,OAAP,GAAiB,QAHnB;;AAvBC,CAAA",
+  "sourcesContent": [
+    "# Generated automatically by nearley, version unknown\n# http://github.com/Hardmath123/nearley\ndo ->\n  id = (d) -> d[0]\n\n  grammar = {\n    Lexer: undefined,\n    ParserRules: [\n          {\"name\": \"expr\", \"symbols\": [\"number\", {\"literal\":\"+\"}, \"number\"], \"postprocess\": \n              (data) =>\n                 return {\n                    op: \"sum\"\n                    left:  data[0]\n                    right: data[2]\n                    }\n              },\n          {\"name\": \"number$ebnf$1\", \"symbols\": [/[0-9]/]},\n          {\"name\": \"number$ebnf$1\", \"symbols\": [\"number$ebnf$1\", /[0-9]/], \"postprocess\": (d) -> d[0].concat([d[1]])},\n          {\"name\": \"number\", \"symbols\": [\"number$ebnf$1\"], \"postprocess\": \n              (data) =>\n                 parseInt(data[0].join(\"\"))\n              }\n      ],\n    ParserStart: \"expr\"\n  }\n  if typeof module != 'undefined' && typeof module.exports != 'undefined'\n    module.exports = grammar;\n  else\n    window.grammar = grammar;\n"
+  ]
+}
