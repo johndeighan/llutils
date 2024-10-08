@@ -44,6 +44,14 @@ export range = (n) ->
 
 # ---------------------------------------------------------------------------
 
+export inRange = (i, n) ->
+
+	assert isInteger(i), "Not an integer: i = #{OL(i)}"
+	assert isInteger(n), "Not an integer: n = #{OL(n)}"
+	return (i >= 0) && (i < n)
+
+# ---------------------------------------------------------------------------
+
 export rev_range = (n) ->
 
 	i = n
@@ -67,7 +75,10 @@ export warnOnError = (flag=true) => warnOnly = flag
 
 export assert = (cond, msg) =>
 
-	if !cond
+	if isArray(cond)
+		for bool in cond
+			assert bool, msg
+	else if !cond
 		if warnOnly
 			console.log "ERROR: #{msg}"
 		else
@@ -144,7 +155,7 @@ export getOneOption = (name, hOptions) =>
 	if (typeof hOptions == 'string') || (hOptions instanceof String)
 		return hOptions.split(/\s+/).includes(name)
 	else
-		return hasKey(hOptions, name) && hOptions[name]
+		return hOptions[name]
 
 # ---------------------------------------------------------------------------
 # Valid options:

@@ -1,6 +1,6 @@
 # nearley.test.coffee
 
-import {undef} from '@jdeighan/llutils'
+import {undef, defined, notdefined} from '@jdeighan/llutils'
 import * as lib from '@jdeighan/llutils/nearley'
 Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'
@@ -84,6 +84,24 @@ Object.assign(global, lib2)
 	)()
 
 # ---------------------------------------------------------------------------
+#symbol "getNearleyParser(code, filePath=undef, hOptions)"
+
+(() =>
+	parser = await getNearleyParser """
+		expr ->
+			  int "+" int {% ([fst, _, snd]) => fst + snd %}
+			| int "-" int {% ([fst, _, snd]) => fst - snd %}
+			| int "*" int {% ([fst, _, snd]) => fst * snd %}
+			| int "/" int {% ([fst, _, snd]) => fst / snd %}
+		int -> [0-9]:+
+		"""
+	truthy defined(parser)
+	)()
+
+# ---------------------------------------------------------------------------
+#symbol "parseInput(parser, code, hMeta, hOptions)"    # --- compile nearley code
+
+# ---------------------------------------------------------------------------
 #symbol "procNearley(code, hMeta, hOptions)"    # --- compile nearley code
 
 succeeds () => procNearley("""
@@ -106,6 +124,6 @@ succeeds () => procNearley("""
 
 (() =>
 	exprPath = './test/nearley/expr.ne'
-	parseExpr = await getNearleyParser(undef, exprPath, 'debug')
+	parseExpr = await getNearleyParser(undef, exprPath)
 	LOG parseExpr
 	)()

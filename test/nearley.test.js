@@ -1,6 +1,8 @@
   // nearley.test.coffee
 import {
-  undef
+  undef,
+  defined,
+  notdefined
 } from '@jdeighan/llutils';
 
 import * as lib from '@jdeighan/llutils/nearley';
@@ -82,6 +84,22 @@ export {grammar};`);
 })();
 
 // ---------------------------------------------------------------------------
+//symbol "getNearleyParser(code, filePath=undef, hOptions)"
+(async() => {
+  var parser;
+  parser = (await getNearleyParser(`expr ->
+	  int "+" int {% ([fst, _, snd]) => fst + snd %}
+	| int "-" int {% ([fst, _, snd]) => fst - snd %}
+	| int "*" int {% ([fst, _, snd]) => fst * snd %}
+	| int "/" int {% ([fst, _, snd]) => fst / snd %}
+int -> [0-9]:+`));
+  return truthy(defined(parser));
+})();
+
+// ---------------------------------------------------------------------------
+//symbol "parseInput(parser, code, hMeta, hOptions)"    # --- compile nearley code
+
+// ---------------------------------------------------------------------------
 //symbol "procNearley(code, hMeta, hOptions)"    # --- compile nearley code
 succeeds(() => {
   return procNearley(`start -> "abc" {%
@@ -103,7 +121,7 @@ start -> "def" {%
 (async() => {
   var exprPath, parseExpr;
   exprPath = './test/nearley/expr.ne';
-  parseExpr = (await getNearleyParser(undef, exprPath, 'debug'));
+  parseExpr = (await getNearleyParser(undef, exprPath));
   return LOG(parseExpr);
 })();
 

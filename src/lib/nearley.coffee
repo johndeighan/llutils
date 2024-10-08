@@ -34,22 +34,22 @@ export fixNearlyJs = (jsCode) =>
 
 # ---------------------------------------------------------------------------
 
-getParser = (grammar=nearleyGrammar) =>
+getParserObj = (grammar=nearleyGrammar) =>
 
 	return new nearley.Parser(grammar)
 
 # ---------------------------------------------------------------------------
 
-export parseInput = (parser, input, filePath=undef, hOptions={}) =>
+export parseInput = (parserObj, code, filePath=undef, hOptions={}) =>
 
 	{debug, allowAmbiguous} = getOptions hOptions, {
 		debug: false
 		allowAmbiguous: false
 		}
 
-	assert isString(input), "Not a string: #{OL(input)}"
-	parser.feed(input)
-	lResults = parser.results
+	assert isString(code), "Not a string: #{OL(code)}"
+	parserObj.feed(code)
+	lResults = parserObj.results
 	if defined(filePath)
 		from = OL(filePath)
 	else
@@ -76,7 +76,8 @@ export getNearleyParser = (code, filePath=undef, hOptions={}) =>
 	if notdefined(code)
 		assert isFile(filePath), "No such file: #{OL(filePath)}"
 		code = slurp filePath
-	ast = parseInput(getParser(), code, filePath, 'allowAmbiguous')
+	coreParserObj = new nearley.Parser(nearleyGrammar)
+	ast = parseInput(coreParserObj, code, filePath, 'allowAmbiguous')
 
 	# --- Compile the AST into a set of rules
 	setOfRules = compile(ast, {})
@@ -88,14 +89,15 @@ export getNearleyParser = (code, filePath=undef, hOptions={}) =>
 		jsPath = withExt(filePath, '.js')
 	else
 		jsPath = tempFile {extension: '.js'}
-#		jsPath = mkpath('./nearley.temp.js')
+	if debug
+		LOG "Writing JS to #{OL(jsPath)}"
 	barf js, jsPath
 	grammar = await import(pathToFileURL(jsPath))
-	parser = getParser(grammar)
+	parserObj = new nearley.Parser(grammar.default)
 	if streaming
-		return parser
+		return parserObj
 	return ((input) =>
-		return parseInput parser, input, filePath
+		return parseInput parserObj, input, filePath, hOptions
 		)
 
 # ---------------------------------------------------------------------------
@@ -111,7 +113,7 @@ export isNearleyBuiltin = (path) =>
 
 export procNearley = (contents, hMetaData={}, filePath=undef, hOptions={}) =>
 
-	nearleyParser = getParser()
+	nearleyParser = getParserObj()
 	assert isString(contents), "contents not a string: #{OL(contents)}"
 	assert nonEmpty(contents), "empty contents: #{OL(contents)}"
 

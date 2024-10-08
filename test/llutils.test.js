@@ -67,6 +67,18 @@ succeeds(() => {
 equal(Array.from(range(10)), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
 // ---------------------------------------------------------------------------
+//symbol "inRange(i, n)"   # --- test that (i >= 0) && (i < n)
+truthy(inRange(0, 5));
+
+truthy(inRange(2, 5));
+
+truthy(inRange(4, 5));
+
+falsy(inRange(5, 5));
+
+falsy(inRange(10, 5));
+
+// ---------------------------------------------------------------------------
 //symbol "rev_range(n)"   # --- build iterable of ints
 equal(Array.from(rev_range(10)), [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
 

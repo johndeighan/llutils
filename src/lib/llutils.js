@@ -46,6 +46,13 @@ export var range = function*(n) {
 };
 
 // ---------------------------------------------------------------------------
+export var inRange = function(i, n) {
+  assert(isInteger(i), `Not an integer: i = ${OL(i)}`);
+  assert(isInteger(n), `Not an integer: n = ${OL(n)}`);
+  return (i >= 0) && (i < n);
+};
+
+// ---------------------------------------------------------------------------
 export var rev_range = function*(n) {
   var i;
   i = n;
@@ -73,7 +80,13 @@ export var warnOnError = (flag = true) => {
 
 // ---------------------------------------------------------------------------
 export var assert = (cond, msg) => {
-  if (!cond) {
+  var bool, j, len1;
+  if (isArray(cond)) {
+    for (j = 0, len1 = cond.length; j < len1; j++) {
+      bool = cond[j];
+      assert(bool, msg);
+    }
+  } else if (!cond) {
     if (warnOnly) {
       console.log(`ERROR: ${msg}`);
     } else {
@@ -167,7 +180,7 @@ export var getOneOption = (name, hOptions) => {
   if ((typeof hOptions === 'string') || (hOptions instanceof String)) {
     return hOptions.split(/\s+/).includes(name);
   } else {
-    return hasKey(hOptions, name) && hOptions[name];
+    return hOptions[name];
   }
 };
 

@@ -45,6 +45,7 @@
 		"./ulmus": "./src/lib/ulmus.js",
 		"./digraph": "./src/lib/digraph.js",
 		"./config": "./src/lib/config.js",
+		"./grammar-utils": "./src/lib/grammar-utils.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {

@@ -1,5 +1,5 @@
 // nearley.coffee
-var getParser;
+var getParserObj;
 
 import nearley from 'nearley';
 
@@ -68,20 +68,20 @@ export var fixNearlyJs = (jsCode) => {
 };
 
 // ---------------------------------------------------------------------------
-getParser = (grammar = nearleyGrammar) => {
+getParserObj = (grammar = nearleyGrammar) => {
   return new nearley.Parser(grammar);
 };
 
 // ---------------------------------------------------------------------------
-export var parseInput = (parser, input, filePath = undef, hOptions = {}) => {
+export var parseInput = (parserObj, code, filePath = undef, hOptions = {}) => {
   var allowAmbiguous, debug, from, lResults;
   ({debug, allowAmbiguous} = getOptions(hOptions, {
     debug: false,
     allowAmbiguous: false
   }));
-  assert(isString(input), `Not a string: ${OL(input)}`);
-  parser.feed(input);
-  lResults = parser.results;
+  assert(isString(code), `Not a string: ${OL(code)}`);
+  parserObj.feed(code);
+  lResults = parserObj.results;
   if (defined(filePath)) {
     from = OL(filePath);
   } else {
@@ -97,7 +97,7 @@ export var parseInput = (parser, input, filePath = undef, hOptions = {}) => {
 // ---------------------------------------------------------------------------
 // --- ASYNC !
 export var getNearleyParser = async(code, filePath = undef, hOptions = {}) => {
-  var ast, debug, grammar, js, jsPath, parser, setOfRules, streaming;
+  var ast, coreParserObj, debug, grammar, js, jsPath, parserObj, setOfRules, streaming;
   ({debug, streaming} = getOptions(hOptions, {
     debug: false,
     streaming: false
@@ -110,7 +110,8 @@ export var getNearleyParser = async(code, filePath = undef, hOptions = {}) => {
     assert(isFile(filePath), `No such file: ${OL(filePath)}`);
     code = slurp(filePath);
   }
-  ast = parseInput(getParser(), code, filePath, 'allowAmbiguous');
+  coreParserObj = new nearley.Parser(nearleyGrammar);
+  ast = parseInput(coreParserObj, code, filePath, 'allowAmbiguous');
   // --- Compile the AST into a set of rules
   setOfRules = compile(ast, {});
   // --- Generate JavaScript code from the rules
@@ -122,15 +123,17 @@ export var getNearleyParser = async(code, filePath = undef, hOptions = {}) => {
       extension: '.js'
     });
   }
-  //		jsPath = mkpath('./nearley.temp.js')
+  if (debug) {
+    LOG(`Writing JS to ${OL(jsPath)}`);
+  }
   barf(js, jsPath);
   grammar = (await import(pathToFileURL(jsPath)));
-  parser = getParser(grammar);
+  parserObj = new nearley.Parser(grammar.default);
   if (streaming) {
-    return parser;
+    return parserObj;
   }
   return ((input) => {
-    return parseInput(parser, input, filePath);
+    return parseInput(parserObj, input, filePath, hOptions);
   });
 };
 
@@ -145,7 +148,7 @@ export var isNearleyBuiltin = (path) => {
 //     Returns { code, sourceMap, hOtherFiles, lUses }
 export var procNearley = (contents, hMetaData = {}, filePath = undef, hOptions = {}) => {
   var coffeeCode, debug, err, grammarObj, i, include, jsCode, jsFilePath, lAST, lParts, lResults, lUses, len, nearleyCode, nearleyParser, path, text, type;
-  nearleyParser = getParser();
+  nearleyParser = getParserObj();
   assert(isString(contents), `contents not a string: ${OL(contents)}`);
   assert(nonEmpty(contents), `empty contents: ${OL(contents)}`);
   // --- nearley's CoffeeScript processing doesn't play well
