@@ -46,6 +46,7 @@
 		"./digraph": "./src/lib/digraph.js",
 		"./config": "./src/lib/config.js",
 		"./grammar-utils": "./src/lib/grammar-utils.js",
+		"./multi-map": "./src/lib/multi-map.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {

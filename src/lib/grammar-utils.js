@@ -15,10 +15,16 @@ import {
   isInteger,
   range,
   inRange,
+  isEmpty,
+  nonEmpty,
   assert,
   croak,
   getOptions
 } from '@jdeighan/llutils';
+
+import {
+  MultiMap
+} from '@jdeighan/llutils/multi-map';
 
 raisedDot = '•';
 
@@ -63,12 +69,12 @@ export var Grammar = class Grammar {
   // --- yields rules
   * alternatives(name) {
     var k, len, ref, rule;
-    ref = this.hAST.lRules;
+    ref = this.hAST.lRules.filter(function(rule) {
+      return rule.head === name;
+    });
     for (k = 0, len = ref.length; k < len; k++) {
       rule = ref[k];
-      if (rule.head === name) {
-        yield rule;
-      }
+      yield rule;
     }
   }
 
@@ -83,36 +89,75 @@ export var Grammar = class Grammar {
 
 };
 
+export var RuleEx = (function() {
+  // ---------------------------------------------------------------------------
+  //     class RuleEx
+  // ---------------------------------------------------------------------------
+  class RuleEx {
+    static resetNextID() {
+      RuleEx.nextID = 0;
+    }
+
+    static getNextID() {
+      var id;
+      id = RuleEx.nextID;
+      RuleEx.nextID += 1;
+      return id;
+    }
+
+    static get(hRule, src, pos = 0) {
+      var obj;
+      obj = RuleEx.mm.get([hRule, src, pos]);
+      if (defined(obj)) {
+        return obj;
+      } else {
+        obj = new RuleEx(hRule, src, pos);
+        RuleEx.mm.set([hRule, src, pos], obj);
+        return obj;
+      }
+    }
+
+    constructor(hRule1, src1, pos1 = 0) {
+      this.hRule = hRule1;
+      this.src = src1;
+      this.pos = pos1;
+      this.id = RuleEx.getNextID();
+      checkRule(this.hRule, this.id);
+      // --- Copy fields from hRule to this object
+      this.type = this.hRule.type;
+      this.head = this.hRule.head;
+      this.lParts = this.hRule.lParts;
+      assert(isInteger(this.src), `Not an int: ${OL(this.src)}`);
+      this.maxpos = this.lParts.length;
+    }
+
+    nextPart() {
+      return this.lParts[this.pos];
+    }
+
+    inc() {
+      assert(this.pos + 1 <= this.maxpos, `Can't inc ${this}`);
+      this.pos += 1;
+    }
+
+    asString() {
+      return `[${this.id}] ${ruleAsString(this.hRule, this.pos)}`;
+    }
+
+  };
+
+  RuleEx.nextID = 0;
+
+  RuleEx.mm = new MultiMap(3);
+
+  return RuleEx;
+
+}).call(this);
+
 // ---------------------------------------------------------------------------
-//     class RuleEx
-// ---------------------------------------------------------------------------
-export var RuleEx = class RuleEx {
-  constructor(hRule1, src1) {
-    this.hRule = hRule1;
-    this.src = src1;
-    checkRule(this.hRule);
-    // --- Copy fields from hRule to this object
-    this.type = this.hRule.type;
-    this.head = this.hRule.head;
-    this.lParts = this.hRule.lParts;
-    this.pos = 0;
-    assert(isInteger(this.src), `Not an int: ${OL(this.src)}`);
-    this.maxpos = this.lParts.length;
-  }
-
-  nextPart() {
-    return this.lParts[this.pos];
-  }
-
-  inc() {
-    assert(this.pos + 1 <= this.maxpos, `Can't inc ${this}`);
-    this.pos += 1;
-  }
-
-  asString() {
-    return ruleAsString(this.hRule, this.pos);
-  }
-
+export var getRuleEx = (hRule, src) => {
+  var pos;
+  return new RuleEx(hRule, src, pos = 0);
 };
 
 // ---------------------------------------------------------------------------
@@ -133,11 +178,17 @@ export var EarleyParser = class EarleyParser {
   }
 
   // ..........................................................
+  asString() {
+    return this.grammar.asString();
+  }
+
+  // ..........................................................
   // --- If debug == true, the function yields each time
   //     a new RuleEx is added or an existing RuleEx is
   //     incremented
   * parse(str, hOptions = {}) {
-    var S, debug, hPart, head, i, initRuleEx, k, l, len, len1, n, next, ref, ref1, ref2, ref3, ref4, root, rule, set, src, xRule, xRuleFromSrc;
+    debugger;
+    var S, debug, hPart, head, i, initRuleEx, isDup, lNewRules, n, newRule, next, pre, ref, ref1, ref2, ref3, ref4, root, rule, set, src, xRule, xRuleFromSrc;
     assert(isString(str), `Not a string: ${OL(str)}`);
     ({debug, root} = getOptions(hOptions, {
       debug: false,
@@ -148,34 +199,42 @@ export var EarleyParser = class EarleyParser {
     this.lRules[0].lParts[0] = nonterminal(root);
     n = str.length;
     // --- S is an array of sets of RuleEx objects
+    RuleEx.resetNextID(); // reset IDs for RuleEx objects
     S = [];
-    initRuleEx = new RuleEx(this.lRules[0], 0);
+    initRuleEx = getRuleEx(this.lRules[0], 0);
     ref = range(n);
-    for (k = 0, len = ref.length; k < len; k++) {
-      i = ref[k];
+    for (i of ref) {
+      set = new Set();
       if (i === 0) {
-        S.push(new Set(initRuleEx));
-      } else {
-        S.push(new Set());
+        set.add(initRuleEx);
       }
+      S.push(set);
     }
     if (debug) {
-      yield initRuleEx.asString();
+      yield "START:\n" + this.debugStr(undef, [initRuleEx]);
     }
     ref1 = range(n);
-    for (l = 0, len1 = ref1.length; l < len1; l++) {
-      i = ref1[l];
+    for (i of ref1) {
       set = S[i];
       assert([defined(set), set instanceof Set, set.size > 0], `Bad set ${i}: ${OL(set)}`);
       ref2 = S[i].values();
       for (xRule of ref2) {
-        ({head} = xRule);
         next = xRule.nextPart();
         switch (next.type) {
           case "nonterminal":
-            ref3 = grammar.alternatives(head);
+            lNewRules = [];
+            ref3 = this.grammar.alternatives(next.value);
             for (rule of ref3) {
-              S[i].add(new RuleEx(rule, i));
+              newRule = RuleEx.get(rule, i);
+              pre = S[i].size;
+              S[i].add(newRule);
+              isDup = S[i].size === pre;
+              if (!isDup) {
+                lNewRules.push(newRule);
+              }
+            }
+            if (debug) {
+              yield this.debugStr(xRule, lNewRules);
             }
             break;
           case "terminal":
@@ -198,6 +257,25 @@ export var EarleyParser = class EarleyParser {
         }
       }
     }
+  }
+
+  // ..........................................................
+  debugStr(srcRule, lNewRules = []) {
+    var k, lLines, len, rule;
+    if (defined(srcRule)) {
+      lLines = [srcRule.asString()];
+    } else {
+      lLines = [];
+    }
+    if (isEmpty(lNewRules)) {
+      lLines.push("   -> NOTHING");
+    } else {
+      for (k = 0, len = lNewRules.length; k < len; k++) {
+        rule = lNewRules[k];
+        lLines.push(`   -> ${rule.asString()}`);
+      }
+    }
+    return lLines.join("\n");
   }
 
 };
@@ -274,8 +352,8 @@ export var checkAST = function(hAST) {
 };
 
 // ---------------------------------------------------------------------------
-export var checkRule = function(hRule) {
-  assert([hRule.type === "rule", hasKey(hRule, 'head'), isString(hRule.head), hRule.head !== 'Φ', hasKey(hRule, 'lParts'), isArray(hRule.lParts)], `Bad rule: ${OL(hRule)}`);
+export var checkRule = function(hRule, id = 1) {
+  assert([hRule.type === "rule", hasKey(hRule, 'head'), isString(hRule.head), (hRule.head !== 'Φ') || (id === 0), hasKey(hRule, 'lParts'), isArray(hRule.lParts)], `Bad rule: ${OL(hRule)}`);
 };
 
 //# sourceMappingURL=grammar-utils.js.map
