@@ -47,6 +47,7 @@
 		"./config": "./src/lib/config.js",
 		"./grammar-utils": "./src/lib/grammar-utils.js",
 		"./multi-map": "./src/lib/multi-map.js",
+		"./rule-ex": "./src/lib/rule-ex.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {

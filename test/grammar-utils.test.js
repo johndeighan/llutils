@@ -9,24 +9,19 @@ import * as lib from '@jdeighan/llutils/grammar-utils';
 
 Object.assign(global, lib);
 
+import {
+  terminal,
+  nonterminal,
+  RuleEx
+} from '@jdeighan/llutils/rule-ex';
+
 import * as lib2 from '@jdeighan/llutils/utest';
 
 Object.assign(global, lib2);
 
 // ---------------------------------------------------------------------------
 (() => {
-  var hRule;
-  hRule = {
-    type: "rule",
-    head: "E",
-    lParts: [terminal("P"), nonterminal("name"), terminal("a"), nonterminal("expr")]
-  };
-  equal(ruleAsString(hRule), 'E -> "P" name "a" expr');
-  return equal(ruleAsString(hRule, 3), 'E -> "P" name "a" • expr');
-})();
-
-(() => {
-  var grammar, hAST, nRules, parser, ref, rule, rx;
+  var grammar, hAST, nRules, parser, ref, rule, rx, rx2, rx3, rx4, rx5;
   hAST = {
     type: "grammar",
     lRules: [
@@ -85,19 +80,20 @@ P -> "a"`);
   // --- T -> T * P
   rx = new RuleEx(grammar.getRule(3), 0);
   equal(rx.pos, 0);
+  rx2 = rx3 = rx4 = rx5 = undef;
   succeeds(() => {
-    return rx.inc();
+    return rx2 = rx.getInc();
   });
-  equal(rx.pos, 1);
+  equal(rx2.pos, 1);
   succeeds(() => {
-    return rx.inc();
+    return rx3 = rx2.getInc();
   });
   succeeds(() => {
-    return rx.inc();
+    return rx4 = rx3.getInc();
   });
-  equal(rx.pos, 3);
+  equal(rx4.pos, 3);
   fails(() => {
-    return rx.inc();
+    return rx5 = rx4.getInc();
   });
   parser = undef;
   return succeeds(() => {

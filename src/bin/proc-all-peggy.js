@@ -6,7 +6,7 @@
 //        Can't use any lib that depends on a file built from peggy
 //     Processes all *.peggy files where there
 //        isn't a corresponding more recent *.js file
-var code, contents, debug, dep, ext, fileFilter, hFiles, hMetaData, hOptions, hOtherFiles, hResult, i, include, j, len, len1, ref, ref1, ref2, relPath, sourceMap, x;
+var code, contents, debug, dep, ext, fileFilter, hFiles, hMetaData, hOptions, hOtherFiles, hResult, i, include, j, lBuildOrder, len, len1, ref, ref1, relPath, sourceMap, x;
 
 import {
   undef,
@@ -16,8 +16,11 @@ import {
   keys,
   LOG,
   OL,
+  assert,
+  croak,
   isString,
-  isHash
+  isHash,
+  isArray
 } from '@jdeighan/llutils';
 
 import {
@@ -67,9 +70,12 @@ for (x of ref) {
   }
 }
 
-ref1 = dep.getBuildOrder();
-for (i = 0, len = ref1.length; i < len; i++) {
-  relPath = ref1[i];
+lBuildOrder = dep.getBuildOrder();
+
+assert(isArray(lBuildOrder), `Not an array: ${OL(lBuildOrder)}`);
+
+for (i = 0, len = lBuildOrder.length; i < len; i++) {
+  relPath = lBuildOrder[i];
   LOG(relPath);
   ({hMetaData, contents} = readTextFile(relPath, 'eager'));
   hOptions = {
@@ -85,9 +91,9 @@ for (i = 0, len = ref1.length; i < len; i++) {
     barf(sourceMap, withExt(relPath, ".js.map"));
   }
   if (defined(hOtherFiles)) {
-    ref2 = keys(hOtherFiles);
-    for (j = 0, len1 = ref2.length; j < len1; j++) {
-      ext = ref2[j];
+    ref1 = keys(hOtherFiles);
+    for (j = 0, len1 = ref1.length; j < len1; j++) {
+      ext = ref1[j];
       barf(hOtherFiles[ext], withExt(relPath, ext));
     }
   }

@@ -863,10 +863,13 @@ export var tabs = (n) => {
 //        buffer - num spaces around text when char <> ' '
 export var centered = (text, width, hOptions = {}) => {
   var buf, char, left, numBuffer, numLeft, numRight, right, totSpaces;
-  ({char} = getOptions(hOptions, {
-    char: ' '
+  ({char, numBuffer} = getOptions(hOptions, {
+    char: ' ',
+    numBuffer: 2
   }));
-  numBuffer = hOptions.numBuffer || 2;
+  if (!isString(text)) {
+    text = text.toString();
+  }
   totSpaces = width - text.length;
   if (totSpaces <= 0) {
     return text;

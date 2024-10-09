@@ -761,12 +761,13 @@ export tabs = (n) =>
 
 export centered = (text, width, hOptions={}) =>
 
-	{char} = getOptions hOptions, {
+	{char, numBuffer} = getOptions hOptions, {
 		char: ' '
+		numBuffer: 2
 		}
 
-	numBuffer = hOptions.numBuffer || 2
-
+	if !isString(text)
+		text = text.toString()
 	totSpaces = width - text.length
 	if (totSpaces <= 0)
 		return text

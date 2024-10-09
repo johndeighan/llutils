@@ -8,7 +8,8 @@
 
 import {
 	undef, defined, notdefined, isEmpty, keys, LOG, OL,
-	isString, isHash,
+	assert, croak,
+	isString, isHash, isArray,
 	} from '@jdeighan/llutils'
 import {
 	withExt, allFilesMatching, newerDestFileExists,
@@ -34,6 +35,7 @@ fileFilter = ({filePath}) =>
 
 hFiles = {}      # --- { <file>: [<uses>, ... ], ... }
 dep = new DiGraph()
+
 for {relPath} from allFilesMatching("**/*.peggy", {fileFilter})
 	{hMetaData} = readTextFile(relPath)
 	if defined(hMetaData) && defined(include = hMetaData.include)
@@ -42,7 +44,10 @@ for {relPath} from allFilesMatching("**/*.peggy", {fileFilter})
 	else
 		dep.add relPath
 
-for relPath in dep.getBuildOrder()
+lBuildOrder = dep.getBuildOrder()
+assert isArray(lBuildOrder), "Not an array: #{OL(lBuildOrder)}"
+
+for relPath in lBuildOrder
 	LOG relPath
 	{hMetaData, contents} = readTextFile(relPath, 'eager')
 	hOptions = {

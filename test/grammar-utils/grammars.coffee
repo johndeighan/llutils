@@ -2,7 +2,7 @@
 
 import {
 	nonterminal, terminal,
-	} from '@jdeighan/llutils/grammar-utils'
+	} from '@jdeighan/llutils/rule-ex'
 
 # ---------------------------------------------------------------------------
 

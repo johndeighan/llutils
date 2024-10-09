@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "rule-ex.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\rule-ex.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAqB;AAErB,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;CAAA,MAAA;;AAGA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EARqB;;;AAYrB,CAAC,CAAA,CAAA,GAAA;AACD,MAAA;EAAC,KAAA,GAAQ;IACP,IAAA,EAAM,MADC;IAEP,IAAA,EAAM,GAFC;IAGP,MAAA,EAAQ,CACP,QAAA,CAAS,GAAT,CADO,EAEP,WAAA,CAAY,MAAZ,CAFO,EAGP,QAAA,CAAS,GAAT,CAHO,EAIP,WAAA,CAAY,MAAZ,CAJO;EAHD;EAUR,KAAA,CAAM,YAAA,CAAa,KAAb,CAAN,EAA2B,wBAA3B;SACA,KAAA,CAAM,YAAA,CAAa,KAAb,EAAoB,CAApB,CAAN,EAA8B,0BAA9B;AAZA,CAAD,CAAA,CAAA",
+  "sourcesContent": [
+    "# rule-ex.test.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined,\r\n\t} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/rule-ex'\r\nObject.assign(global, lib)\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\n(() =>\r\n\thRule = {\r\n\t\ttype: \"rule\"\r\n\t\thead: \"E\"\r\n\t\tlParts: [\r\n\t\t\tterminal \"P\"\r\n\t\t\tnonterminal \"name\"\r\n\t\t\tterminal \"a\"\r\n\t\t\tnonterminal \"expr\"\r\n\t\t\t]\r\n\t\t}\r\n\tequal ruleAsString(hRule), 'E -> \"P\" name \"a\" expr'\r\n\tequal ruleAsString(hRule, 3), 'E -> \"P\" name \"a\" • expr'\r\n\t)()\r\n"
+  ]
+}

@@ -3,12 +3,14 @@
 import {
 	undef, defined, notdefined, OL, LOG, keys, hasKey,
 	isString, isHash, isArray, isInteger, range, inRange,
-	isEmpty, nonEmpty,
+	isEmpty, nonEmpty, centered,
 	assert, croak, getOptions,
 	} from '@jdeighan/llutils'
 import {MultiMap} from '@jdeighan/llutils/multi-map'
-
-raisedDot = '•'
+import {
+	terminal, nonterminal,
+	RuleEx, checkRule, ruleAsString,
+	} from '@jdeighan/llutils/rule-ex'
 
 # ---------------------------------------------------------------------------
 #     class Grammar
@@ -71,65 +73,6 @@ export class Grammar
 		return @hAST.lRules.map(func).join("\n")
 
 # ---------------------------------------------------------------------------
-#     class RuleEx
-# ---------------------------------------------------------------------------
-
-export class RuleEx
-
-	@nextID: 0
-	@resetNextID: () =>
-		@nextID = 0
-		return
-	@getNextID: () =>
-		id = @nextID
-		@nextID += 1
-		return id
-
-	@mm: new MultiMap(3)
-	@get: (hRule, src, pos=0) =>
-		obj = @mm.get([hRule, src, pos])
-		if defined(obj)
-			return obj
-		else
-			obj = new RuleEx(hRule, src, pos)
-			@mm.set [hRule, src, pos], obj
-			return obj
-
-	constructor: (@hRule, @src, @pos=0) ->
-
-		@id = RuleEx.getNextID()
-
-		checkRule(@hRule, @id)
-
-		# --- Copy fields from hRule to this object
-		@type = @hRule.type
-		@head = @hRule.head
-		@lParts = @hRule.lParts
-
-		assert isInteger(@src), "Not an int: #{OL(@src)}"
-		@maxpos = @lParts.length
-
-	nextPart: () ->
-
-		return @lParts[@pos]
-
-	inc: () ->
-
-		assert (@pos+1 <= @maxpos), "Can't inc #{this}"
-		@pos += 1
-		return
-
-	asString: () ->
-
-		return "[#{@id}] #{ruleAsString(@hRule, @pos)}"
-
-# ---------------------------------------------------------------------------
-
-export getRuleEx = (hRule, src) =>
-
-	return new RuleEx(hRule, src, pos=0)
-
-# ---------------------------------------------------------------------------
 #     class EarleyParser
 # ---------------------------------------------------------------------------
 
@@ -176,15 +119,18 @@ export class EarleyParser
 
 		# --- S is an array of sets of RuleEx objects
 		RuleEx.resetNextID()   # reset IDs for RuleEx objects
+
 		S = []
-		initRuleEx = getRuleEx(@lRules[0], 0)
+		initRuleEx = RuleEx.get(@lRules[0], 0, 0)
 		for i from range(n)
 			set = new Set()
 			if (i == 0)
 				set.add initRuleEx
 			S.push set
+
 		if debug
 			yield "START:\n" + @debugStr(undef, [initRuleEx])
+
 		for i from range(n)
 			set = S[i]
 			assert [
@@ -192,30 +138,47 @@ export class EarleyParser
 				(set instanceof Set),
 				(set.size > 0),
 				], "Bad set #{i}: #{OL(set)}"
+
+			if debug
+				LOG centered(i, 32, {char: '-'})
+
 			for xRule from S[i].values()
 				next = xRule.nextPart()
 				switch next.type
 					when "nonterminal"
 						lNewRules = []
+						lDupRules = []
 						for rule from @grammar.alternatives(next.value)
-							newRule = RuleEx.get(rule, i)
+							newRule = RuleEx.get(rule, i, 0)
 							pre = S[i].size
-							S[i].add newRule
+							S[i].add newRule   # won't add dups
 							isDup = (S[i].size == pre)
-							if !isDup
+							if isDup
+								lDupRules.push newRule
+							else
 								lNewRules.push newRule
 						if debug
-							yield @debugStr(xRule, lNewRules)
+							yield @debugStr(xRule, lNewRules, lDupRules)
 					when "terminal"
 						if (next.value == str[i])
-							S[i+1].add xRule.inc()
+							newRule = RuleEx.get(rule, i, xRule.pos+1)
+							pre = S[i].size
+							S[i+1].add xRule.getInc()
+							isDup = (S[i].size == pre)
+							if isDup
+								lDupRules.push newRule
+							else
+								lNewRules.push newRule
+							yield @debugStr(xRule, lNewRules, lDupRules)
+						else
+							yield @debugStr(xRule, lNewRules)
 					when undef
 						{head, src} = xRule
 						for xRuleFromSrc from S[src]
 							hPart = xRuleFromSrc.nextPart()
 							if (hPart.type == 'nonterminal') \
 									&& (hPart.value == head)
-								S[i].add xRule.inc()
+								S[i].add xRule.getInc()
 					else
 						croak "Bad next type: #{OL(next)}"
 
@@ -223,61 +186,21 @@ export class EarleyParser
 
 	# ..........................................................
 
-	debugStr: (srcRule, lNewRules=[]) ->
+	debugStr: (srcRule, lNewRules=[], lDupRules=[]) ->
 
 		if defined(srcRule)
 			lLines = [srcRule.asString()]
 		else
 			lLines = []
-		if isEmpty(lNewRules)
-			lLines.push "   -> NOTHING"
-		else
-			for rule in lNewRules
-				lLines.push "   -> #{rule.asString()}"
+
+		for rule in lNewRules
+			lLines.push "   #{rule.asString()}"
+		for rule in lDupRules
+			lLines.push "   #{rule.asString()} (DUP)"
 		return lLines.join("\n")
 
 # ---------------------------------------------------------------------------
 #     Utility Functions
-# ---------------------------------------------------------------------------
-
-export ruleAsString = (hRule, pos=undef) ->
-
-	lRHS = hRule.lParts.map(
-		(hPart) =>
-			switch hPart.type
-				when "terminal"
-					return "\"#{hPart.value}\""
-				when "nonterminal"
-					return "#{hPart.value}"
-		)
-	if defined(pos)
-		lRHS.splice pos, 0, raisedDot
-	rhs = lRHS.join(" ")
-	return "#{hRule.head} -> #{rhs}"
-
-# ---------------------------------------------------------------------------
-
-export terminal = (value) ->
-
-	assert [
-		isString(value),
-		(value.length == 1),
-		], "Bad terminal: #{OL(value)}"
-	return {
-		type: 'terminal'
-		value
-		}
-
-# ---------------------------------------------------------------------------
-
-export nonterminal = (name) ->
-
-	assert isString(name), "bad nonterminal: #{OL(name)}"
-	return {
-		type: 'nonterminal'
-		value: name
-		}
-
 # ---------------------------------------------------------------------------
 # --- returns [<set of nonterminals>, <set of terminals>]
 #     croaks if RHS of a rule has an undefined nonterminal
@@ -310,18 +233,3 @@ export checkAST = (hAST) ->
 			else
 				croak "Bad item #{i}/#{j}: #{OL(item)}"
 	return [setNonTerminals, setTerminals]
-
-# ---------------------------------------------------------------------------
-
-export checkRule = (hRule, id=1) ->
-
-	assert [
-		(hRule.type == "rule"),
-		hasKey(hRule, 'head'),
-		isString(hRule.head),
-		(hRule.head != 'Φ') || (id == 0),
-		hasKey(hRule, 'lParts'),
-		isArray(hRule.lParts),
-		], "Bad rule: #{OL(hRule)}"
-	return
-
