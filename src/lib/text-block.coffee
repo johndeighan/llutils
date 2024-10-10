@@ -101,7 +101,7 @@ export class TextBlockList
 
 		block = @curBlock()
 		if @esc
-			block.append escapeStr(str, 'escNoNL')
+			block.append escapeStr(str, 'hEsc=escNoNL')
 		else
 			block.append str
 		if (block.maxLen > @maxLen)
@@ -114,7 +114,7 @@ export class TextBlockList
 
 		block = @curBlock()
 		if @esc
-			block.prepend escapeStr(str, 'escNoNL')
+			block.prepend escapeStr(str, 'hEsc=escNoNL')
 		else
 			block.prepend str
 		if (block.maxLen > @maxLen)

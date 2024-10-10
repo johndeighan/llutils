@@ -117,7 +117,7 @@ export var TextBlockList = class TextBlockList {
     var block;
     block = this.curBlock();
     if (this.esc) {
-      block.append(escapeStr(str, 'escNoNL'));
+      block.append(escapeStr(str, 'hEsc=escNoNL'));
     } else {
       block.append(str);
     }
@@ -131,7 +131,7 @@ export var TextBlockList = class TextBlockList {
     var block;
     block = this.curBlock();
     if (this.esc) {
-      block.prepend(escapeStr(str, 'escNoNL'));
+      block.prepend(escapeStr(str, 'hEsc=escNoNL'));
     } else {
       block.prepend(str);
     }

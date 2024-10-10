@@ -87,9 +87,11 @@ export var ElmDocument = class ElmDocument extends SectionMap {
           arg = lArgs[i];
           if (isString(arg)) {
             str = escapeStr(arg, {
-              "\r": '\\r',
-              "\n": '\\n',
-              "\t": '\\t'
+              hEsc: {
+                "\r": '\\r',
+                "\n": '\\n',
+                "\t": '\\t'
+              }
             });
             lParts.push(`\"${str}\"`);
           } else {

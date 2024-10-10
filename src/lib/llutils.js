@@ -1,5 +1,5 @@
   // llutils.coffee
-var deepEqual, log_level, module,
+var deepEqual, hEscNL, hEscNoNL, log_level, module,
   hasProp = {}.hasOwnProperty;
 
 import YAML from 'yaml';
@@ -20,6 +20,30 @@ export var dclone = (x) => {
 // ---------------------------------------------------------------------------
 export var identityFunc = (x) => {
   return x;
+};
+
+// ---------------------------------------------------------------------------
+export var assert = (cond, msg) => {
+  var bool, j, len1;
+  if (isArray(cond)) {
+    for (j = 0, len1 = cond.length; j < len1; j++) {
+      bool = cond[j];
+      assert(bool, msg);
+    }
+  } else if (!cond) {
+    if (isString(msg)) {
+      throw new Error(untabify(msg));
+    } else {
+      throw msg;
+    }
+  }
+  return true;
+};
+
+// ---------------------------------------------------------------------------
+export var croak = (msg) => {
+  throw new Error(untabify(msg));
+  return true;
 };
 
 // ---------------------------------------------------------------------------
@@ -85,23 +109,77 @@ export var untabify = (str, hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
-export var assert = (cond, msg) => {
-  var bool, j, len1;
-  if (isArray(cond)) {
-    for (j = 0, len1 = cond.length; j < len1; j++) {
-      bool = cond[j];
-      assert(bool, msg);
-    }
-  } else if (!cond) {
-    throw new Error(untabify(msg));
-  }
-  return true;
+//   escapeStr - escape newlines, carriage return, TAB chars, etc.
+// --- NOTE: We can't use OL() inside here since it uses escapeStr()
+hEscNL = {
+  "\r": '←',
+  "\n": '↓',
+  "\t": '→',
+  " ": '˳'
+};
+
+hEscNoNL = {
+  "\r": '←',
+  "\t": '→',
+  " ": '˳'
 };
 
 // ---------------------------------------------------------------------------
-export var croak = (msg) => {
-  throw new Error(untabify(msg));
-  return true;
+export var escapeStr = (str, hOptions = {}) => {
+  var ch, hEsc, hReplace, i, lParts, offset, poschar, result;
+  //     Valid options:
+  //        hEsc    - hash {<ch>: <replacement>, ...}
+  //        offset  - indicate position of offset
+  //        poschar - char to use to indicate position
+  assert(isString(str), `not a string: ${typeof str}`);
+  ({hEsc, offset, poschar} = getOptions(hOptions, {
+    hEsc: hEscNL,
+    offset: undef,
+    poschar: '┊'
+  }));
+  if (isString(hEsc)) {
+    switch (hEsc) {
+      case 'esc':
+        hReplace = hEscNL;
+        break;
+      case 'escNoNL':
+        hReplace = hEscNoNL;
+        break;
+      default:
+        hReplace = {};
+    }
+  } else {
+    hReplace = hEsc;
+  }
+  assert(isHash(hReplace), "not a hash");
+  lParts = [];
+  i = 0;
+  for (ch of str) {
+    if (defined(offset)) {
+      if (i === offset) {
+        lParts.push(poschar);
+      }
+    }
+    result = hReplace[ch];
+    if (defined(result)) {
+      lParts.push(result);
+    } else {
+      lParts.push(ch);
+    }
+    i += 1;
+  }
+  if (offset === str.length) {
+    lParts.push(poschar);
+  }
+  return lParts.join('');
+};
+
+// ---------------------------------------------------------------------------
+//   escapeBlock
+//      - remove carriage returns
+//      - escape spaces, TAB chars
+export var escapeBlock = (block) => {
+  return escapeStr(block, 'hEsc=escNoNL');
 };
 
 // ---------------------------------------------------------------------------
@@ -544,78 +622,6 @@ export var cleanHash = (h) => {
     }
   }
   return h;
-};
-
-// ---------------------------------------------------------------------------
-//   escapeStr - escape newlines, carriage return, TAB chars, etc.
-// --- NOTE: We can't use OL() inside here since it uses escapeStr()
-export var hEsc = {
-  "\r": '←',
-  "\n": '↓',
-  "\t": '→',
-  " ": '˳'
-};
-
-export var hEscNoNL = {
-  "\r": '←',
-  "\t": '→',
-  " ": '˳'
-};
-
-export var escapeStr = (str, hReplace = hEsc, hOptions = {}) => {
-  var ch, i, lParts, offset, poschar, result;
-  // --- hReplace can also be a string:
-  //        'esc'     - escape space, newline, tab
-  //        'escNoNL' - escape space, tab
-  //     Valid options:
-  //        offset    - indicate position of offset
-  //        poschar   - char to use to indicate position
-  assert(isString(str), `not a string: ${typeof str}`);
-  if (isString(hReplace)) {
-    switch (hReplace) {
-      case 'esc':
-        hReplace = hEsc;
-        break;
-      case 'escNoNL':
-        hReplace = hEscNoNL;
-        break;
-      default:
-        hReplace = {};
-    }
-  }
-  assert(isHash(hReplace), "not a hash");
-  ({offset, poschar} = getOptions(hOptions, {
-    offset: undef,
-    poschar: '┊'
-  }));
-  lParts = [];
-  i = 0;
-  for (ch of str) {
-    if (defined(offset)) {
-      if (i === offset) {
-        lParts.push(poschar);
-      }
-    }
-    result = hReplace[ch];
-    if (defined(result)) {
-      lParts.push(result);
-    } else {
-      lParts.push(ch);
-    }
-    i += 1;
-  }
-  if (offset === str.length) {
-    lParts.push(poschar);
-  }
-  return lParts.join('');
-};
-
-// ---------------------------------------------------------------------------
-//   escapeBlock
-//      - remove carriage returns
-//      - escape spaces, TAB chars
-export var escapeBlock = (block) => {
-  return escapeStr(block, 'escNoNL');
 };
 
 // ---------------------------------------------------------------------------

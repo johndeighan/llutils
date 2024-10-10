@@ -723,9 +723,9 @@ export var DetailedTracer = class DetailedTracer extends AdvancedTracer {
     ({type, rule, location, result} = hInfo);
     if (defined(location)) {
       ({offset} = location.start);
-      return [str, `${escapeStr(this.input, 'esc', {offset})}${this.varStr()}`];
+      return [str, `${escapeStr(this.input, {offset})}${this.varStr()}`];
     } else {
-      return [str, `${escapeStr(this.input, 'esc')}${this.varStr()}`];
+      return [str, `${escapeStr(this.input)}${this.varStr()}`];
     }
   }
 

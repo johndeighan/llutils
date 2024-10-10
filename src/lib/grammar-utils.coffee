@@ -135,18 +135,15 @@ export class EarleyParser
 			if (i == 0)
 				set.add initRuleEx
 			S.push set
+		S.push new Set()    # --- eliminates need for a check
 
 		if debug
 			yield "START:\n" + @resultStr([[initRuleEx, '']])
 
 		for i from range(n)
 			set = S[i]
-			assert [
-				defined(set),
-				(set instanceof Set),
-				], "Bad set #{i}: #{OL(set)}"
-
-			assert (set.size > 0), "Syntax Error"
+			assert (set.size > 0),
+					new SyntaxError("Unexpected EOS: #{escapeStr(str)}")
 
 			if debug
 				LOG centered(i, 32, {char: '-'})
@@ -168,8 +165,9 @@ export class EarleyParser
 							lNewRules.push [newRule, isDup]
 
 					when "terminal"
-						if (i+1 < n) && (next.value == str[i])
-							newRule = RuleEx.getNew(xRule, i, xRule.pos+1)
+						if (next.value == str[i])
+#							newRule = RuleEx.getNew(xRule, i, xRule.pos+1)
+							newRule = xRule.getInc()
 							isDup = @addRule(newRule, S[i+1])
 							lNewRules.push [newRule, isDup, i+1]
 
@@ -184,7 +182,7 @@ export class EarleyParser
 								isDup = @addRule(newRule, S[i])
 								lNewRules.push [newRule, isDup]
 					else
-						croak "Bad next type: #{OL(next)}"
+						croak "Bad next type in RuleEx: #{OL(xRule)}"
 
 				if debug
 					yield @resultStr(lNewRules)

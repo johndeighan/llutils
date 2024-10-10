@@ -76,11 +76,11 @@ export class ElmDocument extends SectionMap
 				lParts = [name]
 				for arg in lArgs
 					if isString(arg)
-						str = escapeStr arg, {
+						str = escapeStr arg, {hEsc: {
 							"\r": '\\r'
 							"\n": '\\n'
 							"\t": '\\t'
-							}
+							}}
 						lParts.push "\"#{str}\""
 					else
 						croak "Not implemented"

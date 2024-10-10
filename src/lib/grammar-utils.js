@@ -153,14 +153,14 @@ export var EarleyParser = class EarleyParser {
       }
       S.push(set);
     }
+    S.push(new Set()); // --- eliminates need for a check
     if (debug) {
       yield "START:\n" + this.resultStr([[initRuleEx, '']]);
     }
     ref1 = range(n);
     for (i of ref1) {
       set = S[i];
-      assert([defined(set), set instanceof Set], `Bad set ${i}: ${OL(set)}`);
-      assert(set.size > 0, "Syntax Error");
+      assert(set.size > 0, new SyntaxError(`Unexpected EOS: ${escapeStr(str)}`));
       if (debug) {
         LOG(centered(i, 32, {
           char: '-'
@@ -185,8 +185,9 @@ export var EarleyParser = class EarleyParser {
             }
             break;
           case "terminal":
-            if ((i + 1 < n) && (next.value === str[i])) {
-              newRule = RuleEx.getNew(xRule, i, xRule.pos + 1);
+            if (next.value === str[i]) {
+              //							newRule = RuleEx.getNew(xRule, i, xRule.pos+1)
+              newRule = xRule.getInc();
               isDup = this.addRule(newRule, S[i + 1]);
               lNewRules.push([newRule, isDup, i + 1]);
             }
@@ -204,7 +205,7 @@ export var EarleyParser = class EarleyParser {
             }
             break;
           default:
-            croak(`Bad next type: ${OL(next)}`);
+            croak(`Bad next type in RuleEx: ${OL(xRule)}`);
         }
         if (debug) {
           yield this.resultStr(lNewRules);

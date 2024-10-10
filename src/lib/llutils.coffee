@@ -20,6 +20,27 @@ export identityFunc = (x) =>
 	return x
 
 # ---------------------------------------------------------------------------
+
+export assert = (cond, msg) =>
+
+	if isArray(cond)
+		for bool in cond
+			assert bool, msg
+	else if !cond
+		if isString(msg)
+			throw new Error(untabify(msg))
+		else
+			throw msg
+	return true
+
+# ---------------------------------------------------------------------------
+
+export croak = (msg) =>
+
+	throw new Error(untabify(msg))
+	return true
+
+# ---------------------------------------------------------------------------
 #    tabify - convert leading spaces to TAB characters
 #             if numSpaces is not defined, then the first line
 #             that contains at least one space sets it
@@ -71,22 +92,72 @@ export untabify = (str, hOptions={}) =>
 	return arrayToBlock(lLines)
 
 # ---------------------------------------------------------------------------
+#   escapeStr - escape newlines, carriage return, TAB chars, etc.
+# --- NOTE: We can't use OL() inside here since it uses escapeStr()
 
-export assert = (cond, msg) =>
-
-	if isArray(cond)
-		for bool in cond
-			assert bool, msg
-	else if !cond
-		throw new Error(untabify(msg))
-	return true
+hEscNL = {
+	"\r": '←'
+	"\n": '↓'
+	"\t": '→'
+	" ": '˳'
+	}
+hEscNoNL = {
+	"\r": '←'
+	"\t": '→'
+	" ": '˳'
+	}
 
 # ---------------------------------------------------------------------------
 
-export croak = (msg) =>
+export escapeStr = (str, hOptions={}) =>
+	#     Valid options:
+	#        hEsc    - hash {<ch>: <replacement>, ...}
+	#        offset  - indicate position of offset
+	#        poschar - char to use to indicate position
 
-	throw new Error(untabify(msg))
-	return true
+	assert isString(str), "not a string: #{typeof str}"
+	{hEsc, offset, poschar} = getOptions hOptions, {
+		hEsc: hEscNL
+		offset: undef
+		poschar: '┊'
+		}
+
+	if isString(hEsc)
+		switch hEsc
+			when 'esc'
+				hReplace = hEscNL
+			when 'escNoNL'
+				hReplace = hEscNoNL
+			else
+				hReplace = {}
+	else
+		hReplace = hEsc
+	assert isHash(hReplace), "not a hash"
+
+	lParts = []
+	i = 0
+	for ch from str
+		if defined(offset)
+			if (i == offset)
+				lParts.push poschar
+		result = hReplace[ch]
+		if defined(result)
+			lParts.push result
+		else
+			lParts.push ch
+		i += 1
+	if (offset == str.length)
+		lParts.push poschar
+	return lParts.join('')
+
+# ---------------------------------------------------------------------------
+#   escapeBlock
+#      - remove carriage returns
+#      - escape spaces, TAB chars
+
+export escapeBlock = (block) =>
+
+	return escapeStr(block, 'hEsc=escNoNL')
 
 # ---------------------------------------------------------------------------
 # --- Can't use getOptions() !!!!!
@@ -465,71 +536,6 @@ export cleanHash = (h) =>
 		if isEmpty(h[key])
 			delete h[key]
 	return h
-
-# ---------------------------------------------------------------------------
-#   escapeStr - escape newlines, carriage return, TAB chars, etc.
-# --- NOTE: We can't use OL() inside here since it uses escapeStr()
-
-export hEsc = {
-	"\r": '←'
-	"\n": '↓'
-	"\t": '→'
-	" ": '˳'
-	}
-export hEscNoNL = {
-	"\r": '←'
-	"\t": '→'
-	" ": '˳'
-	}
-
-export escapeStr = (str, hReplace=hEsc, hOptions={}) =>
-	# --- hReplace can also be a string:
-	#        'esc'     - escape space, newline, tab
-	#        'escNoNL' - escape space, tab
-	#     Valid options:
-	#        offset    - indicate position of offset
-	#        poschar   - char to use to indicate position
-
-	assert isString(str), "not a string: #{typeof str}"
-	if isString(hReplace)
-		switch hReplace
-			when 'esc'
-				hReplace = hEsc
-			when 'escNoNL'
-				hReplace = hEscNoNL
-			else
-				hReplace = {}
-	assert isHash(hReplace), "not a hash"
-
-	{offset, poschar} = getOptions hOptions, {
-		offset: undef
-		poschar: '┊'
-		}
-
-	lParts = []
-	i = 0
-	for ch from str
-		if defined(offset)
-			if (i == offset)
-				lParts.push poschar
-		result = hReplace[ch]
-		if defined(result)
-			lParts.push result
-		else
-			lParts.push ch
-		i += 1
-	if (offset == str.length)
-		lParts.push poschar
-	return lParts.join('')
-
-# ---------------------------------------------------------------------------
-#   escapeBlock
-#      - remove carriage returns
-#      - escape spaces, TAB chars
-
-export escapeBlock = (block) =>
-
-	return escapeStr(block, 'escNoNL')
 
 # ---------------------------------------------------------------------------
 

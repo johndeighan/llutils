@@ -230,10 +230,12 @@ falsy isClassInstance(s)
 
 equal escapeStr("\t\tabc def"), "→→abc˳def"
 equal escapeStr("\t\tabc def\r\n"), "→→abc˳def←↓"
-equal escapeStr("\t\tabc def\r\nghi", 'escNoNL'), """
+equal escapeStr("\t\tabc def\r\nghi", 'hEsc=escNoNL'), """
 		→→abc˳def←
 		ghi
 		"""
+equal escapeStr("abcde", 'offset=3'), "abc┊de"
+equal escapeStr("abcde", 'offset=3 poschar=^'), "abc^de"
 
 # ---------------------------------------------------------------------------
 #symbol "OL(x)"

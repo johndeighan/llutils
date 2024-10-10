@@ -602,12 +602,12 @@ export class DetailedTracer extends AdvancedTracer
 			{offset} = location.start
 			return [
 				str
-				"#{escapeStr(@input, 'esc', {offset})}#{@varStr()}"
+				"#{escapeStr(@input, {offset})}#{@varStr()}"
 				]
 		else
 			return [
 				str
-				"#{escapeStr(@input, 'esc')}#{@varStr()}"
+				"#{escapeStr(@input)}#{@varStr()}"
 				]
 
 # ---------------------------------------------------------------------------
