@@ -6,6 +6,7 @@ import {
   defined,
   notdefined,
   OL,
+  ML,
   hasKey,
   isString,
   isInteger,
@@ -19,6 +20,8 @@ import {
 } from '@jdeighan/llutils/multi-map';
 
 raisedDot = '•';
+
+export var phi = 'Φ';
 
 export var RuleEx = (function() {
   // ---------------------------------------------------------------------------
@@ -36,7 +39,7 @@ export var RuleEx = (function() {
       return id;
     }
 
-    static get(hRule, src, pos) {
+    static getNew(hRule, src, pos = 0) {
       var obj;
       obj = RuleEx.mm.get([hRule, src, pos]);
       if (defined(obj)) {
@@ -62,17 +65,17 @@ export var RuleEx = (function() {
       this.maxpos = this.lParts.length;
     }
 
-    nextPart() {
+    nextPart() { // --- may return undef
       return this.lParts[this.pos];
     }
 
     getInc() {
-      assert(this.pos + 1 <= this.maxpos, `Can't inc ${this}`);
-      return RuleEx.get(this.hRule, this.src, this.pos + 1);
+      assert(this.pos + 1 <= this.maxpos, `Can't inc ${ML(this)}`);
+      return RuleEx.getNew(this.hRule, this.src, this.pos + 1);
     }
 
     asString() {
-      return `[${this.id}] ${ruleAsString(this.hRule, this.pos)}`;
+      return `[${this.id}] ${ruleAsString(this.hRule, this.pos)} / ${this.src}`;
     }
 
   };
@@ -105,7 +108,16 @@ export var nonterminal = function(name) {
 
 // ---------------------------------------------------------------------------
 export var checkRule = function(hRule, id = 1) {
-  assert([hRule.type === "rule", hasKey(hRule, 'head'), isString(hRule.head), (hRule.head !== 'Φ') || (id === 0), hasKey(hRule, 'lParts'), isArray(hRule.lParts)], `Bad rule: ${OL(hRule)}`);
+  assert([
+    hRule.type === "rule",
+    hasKey(hRule,
+    'head'),
+    isString(hRule.head),
+    //		(hRule.head != phi) || (id == 0),
+    hasKey(hRule,
+    'lParts'),
+    isArray(hRule.lParts)
+  ], `Bad rule: ${OL(hRule)}`);
 };
 
 // ---------------------------------------------------------------------------

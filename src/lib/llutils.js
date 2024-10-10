@@ -1,5 +1,5 @@
   // llutils.coffee
-var deepEqual, log_level, module, warnOnly,
+var deepEqual, log_level, module,
   hasProp = {}.hasOwnProperty;
 
 import YAML from 'yaml';
@@ -20,6 +20,223 @@ export var dclone = (x) => {
 // ---------------------------------------------------------------------------
 export var identityFunc = (x) => {
   return x;
+};
+
+// ---------------------------------------------------------------------------
+//    tabify - convert leading spaces to TAB characters
+//             if numSpaces is not defined, then the first line
+//             that contains at least one space sets it
+export var tabify = (str, hOptions = {}) => {
+  var j, lLines, len1, numSpaces, prefix, prefixLen, ref, spaces, strict, theRest;
+  ({numSpaces, strict} = getOptions(hOptions, {
+    numSpaces: undef,
+    strict: true
+  }));
+  lLines = [];
+  ref = blockToArray(str);
+  for (j = 0, len1 = ref.length; j < len1; j++) {
+    str = ref[j];
+    [prefix, theRest] = splitPrefix(str);
+    prefixLen = prefix.length;
+    if (prefixLen === 0) {
+      lLines.push(theRest);
+    } else {
+      if (strict) {
+        assert(prefix.indexOf('\t') === -1, "unexpected TAB");
+      }
+      if (numSpaces === undef) {
+        numSpaces = substrCount(prefix, ' ');
+      }
+      spaces = ' '.repeat(numSpaces);
+      prefix = prefix.replaceAll(spaces, "\t");
+      lLines.push(`${prefix}${theRest}`);
+    }
+  }
+  return arrayToBlock(lLines);
+};
+
+// ---------------------------------------------------------------------------
+//    untabify - convert TAB characters to spaces
+export var untabify = (str, hOptions = {}) => {
+  var j, lLines, len1, numSpaces, prefix, prefixLen, ref, spaces, strict, theRest;
+  ({numSpaces, strict} = getOptions(hOptions, {
+    numSpaces: 3,
+    strict: true
+  }));
+  assert(isInteger(numSpaces), `bad numSpaces: ${OL(numSpaces)}`);
+  spaces = ' '.repeat(numSpaces);
+  lLines = [];
+  ref = blockToArray(str);
+  for (j = 0, len1 = ref.length; j < len1; j++) {
+    str = ref[j];
+    [prefix, theRest] = splitPrefix(str);
+    prefixLen = prefix.length;
+    if (prefixLen === 0) {
+      lLines.push(theRest);
+    } else {
+      if (strict) {
+        assert(prefix.indexOf(' ') === -1, "unexpected space char");
+      }
+      prefix = prefix.replaceAll("\t", spaces);
+      lLines.push(`${prefix}${theRest}`);
+    }
+  }
+  return arrayToBlock(lLines);
+};
+
+// ---------------------------------------------------------------------------
+export var assert = (cond, msg) => {
+  var bool, j, len1;
+  if (isArray(cond)) {
+    for (j = 0, len1 = cond.length; j < len1; j++) {
+      bool = cond[j];
+      assert(bool, msg);
+    }
+  } else if (!cond) {
+    throw new Error(untabify(msg));
+  }
+  return true;
+};
+
+// ---------------------------------------------------------------------------
+export var croak = (msg) => {
+  throw new Error(untabify(msg));
+  return true;
+};
+
+// ---------------------------------------------------------------------------
+// --- Can't use getOptions() !!!!!
+export var OL = (obj, hOptions = {}) => {
+  var esc, myReplacer, result, short;
+  if (obj === undef) {
+    return 'undef';
+  }
+  if (obj === null) {
+    return 'null';
+  }
+  if (hOptions.hasOwnProperty('esc')) {
+    esc = hOptions.esc;
+  } else {
+    esc = true;
+  }
+  if (hOptions.hasOwnProperty('short')) {
+    short = hOptions.short;
+  } else {
+    short = false;
+  }
+  if (short) {
+    if (isHash(obj)) {
+      return 'HASH';
+    }
+    if (isArray(obj)) {
+      return 'ARRAY';
+    }
+    if (isFunction(obj)) {
+      return 'FUNCTION';
+    }
+    if (isClassInstance(obj)) {
+      return 'CLASS INSTANCE';
+    }
+  }
+  myReplacer = (key, value) => {
+    var tag, type;
+    if (value === undef) {
+      return '«undef»';
+    }
+    type = typeof value;
+    switch (type) {
+      case 'symbol':
+        return '«Symbol»';
+      case 'bigint':
+        return `«BigInt ${value.toString()}»`;
+      case 'function':
+        if (value.toString().startsWith('class')) {
+          tag = 'Class';
+        } else {
+          tag = 'Function';
+        }
+        if (defined(value.name)) {
+          return `«${tag} ${value.name}»`;
+        } else {
+          return `«${tag}»`;
+        }
+        break;
+      case 'string':
+        // --- NOTE: JSON.stringify will add quote chars
+        if (esc) {
+          return escapeStr(value);
+        } else {
+          return value;
+        }
+        break;
+      case 'object':
+        if (value instanceof RegExp) {
+          return `«RegExp ${value.toString()}»`;
+        }
+        if (defined(value) && (typeof value.then === 'function')) {
+          return "«Promise»";
+        } else {
+          return value;
+        }
+        break;
+      default:
+        return value;
+    }
+  };
+  result = JSON.stringify(obj, myReplacer);
+  // --- Because JSON.stringify adds quote marks,
+  //     we remove them when using .
+  return result.replaceAll('"«', '«').replaceAll('»"', '»');
+};
+
+// ---------------------------------------------------------------------------
+export var ML = (obj, hOptions = {}) => {
+  var myReplacer, result;
+  if (obj === undef) {
+    return '.undef.';
+  }
+  if (obj === null) {
+    return '.null.';
+  }
+  myReplacer = (key, x) => {
+    var tag, type;
+    type = typeof x;
+    switch (type) {
+      case 'bigint':
+        return `«BigInt ${x.toString()}»`;
+      case 'function':
+        if (x.toString().startsWith('class')) {
+          tag = 'Class';
+        } else {
+          tag = 'Function';
+        }
+        if (defined(x.name)) {
+          return `«${tag} ${x.name}»`;
+        } else {
+          return `«${tag}»`;
+        }
+        break;
+      case 'string':
+        // --- NOTE: JSON.stringify will add quote chars
+        return escapeStr(x);
+      case 'object':
+        if (x instanceof RegExp) {
+          return `«RegExp ${x.toString()}»`;
+        }
+        if (defined(x) && (typeof x.then === 'function')) {
+          return "«Promise»";
+        } else {
+          return x;
+        }
+        break;
+      default:
+        return x;
+    }
+  };
+  result = JSON.stringify(obj, myReplacer, "\t");
+  // --- Because JSON.stringify adds quote marks,
+  //     we remove them when using « and »
+  return result.replaceAll('"«', '«').replaceAll('»"', '»');
 };
 
 // ---------------------------------------------------------------------------
@@ -69,41 +286,6 @@ export var add_s = (n) => {
   } else {
     return 's';
   }
-};
-
-// ---------------------------------------------------------------------------
-warnOnly = false;
-
-export var warnOnError = (flag = true) => {
-  return warnOnly = flag;
-};
-
-// ---------------------------------------------------------------------------
-export var assert = (cond, msg) => {
-  var bool, j, len1;
-  if (isArray(cond)) {
-    for (j = 0, len1 = cond.length; j < len1; j++) {
-      bool = cond[j];
-      assert(bool, msg);
-    }
-  } else if (!cond) {
-    if (warnOnly) {
-      console.log(`ERROR: ${msg}`);
-    } else {
-      throw new Error(msg);
-    }
-  }
-  return true;
-};
-
-// ---------------------------------------------------------------------------
-export var croak = (msg) => {
-  if (warnOnly) {
-    console.log(`ERROR: ${msg}`);
-  } else {
-    throw new Error(msg);
-  }
-  return true;
 };
 
 // ---------------------------------------------------------------------------
@@ -437,146 +619,9 @@ export var escapeBlock = (block) => {
 };
 
 // ---------------------------------------------------------------------------
-// --- Can't use getOptions() !!!!!
-export var OL = (obj, hOptions = {}) => {
-  var esc, finalResult, myReplacer, result, short;
-  if (obj === undef) {
-    return 'undef';
-  }
-  if (obj === null) {
-    return 'null';
-  }
-  if (hOptions.hasOwnProperty('esc')) {
-    esc = hOptions.esc;
-  } else {
-    esc = true;
-  }
-  if (hOptions.hasOwnProperty('short')) {
-    short = hOptions.short;
-  } else {
-    short = false;
-  }
-  if (short) {
-    if (isHash(obj)) {
-      return 'HASH';
-    }
-    if (isArray(obj)) {
-      return 'ARRAY';
-    }
-    if (isFunction(obj)) {
-      return 'FUNCTION';
-    }
-    if (isClassInstance(obj)) {
-      return 'CLASS INSTANCE';
-    }
-  }
-  myReplacer = (key, value) => {
-    var tag, type;
-    if (value === undef) {
-      return '«undef»';
-    }
-    type = typeof value;
-    switch (type) {
-      case 'symbol':
-        return '«Symbol»';
-      case 'bigint':
-        return `«BigInt ${value.toString()}»`;
-      case 'function':
-        if (value.toString().startsWith('class')) {
-          tag = 'Class';
-        } else {
-          tag = 'Function';
-        }
-        if (defined(value.name)) {
-          return `«${tag} ${value.name}»`;
-        } else {
-          return `«${tag}»`;
-        }
-        break;
-      case 'string':
-        // --- NOTE: JSON.stringify will add quote chars
-        if (esc) {
-          return escapeStr(value);
-        } else {
-          return value;
-        }
-        break;
-      case 'object':
-        if (value instanceof RegExp) {
-          return `«RegExp ${value.toString()}»`;
-        }
-        if (defined(value) && (typeof value.then === 'function')) {
-          return "«Promise»";
-        } else {
-          return value;
-        }
-        break;
-      default:
-        return value;
-    }
-  };
-  result = JSON.stringify(obj, myReplacer);
-  // --- Because JSON.stringify adds quote marks,
-  //     we remove them when using .
-  finalResult = result.replaceAll('"«', '«').replaceAll('»"', '»');
-  return finalResult;
-};
-
-// ---------------------------------------------------------------------------
 export var CWS = (str) => {
   assert(isString(str), "CWS(): parameter not a string");
   return str.trim().replace(/\s+/sg, ' ');
-};
-
-// ---------------------------------------------------------------------------
-export var ML = (obj, hOptions = {}) => {
-  var finalResult, myReplacer, result;
-  if (obj === undef) {
-    return '.undef.';
-  }
-  if (obj === null) {
-    return '.null.';
-  }
-  myReplacer = (key, x) => {
-    var tag, type;
-    type = typeof x;
-    switch (type) {
-      case 'bigint':
-        return `«BigInt ${x.toString()}»`;
-      case 'function':
-        if (x.toString().startsWith('class')) {
-          tag = 'Class';
-        } else {
-          tag = 'Function';
-        }
-        if (defined(x.name)) {
-          return `«${tag} ${x.name}»`;
-        } else {
-          return `«${tag}»`;
-        }
-        break;
-      case 'string':
-        // --- NOTE: JSON.stringify will add quote chars
-        return escapeStr(x);
-      case 'object':
-        if (x instanceof RegExp) {
-          return `«RegExp ${x.toString()}»`;
-        }
-        if (defined(x) && (typeof x.then === 'function')) {
-          return "«Promise»";
-        } else {
-          return x;
-        }
-        break;
-      default:
-        return x;
-    }
-  };
-  result = JSON.stringify(obj, myReplacer, "\t");
-  // --- Because JSON.stringify adds quote marks,
-  //     we remove them when using « and »
-  finalResult = result.replaceAll('"«', '«').replaceAll('»"', '»');
-  return finalResult;
 };
 
 // ---------------------------------------------------------------------------
@@ -763,70 +808,6 @@ export var splitPrefix = (line) => {
 // ---------------------------------------------------------------------------
 export var substrCount = (str, char) => {
   return (str.match(RegExp(`${char}`, "g")) || []).length;
-};
-
-// ---------------------------------------------------------------------------
-//    tabify - convert leading spaces to TAB characters
-//             if numSpaces is not defined, then the first line
-//             that contains at least one space sets it
-export var tabify = (str, hOptions = {}) => {
-  var j, lLines, len1, numSpaces, prefix, prefixLen, ref, spaces, strict, theRest;
-  ({numSpaces, strict} = getOptions(hOptions, {
-    numSpaces: undef,
-    strict: true
-  }));
-  lLines = [];
-  ref = blockToArray(str);
-  for (j = 0, len1 = ref.length; j < len1; j++) {
-    str = ref[j];
-    [prefix, theRest] = splitPrefix(str);
-    prefixLen = prefix.length;
-    if (prefixLen === 0) {
-      lLines.push(theRest);
-    } else {
-      if (strict) {
-        assert(prefix.indexOf('\t') === -1, "unexpected TAB");
-      }
-      if (numSpaces === undef) {
-        numSpaces = substrCount(prefix, ' ');
-      }
-      spaces = ' '.repeat(numSpaces);
-      prefix = prefix.replaceAll(spaces, "\t");
-      lLines.push(`${prefix}${theRest}`);
-    }
-  }
-  return arrayToBlock(lLines);
-};
-
-// ---------------------------------------------------------------------------
-//    tabify - convert leading spaces to TAB characters
-//             if numSpaces is not defined, then the first line
-//             that contains at least one space sets it
-export var untabify = (str, hOptions = {}) => {
-  var j, lLines, len1, numSpaces, prefix, prefixLen, ref, spaces, strict, theRest;
-  ({numSpaces, strict} = getOptions(hOptions, {
-    numSpaces: 3,
-    strict: true
-  }));
-  assert(isInteger(numSpaces), `bad numSpaces: ${OL(numSpaces)}`);
-  spaces = ' '.repeat(numSpaces);
-  lLines = [];
-  ref = blockToArray(str);
-  for (j = 0, len1 = ref.length; j < len1; j++) {
-    str = ref[j];
-    [prefix, theRest] = splitPrefix(str);
-    prefixLen = prefix.length;
-    if (prefixLen === 0) {
-      lLines.push(theRest);
-    } else {
-      if (strict) {
-        assert(prefix.indexOf(' ') === -1, "unexpected space char");
-      }
-      prefix = prefix.replaceAll("\t", spaces);
-      lLines.push(`${prefix}${theRest}`);
-    }
-  }
-  return arrayToBlock(lLines);
 };
 
 // ---------------------------------------------------------------------------

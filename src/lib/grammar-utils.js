@@ -28,6 +28,7 @@ import {
 import {
   terminal,
   nonterminal,
+  phi,
   RuleEx,
   checkRule,
   ruleAsString
@@ -105,7 +106,7 @@ export var EarleyParser = class EarleyParser {
     // --- Add a phi rule at start of grammar's rule list
     rootRule = {
       type: "rule",
-      head: "Φ",
+      head: phi,
       lParts: [nonterminal(this.grammar.root())]
     };
     this.lRules = [rootRule, ...this.grammar.allRules()];
@@ -117,12 +118,20 @@ export var EarleyParser = class EarleyParser {
   }
 
   // ..........................................................
+  addRule(newRule, set) {
+    var pre;
+    pre = set.size;
+    set.add(newRule); // won't add dups
+    return set.size === pre;
+  }
+
+  // ..........................................................
   // --- If debug == true, the function yields each time
   //     a new RuleEx is added or an existing RuleEx is
   //     incremented
   * parse(str, hOptions = {}) {
     debugger;
-    var S, debug, hPart, head, i, initRuleEx, isDup, lDupRules, lNewRules, n, newRule, next, pre, ref, ref1, ref2, ref3, ref4, root, rule, set, src, xRule, xRuleFromSrc;
+    var S, debug, head, i, initRuleEx, isDup, lNewRules, n, newRule, next, ref, ref1, ref2, ref3, ref4, root, rule, set, src, srcRule, type, xRule;
     assert(isString(str), `Not a string: ${OL(str)}`);
     ({debug, root} = getOptions(hOptions, {
       debug: false,
@@ -135,7 +144,7 @@ export var EarleyParser = class EarleyParser {
     // --- S is an array of sets of RuleEx objects
     RuleEx.resetNextID(); // reset IDs for RuleEx objects
     S = [];
-    initRuleEx = RuleEx.get(this.lRules[0], 0, 0);
+    initRuleEx = RuleEx.getNew(this.lRules[0], 0, 0);
     ref = range(n);
     for (i of ref) {
       set = new Set();
@@ -145,12 +154,13 @@ export var EarleyParser = class EarleyParser {
       S.push(set);
     }
     if (debug) {
-      yield "START:\n" + this.debugStr(undef, [initRuleEx]);
+      yield "START:\n" + this.resultStr([[initRuleEx, '']]);
     }
     ref1 = range(n);
     for (i of ref1) {
       set = S[i];
-      assert([defined(set), set instanceof Set, set.size > 0], `Bad set ${i}: ${OL(set)}`);
+      assert([defined(set), set instanceof Set], `Bad set ${i}: ${OL(set)}`);
+      assert(set.size > 0, "Syntax Error");
       if (debug) {
         LOG(centered(i, 32, {
           char: '-'
@@ -158,75 +168,79 @@ export var EarleyParser = class EarleyParser {
       }
       ref2 = S[i].values();
       for (xRule of ref2) {
+        if (debug) {
+          LOG(this.ruleStr(xRule));
+        }
         next = xRule.nextPart();
-        switch (next.type) {
+        type = defined(next) ? next.type : undef;
+        lNewRules = []; // --- [ [rule, isDup, destSet], ... ]
+        //     undef destSet means same set as src
+        switch (type) {
           case "nonterminal":
-            lNewRules = [];
-            lDupRules = [];
             ref3 = this.grammar.alternatives(next.value);
             for (rule of ref3) {
-              newRule = RuleEx.get(rule, i, 0);
-              pre = S[i].size;
-              S[i].add(newRule); // won't add dups
-              isDup = S[i].size === pre;
-              if (isDup) {
-                lDupRules.push(newRule);
-              } else {
-                lNewRules.push(newRule);
-              }
-            }
-            if (debug) {
-              yield this.debugStr(xRule, lNewRules, lDupRules);
+              newRule = RuleEx.getNew(rule, i);
+              isDup = this.addRule(newRule, S[i]);
+              lNewRules.push([newRule, isDup]);
             }
             break;
           case "terminal":
-            if (next.value === str[i]) {
-              newRule = RuleEx.get(rule, i, xRule.pos + 1);
-              pre = S[i].size;
-              S[i + 1].add(xRule.getInc());
-              isDup = S[i].size === pre;
-              if (isDup) {
-                lDupRules.push(newRule);
-              } else {
-                lNewRules.push(newRule);
-              }
-              yield this.debugStr(xRule, lNewRules, lDupRules);
-            } else {
-              yield this.debugStr(xRule, lNewRules);
+            if ((i + 1 < n) && (next.value === str[i])) {
+              newRule = RuleEx.getNew(xRule, i, xRule.pos + 1);
+              isDup = this.addRule(newRule, S[i + 1]);
+              lNewRules.push([newRule, isDup, i + 1]);
             }
             break;
           case undef:
             ({head, src} = xRule);
             ref4 = S[src];
-            for (xRuleFromSrc of ref4) {
-              hPart = xRuleFromSrc.nextPart();
-              if ((hPart.type === 'nonterminal') && (hPart.value === head)) {
-                S[i].add(xRule.getInc());
+            for (srcRule of ref4) {
+              next = srcRule.nextPart();
+              if (defined(next) && (next.type === 'nonterminal') && (next.value === head)) {
+                newRule = srcRule.getInc();
+                isDup = this.addRule(newRule, S[i]);
+                lNewRules.push([newRule, isDup]);
               }
             }
             break;
           default:
             croak(`Bad next type: ${OL(next)}`);
         }
+        if (debug) {
+          yield this.resultStr(lNewRules);
+        }
       }
+    }
+    LOG("SUCCESS!");
+    return "SUCCESS";
+  }
+
+  // ..........................................................
+  ruleStr(srcRuleEx) {
+    var next;
+    next = srcRuleEx.nextPart();
+    if (defined(next)) {
+      return `${srcRuleEx.asString()} (${next.type} next)`;
+    } else {
+      return `${srcRuleEx.asString()} (at end)`;
     }
   }
 
   // ..........................................................
-  debugStr(srcRule, lNewRules = [], lDupRules = []) {
-    var k, l, lLines, len, len1, rule;
-    if (defined(srcRule)) {
-      lLines = [srcRule.asString()];
-    } else {
-      lLines = [];
-    }
+  resultStr(lNewRules = []) {
+    var destSet, isDup, k, lLines, len, rule, status;
+    lLines = [];
     for (k = 0, len = lNewRules.length; k < len; k++) {
-      rule = lNewRules[k];
-      lLines.push(`   ${rule.asString()}`);
+      [rule, isDup, destSet] = lNewRules[k];
+      status = isDup ? 'DUP ' : '';
+      if (defined(destSet)) {
+        lLines.push(`   ${status}${rule.asString()} ===> S${destSet}`);
+      } else {
+        lLines.push(`   ${status}${rule.asString()}`);
+      }
     }
-    for (l = 0, len1 = lDupRules.length; l < len1; l++) {
-      rule = lDupRules[l];
-      lLines.push(`   ${rule.asString()} (DUP)`);
+    if (isEmpty(lLines)) {
+      lLines.push("   NO MATCH");
     }
     return lLines.join("\n");
   }

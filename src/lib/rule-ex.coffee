@@ -1,13 +1,14 @@
 # rule-ex.coffee
 
 import {
-	undef, defined, notdefined, OL, hasKey,
+	undef, defined, notdefined, OL, ML, hasKey,
 	isString, isInteger, isArray,
 	assert, croak,
 	} from '@jdeighan/llutils'
 import {MultiMap} from '@jdeighan/llutils/multi-map'
 
 raisedDot = '•'
+export phi = 'Φ'
 
 # ---------------------------------------------------------------------------
 #     class RuleEx
@@ -25,7 +26,7 @@ export class RuleEx
 		return id
 
 	@mm: new MultiMap(3)
-	@get: (hRule, src, pos) =>
+	@getNew: (hRule, src, pos=0) =>
 		obj = @mm.get([hRule, src, pos])
 		if defined(obj)
 			return obj
@@ -48,18 +49,18 @@ export class RuleEx
 		assert isInteger(@src), "Not an int: #{OL(@src)}"
 		@maxpos = @lParts.length
 
-	nextPart: () ->
+	nextPart: () ->     # --- may return undef
 
 		return @lParts[@pos]
 
 	getInc: () ->
 
-		assert (@pos+1 <= @maxpos), "Can't inc #{this}"
-		return RuleEx.get(@hRule, @src, @pos+1)
+		assert (@pos+1 <= @maxpos), "Can't inc #{ML(this)}"
+		return RuleEx.getNew(@hRule, @src, @pos+1)
 
 	asString: () ->
 
-		return "[#{@id}] #{ruleAsString(@hRule, @pos)}"
+		return "[#{@id}] #{ruleAsString(@hRule, @pos)} / #{@src}"
 
 # ---------------------------------------------------------------------------
 
@@ -92,7 +93,7 @@ export checkRule = (hRule, id=1) ->
 		(hRule.type == "rule"),
 		hasKey(hRule, 'head'),
 		isString(hRule.head),
-		(hRule.head != 'Φ') || (id == 0),
+#		(hRule.head != phi) || (id == 0),
 		hasKey(hRule, 'lParts'),
 		isArray(hRule.lParts),
 		], "Bad rule: #{OL(hRule)}"

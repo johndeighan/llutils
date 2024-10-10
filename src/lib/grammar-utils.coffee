@@ -8,7 +8,7 @@ import {
 	} from '@jdeighan/llutils'
 import {MultiMap} from '@jdeighan/llutils/multi-map'
 import {
-	terminal, nonterminal,
+	terminal, nonterminal, phi,
 	RuleEx, checkRule, ruleAsString,
 	} from '@jdeighan/llutils/rule-ex'
 
@@ -86,7 +86,7 @@ export class EarleyParser
 		# --- Add a phi rule at start of grammar's rule list
 		rootRule = {
 			type: "rule"
-			head: "Φ"
+			head: phi
 			lParts: [nonterminal(@grammar.root())]
 			}
 		@lRules = [ rootRule, @grammar.allRules()...]
@@ -96,6 +96,14 @@ export class EarleyParser
 	asString: () ->
 
 		return @grammar.asString()
+
+	# ..........................................................
+
+	addRule: (newRule, set) ->
+
+		pre = set.size
+		set.add newRule   # won't add dups
+		return (set.size == pre)
 
 	# ..........................................................
 	# --- If debug == true, the function yields each time
@@ -121,7 +129,7 @@ export class EarleyParser
 		RuleEx.resetNextID()   # reset IDs for RuleEx objects
 
 		S = []
-		initRuleEx = RuleEx.get(@lRules[0], 0, 0)
+		initRuleEx = RuleEx.getNew(@lRules[0], 0, 0)
 		for i from range(n)
 			set = new Set()
 			if (i == 0)
@@ -129,74 +137,84 @@ export class EarleyParser
 			S.push set
 
 		if debug
-			yield "START:\n" + @debugStr(undef, [initRuleEx])
+			yield "START:\n" + @resultStr([[initRuleEx, '']])
 
 		for i from range(n)
 			set = S[i]
 			assert [
 				defined(set),
 				(set instanceof Set),
-				(set.size > 0),
 				], "Bad set #{i}: #{OL(set)}"
+
+			assert (set.size > 0), "Syntax Error"
 
 			if debug
 				LOG centered(i, 32, {char: '-'})
 
 			for xRule from S[i].values()
+				if debug
+					LOG @ruleStr(xRule)
 				next = xRule.nextPart()
-				switch next.type
+				type = if defined(next) then next.type else undef
+
+				lNewRules = []     # --- [ [rule, isDup, destSet], ... ]
+				                   #     undef destSet means same set as src
+				switch type
+
 					when "nonterminal"
-						lNewRules = []
-						lDupRules = []
 						for rule from @grammar.alternatives(next.value)
-							newRule = RuleEx.get(rule, i, 0)
-							pre = S[i].size
-							S[i].add newRule   # won't add dups
-							isDup = (S[i].size == pre)
-							if isDup
-								lDupRules.push newRule
-							else
-								lNewRules.push newRule
-						if debug
-							yield @debugStr(xRule, lNewRules, lDupRules)
+							newRule = RuleEx.getNew(rule, i)
+							isDup = @addRule(newRule, S[i])
+							lNewRules.push [newRule, isDup]
+
 					when "terminal"
-						if (next.value == str[i])
-							newRule = RuleEx.get(rule, i, xRule.pos+1)
-							pre = S[i].size
-							S[i+1].add xRule.getInc()
-							isDup = (S[i].size == pre)
-							if isDup
-								lDupRules.push newRule
-							else
-								lNewRules.push newRule
-							yield @debugStr(xRule, lNewRules, lDupRules)
-						else
-							yield @debugStr(xRule, lNewRules)
+						if (i+1 < n) && (next.value == str[i])
+							newRule = RuleEx.getNew(xRule, i, xRule.pos+1)
+							isDup = @addRule(newRule, S[i+1])
+							lNewRules.push [newRule, isDup, i+1]
+
 					when undef
 						{head, src} = xRule
-						for xRuleFromSrc from S[src]
-							hPart = xRuleFromSrc.nextPart()
-							if (hPart.type == 'nonterminal') \
-									&& (hPart.value == head)
-								S[i].add xRule.getInc()
+						for srcRule from S[src]
+							next = srcRule.nextPart()
+							if defined(next) \
+									&& (next.type == 'nonterminal') \
+									&& (next.value == head)
+								newRule = srcRule.getInc()
+								isDup = @addRule(newRule, S[i])
+								lNewRules.push [newRule, isDup]
 					else
 						croak "Bad next type: #{OL(next)}"
 
-		return
+				if debug
+					yield @resultStr(lNewRules)
+
+		LOG "SUCCESS!"
+		return "SUCCESS"
 
 	# ..........................................................
 
-	debugStr: (srcRule, lNewRules=[], lDupRules=[]) ->
+	ruleStr: (srcRuleEx) ->
 
-		if defined(srcRule)
-			lLines = [srcRule.asString()]
+		next = srcRuleEx.nextPart()
+		if defined(next)
+			return "#{srcRuleEx.asString()} (#{next.type} next)"
 		else
-			lLines = []
+			return "#{srcRuleEx.asString()} (at end)"
 
-		for rule in lNewRules
-			lLines.push "   #{rule.asString()}"
-		for rule in lDupRules
-			lLines.push "   #{rule.asString()} (DUP)"
+	# ..........................................................
+
+	resultStr: (lNewRules=[]) ->
+
+		lLines = []
+		for [rule, isDup, destSet] in lNewRules
+			status = if isDup then 'DUP ' else ''
+			if defined(destSet)
+				lLines.push "   #{status}#{rule.asString()} ===> S#{destSet}"
+			else
+				lLines.push "   #{status}#{rule.asString()}"
+		if isEmpty(lLines)
+			lLines.push "   NO MATCH"
 		return lLines.join("\n")
 
 # ---------------------------------------------------------------------------

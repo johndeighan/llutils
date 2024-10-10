@@ -20,6 +20,183 @@ export identityFunc = (x) =>
 	return x
 
 # ---------------------------------------------------------------------------
+#    tabify - convert leading spaces to TAB characters
+#             if numSpaces is not defined, then the first line
+#             that contains at least one space sets it
+
+export tabify = (str, hOptions={}) =>
+
+	{numSpaces, strict} = getOptions hOptions, {
+		numSpaces: undef
+		strict: true
+		}
+	lLines = []
+	for str in blockToArray(str)
+		[prefix, theRest] = splitPrefix(str)
+		prefixLen = prefix.length
+		if prefixLen == 0
+			lLines.push theRest
+		else
+			if strict
+				assert (prefix.indexOf('\t') == -1), "unexpected TAB"
+			if (numSpaces == undef)
+				numSpaces = substrCount(prefix, ' ')
+			spaces = ' '.repeat(numSpaces)
+			prefix = prefix.replaceAll(spaces, "\t")
+			lLines.push "#{prefix}#{theRest}"
+	return arrayToBlock(lLines)
+
+# ---------------------------------------------------------------------------
+#    untabify - convert TAB characters to spaces
+
+export untabify = (str, hOptions={}) =>
+
+	{numSpaces, strict} = getOptions hOptions, {
+		numSpaces: 3
+		strict: true
+		}
+	assert isInteger(numSpaces), "bad numSpaces: #{OL(numSpaces)}"
+	spaces = ' '.repeat(numSpaces)
+	lLines = []
+	for str in blockToArray(str)
+		[prefix, theRest] = splitPrefix(str)
+		prefixLen = prefix.length
+		if prefixLen == 0
+			lLines.push theRest
+		else
+			if strict
+				assert (prefix.indexOf(' ') == -1), "unexpected space char"
+			prefix = prefix.replaceAll("\t", spaces)
+			lLines.push "#{prefix}#{theRest}"
+	return arrayToBlock(lLines)
+
+# ---------------------------------------------------------------------------
+
+export assert = (cond, msg) =>
+
+	if isArray(cond)
+		for bool in cond
+			assert bool, msg
+	else if !cond
+		throw new Error(untabify(msg))
+	return true
+
+# ---------------------------------------------------------------------------
+
+export croak = (msg) =>
+
+	throw new Error(untabify(msg))
+	return true
+
+# ---------------------------------------------------------------------------
+# --- Can't use getOptions() !!!!!
+
+export OL = (obj, hOptions={}) =>
+
+	if (obj == undef) then return 'undef'
+	if (obj == null) then return 'null'
+
+	if hOptions.hasOwnProperty('esc')
+		esc = hOptions.esc
+	else
+		esc = true
+
+	if hOptions.hasOwnProperty('short')
+		short = hOptions.short
+	else
+		short = false
+
+	if short
+		if isHash(obj) then return 'HASH'
+		if isArray(obj) then return 'ARRAY'
+		if isFunction(obj) then return 'FUNCTION'
+		if isClassInstance(obj) then return 'CLASS INSTANCE'
+
+	myReplacer = (key, value) =>
+		if (value == undef)
+			return '«undef»'
+		type = typeof value
+		switch type
+			when 'symbol'
+				return '«Symbol»'
+			when 'bigint'
+				return "«BigInt #{value.toString()}»"
+			when 'function'
+				if value.toString().startsWith('class')
+					tag = 'Class'
+				else
+					tag = 'Function'
+				if defined(value.name)
+					return "«#{tag} #{value.name}»"
+				else
+					return "«#{tag}»"
+			when 'string'
+				# --- NOTE: JSON.stringify will add quote chars
+				if esc
+					return escapeStr(value)
+				else
+					return value
+			when 'object'
+				if value instanceof RegExp
+					return "«RegExp #{value.toString()}»"
+				if defined(value) && (typeof value.then == 'function')
+					return "«Promise»"
+				else
+					return value
+			else
+				return value
+
+	result = JSON.stringify(obj, myReplacer)
+
+	# --- Because JSON.stringify adds quote marks,
+	#     we remove them when using .
+	return result \
+		.replaceAll('"«','«') \
+		.replaceAll('»"','»')
+
+# ---------------------------------------------------------------------------
+
+export ML = (obj, hOptions={}) =>
+
+	if (obj == undef) then return '.undef.'
+	if (obj == null) then return '.null.'
+
+	myReplacer = (key, x) =>
+		type = typeof x
+		switch type
+			when 'bigint'
+				return "«BigInt #{x.toString()}»"
+			when 'function'
+				if x.toString().startsWith('class')
+					tag = 'Class'
+				else
+					tag = 'Function'
+				if defined(x.name)
+					return "«#{tag} #{x.name}»"
+				else
+					return "«#{tag}»"
+			when 'string'
+				# --- NOTE: JSON.stringify will add quote chars
+				return escapeStr(x)
+			when 'object'
+				if x instanceof RegExp
+					return "«RegExp #{x.toString()}»"
+				if defined(x) && (typeof x.then == 'function')
+					return "«Promise»"
+				else
+					return x
+			else
+				return x
+
+	result = JSON.stringify(obj, myReplacer, "\t")
+
+	# --- Because JSON.stringify adds quote marks,
+	#     we remove them when using « and »
+	return result \
+		.replaceAll('"«','«') \
+		.replaceAll('»"','»')
+
+# ---------------------------------------------------------------------------
 
 export stripCR = (str) =>
 
@@ -65,35 +242,6 @@ export rev_range = (n) ->
 export add_s = (n) =>
 
 	return if (n == 1) then '' else 's'
-
-# ---------------------------------------------------------------------------
-
-warnOnly = false
-export warnOnError = (flag=true) => warnOnly = flag
-
-# ---------------------------------------------------------------------------
-
-export assert = (cond, msg) =>
-
-	if isArray(cond)
-		for bool in cond
-			assert bool, msg
-	else if !cond
-		if warnOnly
-			console.log "ERROR: #{msg}"
-		else
-			throw new Error(msg)
-	return true
-
-# ---------------------------------------------------------------------------
-
-export croak = (msg) =>
-
-	if warnOnly
-		console.log "ERROR: #{msg}"
-	else
-		throw new Error(msg)
-	return true
 
 # ---------------------------------------------------------------------------
 # returns true if all args defined
@@ -384,118 +532,11 @@ export escapeBlock = (block) =>
 	return escapeStr(block, 'escNoNL')
 
 # ---------------------------------------------------------------------------
-# --- Can't use getOptions() !!!!!
-
-export OL = (obj, hOptions={}) =>
-
-	if (obj == undef) then return 'undef'
-	if (obj == null) then return 'null'
-
-	if hOptions.hasOwnProperty('esc')
-		esc = hOptions.esc
-	else
-		esc = true
-
-	if hOptions.hasOwnProperty('short')
-		short = hOptions.short
-	else
-		short = false
-
-	if short
-		if isHash(obj) then return 'HASH'
-		if isArray(obj) then return 'ARRAY'
-		if isFunction(obj) then return 'FUNCTION'
-		if isClassInstance(obj) then return 'CLASS INSTANCE'
-
-	myReplacer = (key, value) =>
-		if (value == undef)
-			return '«undef»'
-		type = typeof value
-		switch type
-			when 'symbol'
-				return '«Symbol»'
-			when 'bigint'
-				return "«BigInt #{value.toString()}»"
-			when 'function'
-				if value.toString().startsWith('class')
-					tag = 'Class'
-				else
-					tag = 'Function'
-				if defined(value.name)
-					return "«#{tag} #{value.name}»"
-				else
-					return "«#{tag}»"
-			when 'string'
-				# --- NOTE: JSON.stringify will add quote chars
-				if esc
-					return escapeStr(value)
-				else
-					return value
-			when 'object'
-				if value instanceof RegExp
-					return "«RegExp #{value.toString()}»"
-				if defined(value) && (typeof value.then == 'function')
-					return "«Promise»"
-				else
-					return value
-			else
-				return value
-
-	result = JSON.stringify(obj, myReplacer)
-
-	# --- Because JSON.stringify adds quote marks,
-	#     we remove them when using .
-	finalResult = result \
-		.replaceAll('"«','«').replaceAll('»"','»')
-	return finalResult
-
-# ---------------------------------------------------------------------------
 
 export CWS = (str) =>
 
 	assert isString(str), "CWS(): parameter not a string"
 	return str.trim().replace(/\s+/sg, ' ')
-
-# ---------------------------------------------------------------------------
-
-export ML = (obj, hOptions={}) =>
-
-	if (obj == undef) then return '.undef.'
-	if (obj == null) then return '.null.'
-
-	myReplacer = (key, x) =>
-		type = typeof x
-		switch type
-			when 'bigint'
-				return "«BigInt #{x.toString()}»"
-			when 'function'
-				if x.toString().startsWith('class')
-					tag = 'Class'
-				else
-					tag = 'Function'
-				if defined(x.name)
-					return "«#{tag} #{x.name}»"
-				else
-					return "«#{tag}»"
-			when 'string'
-				# --- NOTE: JSON.stringify will add quote chars
-				return escapeStr(x)
-			when 'object'
-				if x instanceof RegExp
-					return "«RegExp #{x.toString()}»"
-				if defined(x) && (typeof x.then == 'function')
-					return "«Promise»"
-				else
-					return x
-			else
-				return x
-
-	result = JSON.stringify(obj, myReplacer, "\t")
-
-	# --- Because JSON.stringify adds quote marks,
-	#     we remove them when using « and »
-	finalResult = result.replaceAll('"«','«').replaceAll('»"','»')
-	return finalResult
 
 # ---------------------------------------------------------------------------
 # returns a single string
@@ -672,59 +713,6 @@ export splitPrefix = (line) =>
 export substrCount = (str, char) =>
 
 	return (str.match(///#{char}///g)||[]).length
-
-# ---------------------------------------------------------------------------
-#    tabify - convert leading spaces to TAB characters
-#             if numSpaces is not defined, then the first line
-#             that contains at least one space sets it
-
-export tabify = (str, hOptions={}) =>
-
-	{numSpaces, strict} = getOptions hOptions, {
-		numSpaces: undef
-		strict: true
-		}
-	lLines = []
-	for str in blockToArray(str)
-		[prefix, theRest] = splitPrefix(str)
-		prefixLen = prefix.length
-		if prefixLen == 0
-			lLines.push theRest
-		else
-			if strict
-				assert (prefix.indexOf('\t') == -1), "unexpected TAB"
-			if (numSpaces == undef)
-				numSpaces = substrCount(prefix, ' ')
-			spaces = ' '.repeat(numSpaces)
-			prefix = prefix.replaceAll(spaces, "\t")
-			lLines.push "#{prefix}#{theRest}"
-	return arrayToBlock(lLines)
-
-# ---------------------------------------------------------------------------
-#    tabify - convert leading spaces to TAB characters
-#             if numSpaces is not defined, then the first line
-#             that contains at least one space sets it
-
-export untabify = (str, hOptions={}) =>
-
-	{numSpaces, strict} = getOptions hOptions, {
-		numSpaces: 3
-		strict: true
-		}
-	assert isInteger(numSpaces), "bad numSpaces: #{OL(numSpaces)}"
-	spaces = ' '.repeat(numSpaces)
-	lLines = []
-	for str in blockToArray(str)
-		[prefix, theRest] = splitPrefix(str)
-		prefixLen = prefix.length
-		if prefixLen == 0
-			lLines.push theRest
-		else
-			if strict
-				assert (prefix.indexOf(' ') == -1), "unexpected space char"
-			prefix = prefix.replaceAll("\t", spaces)
-			lLines.push "#{prefix}#{theRest}"
-	return arrayToBlock(lLines)
 
 # ---------------------------------------------------------------------------
 
