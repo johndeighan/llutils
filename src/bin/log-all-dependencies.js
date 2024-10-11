@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --enable-source-maps
+#!/usr/bin/env node
 // log-all-dependencies.coffee
 var filePath, graph, i, lDeps, lPatterns, len, nodeType, regexp;
 

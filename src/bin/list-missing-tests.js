@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --enable-source-maps
+#!/usr/bin/env node
 // list-missing-tests.coffee
 var filePath, hArgs, ref, ref1, stub, x, y;
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --enable-source-maps
+#!/usr/bin/env node
 // map-source-line.coffee
 var filePath, hArgs, lineNum;
 

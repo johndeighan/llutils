@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --enable-source-maps
+#!/usr/bin/env node
 // low-level-build.coffee
 
 // --- Designed to run in ANY project that installs @jdeighan/llutils
@@ -51,8 +51,7 @@ doLog = (str) => {
   }
 };
 
-// --- NOTE: This should enable source maps in node, but it doesn't work
-shebang = "#!/usr/bin/env -S node --enable-source-maps";
+shebang = "#!/usr/bin/env node";
 
 // ---------------------------------------------------------------------------
 // Usage:   node src/bin/low-level-build.js

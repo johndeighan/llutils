@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --enable-source-maps
+#!/usr/bin/env node
 // add-user-lib.coffee
 
 // --- Add new library file(s) to an existing project

@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --enable-source-maps
+#!/usr/bin/env node
 // for-each-file.coffee
 
 // --- Using option -debug prevents any execution

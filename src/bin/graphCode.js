@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --enable-source-maps
+#!/usr/bin/env node
 // graphCode.coffee
 var graph, lDeps, ref, ref1, ref2, relPath, x, y, z;
 

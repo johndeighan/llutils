@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --enable-source-maps
+#!/usr/bin/env node
 // proc-all-peggy.coffee
 
 // --- Part of build process, can't use getArgs()
