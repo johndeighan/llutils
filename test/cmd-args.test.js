@@ -1,5 +1,5 @@
 // cmd-args.test.coffee
-var hDesc;
+var hDesc, hDesc2;
 
 import {
   undef
@@ -76,6 +76,7 @@ equal(getArgs(hDesc, {
 }), {
   _: ['letmein'],
   a: true,
+  b: false,
   cd: 'why'
 });
 
@@ -88,6 +89,42 @@ fails(() => {
 fails(() => {
   return getArgs(hDesc, {
     args: '-ab -cd=why a b c d'
+  });
+});
+
+hDesc2 = {
+  _: {
+    exactly: 1
+  },
+  a: {
+    type: 'boolean'
+  },
+  b: {
+    type: 'boolean'
+  },
+  cd: {
+    type: 'string'
+  }
+};
+
+equal(getArgs(hDesc2, {
+  args: '-b -cd=why letmein'
+}), {
+  _: ['letmein'],
+  a: false,
+  b: true,
+  cd: 'why'
+});
+
+fails(() => {
+  return getArgs(hDesc2, {
+    args: '-ab -cd=why'
+  });
+});
+
+fails(() => {
+  return getArgs(hDesc2, {
+    args: '-ab -cd=why one two'
   });
 });
 

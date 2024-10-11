@@ -36,7 +36,7 @@
 	hOptions = {};
 
 	export var getArgs = (hDesc = undef, hOptions = {}) => {
-	  var argStr, args, err, hResult, tracer;
+	  var argStr, args, err, hResult, i, isMissing, key, len, ref, tracer;
 	  ({args, tracer} = getOptions(hOptions, {
 	    args: undef,
 	    tracer: 'none'
@@ -56,6 +56,14 @@
 	  }
 	  if (defined(hDesc)) {
 	    check(hResult, hDesc);
+	    isMissing = (key) => {
+	      return (key !== '_') && !hasKey(hResult, key) && (hDesc[key].type === 'boolean');
+	    };
+	    ref = keys(hDesc).filter(isMissing);
+	    for (i = 0, len = ref.length; i < len; i++) {
+	      key = ref[i];
+	      hResult[key] = false;
+	    }
 	  }
 	  return hResult;
 	};
@@ -121,6 +129,7 @@
 	    assert(n >= min, `There must be at least ${min} non-option${add_s(min)}`);
 	    assert(n <= max, `There can be at most ${max} non-option${add_s(max)}`);
 	  }
+	  return hResult;
 	};
 
 	showHelp = (hDesc) => {

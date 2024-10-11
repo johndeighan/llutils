@@ -51,6 +51,17 @@ GLOBAL
 			process.exit()
 		if defined(hDesc)
 			check hResult, hDesc
+
+			# --- Return false value for boolean options not set
+			isMissing = (key) =>
+				return (
+						(key != '_')
+						&& ! hasKey(hResult, key)
+						&& (hDesc[key].type == 'boolean')
+						)
+			for key in keys(hDesc).filter(isMissing)
+				hResult[key] = false
+
 		return hResult
 
 	# ..........................................................
@@ -60,7 +71,11 @@ GLOBAL
 		assert isHash(hResult), "check(): hResult not a hash: #{OL(hResult)}"
 		assert isHash(hDesc),   "check(): hDesc not a hash: #{OL(hDesc)}"
 
-		# --- Check options
+		# --- Check types of all options
+		#     typeof hDesc[key] can be:
+		#        string - 'string','boolean','number,'integer'
+		#        function
+		#        object
 		for key in keys(hResult).filter((x) => x != '_')
 			{type, desc, msg} = hDesc[key]
 			if isString(type)
@@ -117,13 +132,7 @@ GLOBAL
 			assert (n <= max),
 					"There can be at most #{max} non-option#{add_s(max)}"
 
-		# --- Check types of all options
-		#     typeof hDesc[key] can be:
-		#        string - 'string','boolean','number,'integer'
-		#        function
-		#        object
-
-		return
+		return hResult
 
 	# ..........................................................
 
