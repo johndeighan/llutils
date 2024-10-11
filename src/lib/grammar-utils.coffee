@@ -3,7 +3,7 @@
 import {
 	undef, defined, notdefined, OL, LOG, keys, hasKey,
 	isString, isHash, isArray, isInteger, range, inRange,
-	isEmpty, nonEmpty, centered,
+	isEmpty, nonEmpty, centered, escapeStr,
 	assert, croak, getOptions,
 	} from '@jdeighan/llutils'
 import {MultiMap} from '@jdeighan/llutils/multi-map'
@@ -90,6 +90,7 @@ export class EarleyParser
 			lParts: [nonterminal(@grammar.root())]
 			}
 		@lRules = [ rootRule, @grammar.allRules()...]
+		@width = 40
 
 	# ..........................................................
 
@@ -106,11 +107,82 @@ export class EarleyParser
 		return (set.size == pre)
 
 	# ..........................................................
+
+	parse: (str, hOptions={}) ->
+
+		{debug, root} = getOptions hOptions, {
+			debug: false
+			root: @grammar.root()
+			}
+		iterator = @parse_generator str, hOptions
+		next = iterator.next()
+		while !next.done
+			next = iterator.next()
+		return next.value
+
+	# ..........................................................
+
+	expandSet: (S, i, str, hOptions={}) ->
+
+		debugger
+		{debug} = getOptions hOptions, {
+			debug: false
+			}
+		curSet = S[i]
+		nextSet = S[i+1]
+		if debug
+			LOG centered(i, @width, {char: '-'})
+
+		for xRule from curSet.values()
+			if debug
+				LOG @ruleStr(xRule)
+			next = xRule.nextPart()
+			type = if defined(next) then next.type else undef
+
+			lNewRules = []     # --- [ [rule, isDup, destSet], ... ]
+									 #     undef destSet means same set as src
+			switch type
+
+				when "nonterminal"
+					for rule from @grammar.alternatives(next.value)
+						newRule = RuleEx.getNew(rule, i)
+						isDup = @addRule(newRule, curSet)
+						lNewRules.push [newRule, isDup]
+
+				when "terminal"
+					if (next.value == str[i]) && defined(nextSet)
+						newRule = xRule.getInc()
+						isDup = @addRule(newRule, nextSet)
+						lNewRules.push [newRule, isDup, i+1]
+
+				when undef
+					{head, src} = xRule
+					for srcRule from S[src]
+						next = srcRule.nextPart()
+						if defined(next) \
+								&& (next.type == 'nonterminal') \
+								&& (next.value == head)
+							newRule = srcRule.getInc()
+							isDup = @addRule(newRule, curSet)
+							lNewRules.push [newRule, isDup]
+				else
+					croak "Bad next type in RuleEx: #{OL(xRule)}"
+
+			if debug
+				LOG @resultStr(lNewRules)
+				yield @resultStr(lNewRules)
+
+		# --- Dump contents of curSet
+		if debug
+			LOG @setStr(curSet, i)
+		return
+
+	# ..........................................................
 	# --- If debug == true, the function yields each time
 	#     a new RuleEx is added or an existing RuleEx is
 	#     incremented
 
-	parse: (str, hOptions={}) ->
+	parse_generator: (str, hOptions={}) ->
 
 		debugger
 		assert isString(str), "Not a string: #{OL(str)}"
@@ -126,69 +198,46 @@ export class EarleyParser
 		n = str.length
 
 		# --- S is an array of sets of RuleEx objects
+		S = []
 		RuleEx.resetNextID()   # reset IDs for RuleEx objects
 
-		S = []
-		initRuleEx = RuleEx.getNew(@lRules[0], 0, 0)
-		for i from range(n)
-			set = new Set()
+		for i from range(n+1)
 			if (i == 0)
-				set.add initRuleEx
-			S.push set
-		S.push new Set()    # --- eliminates need for a check
+				S.push new Set([RuleEx.getNew(@lRules[0], 0, 0)])
+			else
+				S.push new Set()
 
+		lIndexes = Array.from(range(n))
+		for i in lIndexes
+			if (S[i].size == 0)
+				str = escapeStr(str, {offset: i-1})
+				throw new SyntaxError(str)
+			yield from @expandSet S, i, str, {debug}
+
+		yield from @expandSet S, n, str, {debug}
 		if debug
-			yield "START:\n" + @resultStr([[initRuleEx, '']])
+			LOG @setStr(S[n], n)
+		for xRule from S[n].values()
+			if @isFinal(xRule)
+				return "OK"
+		debugStr = escapeStr(str, {offset: n-1})
+		throw new SyntaxError(debugStr)
 
-		for i from range(n)
-			set = S[i]
-			assert (set.size > 0),
-					new SyntaxError("Unexpected EOS: #{escapeStr(str)}")
+	# ..........................................................
 
-			if debug
-				LOG centered(i, 32, {char: '-'})
+	isFinal: (xRule) ->
 
-			for xRule from S[i].values()
-				if debug
-					LOG @ruleStr(xRule)
-				next = xRule.nextPart()
-				type = if defined(next) then next.type else undef
+		return (xRule.head == phi) && notdefined(xRule.nextPart())
 
-				lNewRules = []     # --- [ [rule, isDup, destSet], ... ]
-				                   #     undef destSet means same set as src
-				switch type
+	# ..........................................................
 
-					when "nonterminal"
-						for rule from @grammar.alternatives(next.value)
-							newRule = RuleEx.getNew(rule, i)
-							isDup = @addRule(newRule, S[i])
-							lNewRules.push [newRule, isDup]
+	setStr: (set, i) ->
 
-					when "terminal"
-						if (next.value == str[i])
-#							newRule = RuleEx.getNew(xRule, i, xRule.pos+1)
-							newRule = xRule.getInc()
-							isDup = @addRule(newRule, S[i+1])
-							lNewRules.push [newRule, isDup, i+1]
-
-					when undef
-						{head, src} = xRule
-						for srcRule from S[src]
-							next = srcRule.nextPart()
-							if defined(next) \
-									&& (next.type == 'nonterminal') \
-									&& (next.value == head)
-								newRule = srcRule.getInc()
-								isDup = @addRule(newRule, S[i])
-								lNewRules.push [newRule, isDup]
-					else
-						croak "Bad next type in RuleEx: #{OL(xRule)}"
-
-				if debug
-					yield @resultStr(lNewRules)
-
-		LOG "SUCCESS!"
-		return "SUCCESS"
+		# --- Get contents of a set as a string
+		lLines = [centered("S[#{i}]", @width, {char: '-'})]
+		for xRule from set
+			lLines.push xRule.asString()
+		return lLines.join("\n")
 
 	# ..........................................................
 

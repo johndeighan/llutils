@@ -16,6 +16,7 @@ import {
   isEmpty,
   nonEmpty,
   centered,
+  escapeStr,
   assert,
   croak,
   getOptions
@@ -110,6 +111,7 @@ export var EarleyParser = class EarleyParser {
       lParts: [nonterminal(this.grammar.root())]
     };
     this.lRules = [rootRule, ...this.grammar.allRules()];
+    this.width = 40;
   }
 
   // ..........................................................
@@ -126,12 +128,92 @@ export var EarleyParser = class EarleyParser {
   }
 
   // ..........................................................
+  parse(str, hOptions = {}) {
+    var debug, iterator, next, root;
+    ({debug, root} = getOptions(hOptions, {
+      debug: false,
+      root: this.grammar.root()
+    }));
+    iterator = this.parse_generator(str, hOptions);
+    next = iterator.next();
+    while (!next.done) {
+      next = iterator.next();
+    }
+    return next.value;
+  }
+
+  // ..........................................................
+  * expandSet(S, i, str, hOptions = {}) {
+    debugger;
+    var curSet, debug, head, isDup, lNewRules, newRule, next, nextSet, ref, ref1, ref2, rule, src, srcRule, type, xRule;
+    ({debug} = getOptions(hOptions, {
+      debug: false
+    }));
+    curSet = S[i];
+    nextSet = S[i + 1];
+    if (debug) {
+      LOG(centered(i, this.width, {
+        char: '-'
+      }));
+    }
+    ref = curSet.values();
+    for (xRule of ref) {
+      if (debug) {
+        LOG(this.ruleStr(xRule));
+      }
+      next = xRule.nextPart();
+      type = defined(next) ? next.type : undef;
+      lNewRules = []; // --- [ [rule, isDup, destSet], ... ]
+      //     undef destSet means same set as src
+      switch (type) {
+        case "nonterminal":
+          ref1 = this.grammar.alternatives(next.value);
+          for (rule of ref1) {
+            newRule = RuleEx.getNew(rule, i);
+            isDup = this.addRule(newRule, curSet);
+            lNewRules.push([newRule, isDup]);
+          }
+          break;
+        case "terminal":
+          if ((next.value === str[i]) && defined(nextSet)) {
+            newRule = xRule.getInc();
+            isDup = this.addRule(newRule, nextSet);
+            lNewRules.push([newRule, isDup, i + 1]);
+          }
+          break;
+        case undef:
+          ({head, src} = xRule);
+          ref2 = S[src];
+          for (srcRule of ref2) {
+            next = srcRule.nextPart();
+            if (defined(next) && (next.type === 'nonterminal') && (next.value === head)) {
+              newRule = srcRule.getInc();
+              isDup = this.addRule(newRule, curSet);
+              lNewRules.push([newRule, isDup]);
+            }
+          }
+          break;
+        default:
+          croak(`Bad next type in RuleEx: ${OL(xRule)}`);
+      }
+      if (debug) {
+        LOG(this.resultStr(lNewRules));
+        yield this.resultStr(lNewRules);
+      }
+    }
+    // --- Dump contents of curSet
+    if (debug) {
+      LOG(this.setStr(curSet, i));
+    }
+  }
+
+  // ..........................................................
   // --- If debug == true, the function yields each time
   //     a new RuleEx is added or an existing RuleEx is
   //     incremented
-  * parse(str, hOptions = {}) {
+  * parse_generator(str, hOptions = {}) {
     debugger;
-    var S, debug, head, i, initRuleEx, isDup, lNewRules, n, newRule, next, ref, ref1, ref2, ref3, ref4, root, rule, set, src, srcRule, type, xRule;
+    var S, debug, debugStr, i, k, lIndexes, len, n, ref, ref1, root, xRule;
     assert(isString(str), `Not a string: ${OL(str)}`);
     ({debug, root} = getOptions(hOptions, {
       debug: false,
@@ -142,78 +224,63 @@ export var EarleyParser = class EarleyParser {
     this.lRules[0].lParts[0] = nonterminal(root);
     n = str.length;
     // --- S is an array of sets of RuleEx objects
-    RuleEx.resetNextID(); // reset IDs for RuleEx objects
     S = [];
-    initRuleEx = RuleEx.getNew(this.lRules[0], 0, 0);
-    ref = range(n);
+    RuleEx.resetNextID(); // reset IDs for RuleEx objects
+    ref = range(n + 1);
     for (i of ref) {
-      set = new Set();
       if (i === 0) {
-        set.add(initRuleEx);
+        S.push(new Set([RuleEx.getNew(this.lRules[0], 0, 0)]));
+      } else {
+        S.push(new Set());
       }
-      S.push(set);
     }
-    S.push(new Set()); // --- eliminates need for a check
+    lIndexes = Array.from(range(n));
+    for (k = 0, len = lIndexes.length; k < len; k++) {
+      i = lIndexes[k];
+      if (S[i].size === 0) {
+        str = escapeStr(str, {
+          offset: i - 1
+        });
+        throw new SyntaxError(str);
+      }
+      yield* this.expandSet(S, i, str, {debug});
+    }
+    yield* this.expandSet(S, n, str, {debug});
     if (debug) {
-      yield "START:\n" + this.resultStr([[initRuleEx, '']]);
+      LOG(this.setStr(S[n], n));
     }
-    ref1 = range(n);
-    for (i of ref1) {
-      set = S[i];
-      assert(set.size > 0, new SyntaxError(`Unexpected EOS: ${escapeStr(str)}`));
-      if (debug) {
-        LOG(centered(i, 32, {
-          char: '-'
-        }));
-      }
-      ref2 = S[i].values();
-      for (xRule of ref2) {
-        if (debug) {
-          LOG(this.ruleStr(xRule));
-        }
-        next = xRule.nextPart();
-        type = defined(next) ? next.type : undef;
-        lNewRules = []; // --- [ [rule, isDup, destSet], ... ]
-        //     undef destSet means same set as src
-        switch (type) {
-          case "nonterminal":
-            ref3 = this.grammar.alternatives(next.value);
-            for (rule of ref3) {
-              newRule = RuleEx.getNew(rule, i);
-              isDup = this.addRule(newRule, S[i]);
-              lNewRules.push([newRule, isDup]);
-            }
-            break;
-          case "terminal":
-            if (next.value === str[i]) {
-              //							newRule = RuleEx.getNew(xRule, i, xRule.pos+1)
-              newRule = xRule.getInc();
-              isDup = this.addRule(newRule, S[i + 1]);
-              lNewRules.push([newRule, isDup, i + 1]);
-            }
-            break;
-          case undef:
-            ({head, src} = xRule);
-            ref4 = S[src];
-            for (srcRule of ref4) {
-              next = srcRule.nextPart();
-              if (defined(next) && (next.type === 'nonterminal') && (next.value === head)) {
-                newRule = srcRule.getInc();
-                isDup = this.addRule(newRule, S[i]);
-                lNewRules.push([newRule, isDup]);
-              }
-            }
-            break;
-          default:
-            croak(`Bad next type in RuleEx: ${OL(xRule)}`);
-        }
-        if (debug) {
-          yield this.resultStr(lNewRules);
-        }
+    ref1 = S[n].values();
+    for (xRule of ref1) {
+      if (this.isFinal(xRule)) {
+        return "OK";
       }
     }
-    LOG("SUCCESS!");
-    return "SUCCESS";
+    debugStr = escapeStr(str, {
+      offset: n - 1
+    });
+    throw new SyntaxError(debugStr);
+  }
+
+  // ..........................................................
+  isFinal(xRule) {
+    return (xRule.head === phi) && notdefined(xRule.nextPart());
+  }
+
+  // ..........................................................
+  setStr(set, i) {
+    var lLines, xRule;
+    // --- Get contents of a set as a string
+    lLines = [
+      centered(`S[${i}]`,
+      this.width,
+      {
+        char: '-'
+      })
+    ];
+    for (xRule of set) {
+      lLines.push(xRule.asString());
+    }
+    return lLines.join("\n");
   }
 
   // ..........................................................

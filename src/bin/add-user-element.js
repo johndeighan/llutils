@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --enable-source-maps
 // add-user-element.coffee
 
 // --- Add a new binary executable file to an existing project

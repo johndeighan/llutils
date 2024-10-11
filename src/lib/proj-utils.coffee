@@ -74,7 +74,7 @@ export promptForProjType = () =>
 				}
 			],
 		});
-	return type
+	return hResponse.type
 
 # ---------------------------------------------------------------------------
 

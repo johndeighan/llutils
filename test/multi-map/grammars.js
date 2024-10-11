@@ -1,8 +1,21 @@
-  // grammars.coffee
-import {
-  nonterminal,
-  terminal
-} from '@jdeighan/llutils/rule-ex';
+// grammars.coffee
+
+// ---------------------------------------------------------------------------
+var nonterminal, terminal;
+
+terminal = (value) => {
+  return {
+    type: 'terminal',
+    value
+  };
+};
+
+nonterminal = (value) => {
+  return {
+    type: 'nonterminal',
+    value
+  };
+};
 
 // ---------------------------------------------------------------------------
 export var hExprAST = {

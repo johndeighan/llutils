@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --enable-source-maps
 // make-new-project.coffee
 
 // --- Before running, set these environment variables:

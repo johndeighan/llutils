@@ -23,7 +23,9 @@ doLog = (str) =>
 		console.log str
 	return
 
-shebang = "#!/usr/bin/env node"
+# --- NOTE: This should enable source maps in node, but it doesn't work
+
+shebang = "#!/usr/bin/env -S node --enable-source-maps"
 
 # ---------------------------------------------------------------------------
 # Usage:   node src/bin/low-level-build.js

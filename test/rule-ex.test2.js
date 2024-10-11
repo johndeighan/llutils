@@ -25,4 +25,4 @@ Object.assign(global, lib2);
   return equal(ruleAsString(hRule, 3), 'E -> "P" name "a" • expr');
 })();
 
-//# sourceMappingURL=rule-ex.test.js.map
+//# sourceMappingURL=rule-ex.test2.js.map

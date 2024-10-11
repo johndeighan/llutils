@@ -1,8 +1,9 @@
 # grammars.coffee
 
-import {
-	nonterminal, terminal,
-	} from '@jdeighan/llutils/rule-ex'
+# ---------------------------------------------------------------------------
+
+terminal = (value) => return {type: 'terminal', value}
+nonterminal = (value) => return {type: 'nonterminal', value}
 
 # ---------------------------------------------------------------------------
 

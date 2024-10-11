@@ -99,7 +99,7 @@ export var promptForProjType = async() => {
       }
     ]
   }));
-  return type;
+  return hResponse.type;
 };
 
 // ---------------------------------------------------------------------------
