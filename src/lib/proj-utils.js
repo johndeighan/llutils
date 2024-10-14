@@ -254,7 +254,7 @@ setUpElm = (nodeEnv, subtype = undef) => {
   LOG("mkdir ./src/elements");
   mkDir('./src/elements');
   nodeEnv.addDevDependency('svelte');
-  // --- NOTE: script build:all was defined in baseSetUp()
+  // --- NOTE: script build:all was defined in basicSetUp()
   nodeEnv.addScript('build', "npm run build:all && elm make src/Main.elm --output=main.js");
   nodeEnv.addScript('dev', "npm run build:all && elm-live src/Main.elm -- --debug --output=main.js");
   LOG("initializing elm");
@@ -810,7 +810,7 @@ getVersion = (pkg) => {
     case 'coffeescript':
       return "^2.7.0";
     case 'concurrently':
-      return "^8.2.2";
+      return "^9.0.1";
     case 'ava':
       return "^6.1.3";
     case 'svelte':

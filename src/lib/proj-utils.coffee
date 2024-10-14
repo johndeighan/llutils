@@ -250,7 +250,7 @@ setUpElm = (nodeEnv, subtype=undef) =>
 
 	nodeEnv.addDevDependency 'svelte'
 
-	# --- NOTE: script build:all was defined in baseSetUp()
+	# --- NOTE: script build:all was defined in basicSetUp()
 	nodeEnv.addScript 'build',  "npm run build:all && elm make src/Main.elm --output=main.js"
 	nodeEnv.addScript 'dev',    "npm run build:all && elm-live src/Main.elm -- --debug --output=main.js"
 
@@ -876,7 +876,7 @@ getVersion = (pkg) =>
 		when 'coffeescript'
 			return "^2.7.0"
 		when 'concurrently'
-			return "^8.2.2"
+			return "^9.0.1"
 		when 'ava'
 			return "^6.1.3"
 		when 'svelte'

@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "dom.test.js",
+  "sourceRoot": "..\\",
+  "sources": [
+    "test\\dom.test.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAiB;AAEjB,OAAA;EACC,KADD;EACQ,OADR;EACiB,UADjB;EAC6B,GAD7B;EACkC,EADlC;EAEC,MAFD;EAES,KAFT;CAAA,MAAA;;AAIA,OAAO,CAAA,OAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,GAAtB;;AACA,OAAO,CAAA,QAAP,MAAA;;AACA,MAAM,CAAC,MAAP,CAAc,MAAd,EAAsB,IAAtB,EATiB;;;AAajB,KAAA,CAAM,SAAA,CAAU,oCAAV,CAAN,EAAuD,CAAA;;MAAA,CAAvD",
+  "sourcesContent": [
+    "# dom.test.coffee\r\n\r\nimport {\r\n\tundef, defined, notdefined, LOG, OL,\r\n\tassert, croak,\r\n\t} from '@jdeighan/llutils'\r\nimport * as lib from '@jdeighan/llutils/dom'\r\nObject.assign(global, lib)\r\nimport * as lib2 from '@jdeighan/llutils/utest'\r\nObject.assign(global, lib2)\r\n\r\n# ---------------------------------------------------------------------------\r\n\r\nequal formatXML('<doc><warn>Watch out!</warn></doc>'), \"\"\"\r\n\t<doc>\r\n\t\t<warn>Watch out!</warn>\r\n\t</doc>\r\n\t\"\"\"\r\n"
+  ]
+}

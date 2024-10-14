@@ -4,7 +4,7 @@
 	"type": "module",
 	"license": "MIT",
 	"author": "John Deighan",
-	"description": "compile coffee and peggy files",
+	"description": "JavaScript utilities, including CoffeeScript and Peggy",
 	"exports": {
 		".": "./src/lib/llutils.js",
 		"./text-block": "./src/lib/text-block.js",
@@ -46,6 +46,8 @@
 		"./digraph": "./src/lib/digraph.js",
 		"./config": "./src/lib/config.js",
 		"./multi-map": "./src/lib/multi-map.js",
+		"./dom": "./src/lib/dom.js",
+		"./jade": "./src/lib/jade.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {
@@ -104,13 +106,14 @@
 		"graphology-dag": "^0.4.1",
 		"n-readlines": "^1.0.1",
 		"nearley": "^2.20.1",
-		"peggy": "file:../peggy",
+		"peggy": "^4.1.1",
 		"prompts": "^2.4.2",
 		"source-map-js": "^1.2.1",
 		"sprintf-js": "^1.1.3",
 		"svelte": "^5.0.0-next.200",
 		"tempy": "^3.1.0",
+		"xmldom": "^0.6.0",
 		"yaml": "^2.5.1"
 	},
-	"packageManager": "pnpm@9.6.0+sha512.38dc6fba8dba35b39340b9700112c2fe1e12f10b17134715a4aa98ccf7bb035e76fd981cf0bb384dfa98f8d6af5481c2bef2f4266a24bfa20c34eb7147ce0b5e"
+	"packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

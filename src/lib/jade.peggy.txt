@@ -1,0 +1,30 @@
+{{
+	var VDOM, getTracer, init, parse__DOM__1;
+
+	({getTracer} = (await import('@jdeighan/llutils/peggy-utils')));
+
+	({VDOM} = (await import('@jdeighan/llutils/dom')));
+
+	export var getDOM = (input, tracerType = 'none') => {
+	  return peg$parse(input, {
+	    tracer: getTracer(tracerType)
+	  });
+	};
+
+	init = () => {
+	  return VDOM.init();
+	};
+
+	// --------------------------------------------------------------
+	parse__DOM__1 = (ident) => {
+	  return VDOM;
+	};
+}}
+{
+init();
+}
+
+DOM
+
+	= ident: identifier
+		{ return parse__DOM__1(ident); }
