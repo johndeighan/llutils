@@ -1010,4 +1010,24 @@ falsy(setsAreEqual(new Set([1, 2, 3]), new Set([1, 2, 3, 4])));
 //symbol tla(stub)
 equal(tla('low-level-build'), 'llb');
 
+// ---------------------------------------------------------------------------
+//symbol allCombos(lArrayOfArrays)
+equal(allCombos([['a', 'b'], [1, 2]]), [['a', 1], ['a', 2], ['b', 1], ['b', 2]]);
+
+equal(allCombos([]), []);
+
+equal(allCombos([['a']]), [['a']]);
+
+equal(allCombos([['a'], []]), []);
+
+equal(allCombos([[], ['b']]), []);
+
+equal(allCombos([['a'], ['b']]), [['a', 'b']]);
+
+equal(allCombos([[['a']], ['b']]), [[['a'], 'b']]);
+
+equal(allCombos([[['a', 1]], ['b']]), [[['a', 1], 'b']]);
+
+equal(allCombos([[['a', 1]], [['b']]]), [[['a', 1], ['b']]]);
+
 //# sourceMappingURL=llutils.test.js.map

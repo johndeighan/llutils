@@ -1156,6 +1156,20 @@ export setsAreEqual = (a, b) =>
 		&& [...a].every((val) => b.has(val))
 
 # ---------------------------------------------------------------------------
+
+export allCombos = (lArrayOfArrays) ->
+
+	if (lArrayOfArrays.length == 0)
+		return []
+	if (lArrayOfArrays.length == 1)
+		return lArrayOfArrays[0].map((x) => [x])
+	lResults = []
+	for item in lArrayOfArrays[0]
+		for lSubArray in allCombos(lArrayOfArrays.slice(1))
+			lResults.push [item, lSubArray...]
+	return lResults
+
+# ---------------------------------------------------------------------------
 # --- ASYNC !
 
 export sleep = (sec) =>

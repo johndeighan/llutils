@@ -1284,6 +1284,30 @@ export var setsAreEqual = (a, b) => {
 };
 
 // ---------------------------------------------------------------------------
+export var allCombos = function(lArrayOfArrays) {
+  var item, j, k, lResults, lSubArray, len1, len2, ref, ref1;
+  if (lArrayOfArrays.length === 0) {
+    return [];
+  }
+  if (lArrayOfArrays.length === 1) {
+    return lArrayOfArrays[0].map((x) => {
+      return [x];
+    });
+  }
+  lResults = [];
+  ref = lArrayOfArrays[0];
+  for (j = 0, len1 = ref.length; j < len1; j++) {
+    item = ref[j];
+    ref1 = allCombos(lArrayOfArrays.slice(1));
+    for (k = 0, len2 = ref1.length; k < len2; k++) {
+      lSubArray = ref1[k];
+      lResults.push([item, ...lSubArray]);
+    }
+  }
+  return lResults;
+};
+
+// ---------------------------------------------------------------------------
 // --- ASYNC !
 export var sleep = async(sec) => {
   await new Promise((r) => {
