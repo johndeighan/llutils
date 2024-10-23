@@ -110,167 +110,164 @@ equal mapHereDoc("""
 		'["a","b"]'
 
 # ---------------------------------------------------------------------------
-#symbol "HereDocTester - a custom tester"
 
-class HereDocTester extends UnitTester
+(() =>
 
-	transformValue: (block) ->
+	u = new UnitTester()
+	u.transformValue = (block) -> return mapHereDoc(block)
 
-		return mapHereDoc(block)
+	# ------------------------------------------------------------------------
+	# Default heredoc type is a block
 
-tester = new HereDocTester()
+	u.equal """
+			this is a
+			block of text
+			""",
+			'"this is a\\nblock of text"'
 
-# ------------------------------------------------------------------------
-# Default heredoc type is a block
+	# ------------------------------------------------------------------------
+	# Make explicit that the heredoc type is a block
 
-tester.equal """
-		this is a
-		block of text
-		""",
-		'"this is a\\nblock of text"'
+	u.equal """
+			===
+			this is a
+			block of text
+			""",
+			'"this is a\\nblock of text"'
 
-# ------------------------------------------------------------------------
-# Make explicit that the heredoc type is a block
+	# ------------------------------------------------------------------------
+	# One Line block
 
-tester.equal """
-		===
-		this is a
-		block of text
-		""",
-		'"this is a\\nblock of text"'
+	u.equal """
+			...this is a
+			line of text
+			""",
+			'"this is a line of text"'
 
-# ------------------------------------------------------------------------
-# One Line block
+	# ------------------------------------------------------------------------
+	# One Line block
 
-tester.equal """
-		...this is a
-		line of text
-		""",
-		'"this is a line of text"'
+	u.equal """
+			...
+			this is a
+			line of text
+			""",
+			'"this is a line of text"'
 
-# ------------------------------------------------------------------------
-# One Line block
+	# ---------------------------------------------------------------------------
+	#symbol "MatrixHereDoc - custom heredoc"
 
-tester.equal """
-		...
-		this is a
-		line of text
-		""",
-		'"this is a line of text"'
+	class MatrixHereDoc extends BaseHereDoc
 
-# ---------------------------------------------------------------------------
-#symbol "MatrixHereDoc - custom heredoc"
+		map: (block) ->
+			# --- if block starts with a digit
+			if notdefined(block.match(/^\s*\d/s))
+				return undef
+			lArray = for line in blockToArray(block)
+				line.split(/\s+/).map((str) => parseInt(str))
+			return JSON.stringify(lArray)
 
-class MatrixHereDoc extends BaseHereDoc
+	addHereDocType 'matrix', new MatrixHereDoc()
 
-	map: (block) ->
-		# --- if block starts with a digit
-		if notdefined(block.match(/^\s*\d/s))
-			return undef
-		lArray = for line in blockToArray(block)
-			line.split(/\s+/).map((str) => parseInt(str))
-		return JSON.stringify(lArray)
+	u.equal """
+			1 2 3
+			2 4 6
+			""",
+			'[[1,2,3],[2,4,6]]'
 
-addHereDocType 'matrix', new MatrixHereDoc()
+	# ------------------------------------------------------------------------
+	#symbol "UCHereDoc = custom heredoc"
 
-tester.equal """
-		1 2 3
-		2 4 6
-		""",
-		'[[1,2,3],[2,4,6]]'
+	class UCHereDoc extends BaseHereDoc
 
-# ------------------------------------------------------------------------
-#symbol "UCHereDoc = custom heredoc"
+		map: (block) ->
 
-class UCHereDoc extends BaseHereDoc
+			if (block.indexOf('^^^') != 0)
+				return undef
 
-	map: (block) ->
+			block = block.substring(4).toUpperCase()
+			return JSON.stringify(block)
 
-		if (block.indexOf('^^^') != 0)
-			return undef
+	addHereDocType 'upper case', new UCHereDoc()
 
-		block = block.substring(4).toUpperCase()
-		return JSON.stringify(block)
+	u.equal """
+			^^^
+			This is a
+			block of text
+			""",
+			'"THIS IS A\\nBLOCK OF TEXT"'
 
-addHereDocType 'upper case', new UCHereDoc()
+	# ---------------------------------------------------------------------------
+	#symbol "UCHereDoc1 - custom heredoc"
 
-tester.equal """
-		^^^
-		This is a
-		block of text
-		""",
-		'"THIS IS A\\nBLOCK OF TEXT"'
+	#
+	#     e.g. with header line ***,
+	#     we'll create an upper-cased single line string
 
-# ---------------------------------------------------------------------------
-#symbol "UCHereDoc1 - custom heredoc"
+	class UCHereDoc2 extends BaseHereDoc
 
-#
-#     e.g. with header line ***,
-#     we'll create an upper-cased single line string
+		map: (block) ->
 
-class UCHereDoc2 extends BaseHereDoc
+			[head, rest] = behead(block)
+			if (head != '***')
+				return undef
+			block = CWS(rest.toUpperCase())
+			result = JSON.stringify(block)
+			return result
 
-	map: (block) ->
+	addHereDocType 'upper case 2', new UCHereDoc2()
 
-		[head, rest] = behead(block)
-		if (head != '***')
-			return undef
-		block = CWS(rest.toUpperCase())
-		result = JSON.stringify(block)
-		return result
+	# ---------------------------------------------------------------------------
 
-addHereDocType 'upper case 2', new UCHereDoc2()
+	u.equal """
+			***
+			select ID,Name
+			from Users
+			""",
+			'"SELECT ID,NAME FROM USERS"'
 
-# ---------------------------------------------------------------------------
+	# ---------------------------------------------------------------------------
+	#symbol "TAML heredoc"
 
-tester.equal """
-		***
-		select ID,Name
-		from Users
-		""",
-		'"SELECT ID,NAME FROM USERS"'
+	u.equal """
+			---
+			- abc
+			- def
+			""",
+			'["abc","def"]'
 
-# ---------------------------------------------------------------------------
-#symbol "TAML heredoc"
+	# ---------------------------------------------------------------------------
+	# TAML-like block, but actually a block
 
-tester.equal """
-		---
-		- abc
-		- def
-		""",
-		'["abc","def"]'
+	u.equal """
+			===
+			---
+			- abc
+			- def
+			""",
+			'"---\\n- abc\\n- def"'
 
-# ---------------------------------------------------------------------------
-# TAML-like block, but actually a block
+	# ---------------------------------------------------------------------------
+	# TAML block 2
 
-tester.equal """
-		===
-		---
-		- abc
-		- def
-		""",
-		'"---\\n- abc\\n- def"'
-
-# ---------------------------------------------------------------------------
-# TAML block 2
-
-tester.equal """
-		---
-		-
-			label: Help
-			url: /help
-		-
-			label: Books
-			url: /books
-		""",
-		'[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]'
+	u.equal """
+			---
+			-
+				label: Help
+				url: /help
+			-
+				label: Books
+				url: /books
+			""",
+			'[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]'
+	)()
 
 # ---------------------------------------------------------------------------
 #symbol "HereDocReplacer - custom tester"
 
-class HereDocReplacer extends UnitTester
-
-	transformValue: (block) ->
+(() =>
+	u = new UnitTester()
+	u.transformValue = (block) ->
 
 		[head, rest] = behead(block)
 		lNewParts = for part in lineToParts(head)
@@ -282,34 +279,33 @@ class HereDocReplacer extends UnitTester
 		result = lNewParts.join('')
 		return result
 
-replacer = new HereDocReplacer()
+	# ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
+	u.equal """
+			TopMenu lItems={<<<}
+				---
+				-
+					label: Help
+					url: /help
+				-
+					label: Books
+					url: /books
+			""", """
+			TopMenu lItems={[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]}
+			"""
 
-replacer.equal """
-		TopMenu lItems={<<<}
-			---
-			-
-				label: Help
-				url: /help
-			-
-				label: Books
-				url: /books
-		""", """
-		TopMenu lItems={[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]}
-		"""
+	# ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-
-replacer.equal """
-		<TopMenu lItems={<<<}>
-			---
-			-
-				label: Help
-				url: /help
-			-
-				label: Books
-				url: /books
-		""", """
-		<TopMenu lItems={[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]}>
-		"""
+	u.equal """
+			<TopMenu lItems={<<<}>
+				---
+				-
+					label: Help
+					url: /help
+				-
+					label: Books
+					url: /books
+			""", """
+			<TopMenu lItems={[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]}>
+			"""
+	)()

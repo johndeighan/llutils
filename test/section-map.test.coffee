@@ -333,27 +333,23 @@ elem = (tag, content) =>
 		'style'
 		])
 
-	class MyTester extends UnitTester
-
-		transformValue: (query) ->
-
-			lSections = []
-			for section from sectMap.allSections(query)
-				lSections.push section.name
-			return toBlock(lSections)
-
-	tester = new MyTester()
+	u = new UnitTester()
+	u.transformValue = (query) ->
+		lSections = []
+		for section from sectMap.allSections(query)
+			lSections.push section.name
+		return toBlock(lSections)
 
 	# ------------------------------------------------------------------------
 
-	tester.equal ['export','import'], """
+	u.equal ['export','import'], """
 		export
 		import
 		"""
 
 	# ------------------------------------------------------------------------
 
-	tester.equal 'Script', """
+	u.equal 'Script', """
 		startup
 		export
 		import

@@ -222,7 +222,7 @@ LOG 'Done'`);
 
 // ---------------------------------------------------------------------------
 (function() {
-  var MyTester, sectMap, tester;
+  var sectMap, u;
   sectMap = new SectionMap([
     'html',
     [
@@ -238,24 +238,21 @@ LOG 'Done'`);
     ],
     'style'
   ]);
-  MyTester = class MyTester extends UnitTester {
-    transformValue(query) {
-      var lSections, ref, section;
-      lSections = [];
-      ref = sectMap.allSections(query);
-      for (section of ref) {
-        lSections.push(section.name);
-      }
-      return toBlock(lSections);
+  u = new UnitTester();
+  u.transformValue = function(query) {
+    var lSections, ref, section;
+    lSections = [];
+    ref = sectMap.allSections(query);
+    for (section of ref) {
+      lSections.push(section.name);
     }
-
+    return toBlock(lSections);
   };
-  tester = new MyTester();
   // ------------------------------------------------------------------------
-  tester.equal(['export', 'import'], `export
+  u.equal(['export', 'import'], `export
 import`);
   // ------------------------------------------------------------------------
-  return tester.equal('Script', `startup
+  return u.equal('Script', `startup
 export
 import
 vars

@@ -15,12 +15,12 @@ fails () => await execCivet("not real JS code +")
 # ---------------------------------------------------------------------------
 
 (() =>
-	tester = new UnitTester()
-	tester.transformValue = (str) ->
+	u = new UnitTester()
+	u.transformValue = (str) ->
 		result = await execCivet(str)
 		return result
 
-	tester.equal """
+	u.equal """
 		x = 42
 		2 * x
 		""", 84

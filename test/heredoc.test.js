@@ -1,6 +1,4 @@
-// heredoc.test.coffee
-var HereDocReplacer, HereDocTester, MatrixHereDoc, UCHereDoc, UCHereDoc2, replacer, tester;
-
+  // heredoc.test.coffee
 import {
   undef,
   defined,
@@ -69,141 +67,125 @@ equal(mapHereDoc(`---
 - b`), '["a","b"]');
 
 // ---------------------------------------------------------------------------
-//symbol "HereDocTester - a custom tester"
-HereDocTester = class HereDocTester extends UnitTester {
-  transformValue(block) {
+(() => {
+  var MatrixHereDoc, UCHereDoc, UCHereDoc2, u;
+  u = new UnitTester();
+  u.transformValue = function(block) {
     return mapHereDoc(block);
-  }
-
-};
-
-tester = new HereDocTester();
-
-// ------------------------------------------------------------------------
-// Default heredoc type is a block
-tester.equal(`this is a
+  };
+  // ------------------------------------------------------------------------
+  // Default heredoc type is a block
+  u.equal(`this is a
 block of text`, '"this is a\\nblock of text"');
-
-// ------------------------------------------------------------------------
-// Make explicit that the heredoc type is a block
-tester.equal(`===
+  // ------------------------------------------------------------------------
+  // Make explicit that the heredoc type is a block
+  u.equal(`===
 this is a
 block of text`, '"this is a\\nblock of text"');
-
-// ------------------------------------------------------------------------
-// One Line block
-tester.equal(`...this is a
+  // ------------------------------------------------------------------------
+  // One Line block
+  u.equal(`...this is a
 line of text`, '"this is a line of text"');
-
-// ------------------------------------------------------------------------
-// One Line block
-tester.equal(`...
+  // ------------------------------------------------------------------------
+  // One Line block
+  u.equal(`...
 this is a
 line of text`, '"this is a line of text"');
-
-// ---------------------------------------------------------------------------
-//symbol "MatrixHereDoc - custom heredoc"
-MatrixHereDoc = class MatrixHereDoc extends BaseHereDoc {
-  map(block) {
-    var lArray, line;
-    // --- if block starts with a digit
-    if (notdefined(block.match(/^\s*\d/s))) {
-      return undef;
-    }
-    lArray = (function() {
-      var i, len, ref, results;
-      ref = blockToArray(block);
-      results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        line = ref[i];
-        results.push(line.split(/\s+/).map((str) => {
-          return parseInt(str);
-        }));
+  // ---------------------------------------------------------------------------
+  //symbol "MatrixHereDoc - custom heredoc"
+  MatrixHereDoc = class MatrixHereDoc extends BaseHereDoc {
+    map(block) {
+      var lArray, line;
+      // --- if block starts with a digit
+      if (notdefined(block.match(/^\s*\d/s))) {
+        return undef;
       }
-      return results;
-    }).call(this);
-    return JSON.stringify(lArray);
-  }
-
-};
-
-addHereDocType('matrix', new MatrixHereDoc());
-
-tester.equal(`1 2 3
-2 4 6`, '[[1,2,3],[2,4,6]]');
-
-// ------------------------------------------------------------------------
-//symbol "UCHereDoc = custom heredoc"
-UCHereDoc = class UCHereDoc extends BaseHereDoc {
-  map(block) {
-    if (block.indexOf('^^^') !== 0) {
-      return undef;
+      lArray = (function() {
+        var i, len, ref, results;
+        ref = blockToArray(block);
+        results = [];
+        for (i = 0, len = ref.length; i < len; i++) {
+          line = ref[i];
+          results.push(line.split(/\s+/).map((str) => {
+            return parseInt(str);
+          }));
+        }
+        return results;
+      }).call(this);
+      return JSON.stringify(lArray);
     }
-    block = block.substring(4).toUpperCase();
-    return JSON.stringify(block);
-  }
 
-};
+  };
+  addHereDocType('matrix', new MatrixHereDoc());
+  u.equal(`1 2 3
+2 4 6`, '[[1,2,3],[2,4,6]]');
+  // ------------------------------------------------------------------------
+  //symbol "UCHereDoc = custom heredoc"
+  UCHereDoc = class UCHereDoc extends BaseHereDoc {
+    map(block) {
+      if (block.indexOf('^^^') !== 0) {
+        return undef;
+      }
+      block = block.substring(4).toUpperCase();
+      return JSON.stringify(block);
+    }
 
-addHereDocType('upper case', new UCHereDoc());
-
-tester.equal(`^^^
+  };
+  addHereDocType('upper case', new UCHereDoc());
+  u.equal(`^^^
 This is a
 block of text`, '"THIS IS A\\nBLOCK OF TEXT"');
+  // ---------------------------------------------------------------------------
+  //symbol "UCHereDoc1 - custom heredoc"
 
-// ---------------------------------------------------------------------------
-//symbol "UCHereDoc1 - custom heredoc"
-
-//     e.g. with header line ***,
-//     we'll create an upper-cased single line string
-UCHereDoc2 = class UCHereDoc2 extends BaseHereDoc {
-  map(block) {
-    var head, rest, result;
-    [head, rest] = behead(block);
-    if (head !== '***') {
-      return undef;
+  //     e.g. with header line ***,
+  //     we'll create an upper-cased single line string
+  UCHereDoc2 = class UCHereDoc2 extends BaseHereDoc {
+    map(block) {
+      var head, rest, result;
+      [head, rest] = behead(block);
+      if (head !== '***') {
+        return undef;
+      }
+      block = CWS(rest.toUpperCase());
+      result = JSON.stringify(block);
+      return result;
     }
-    block = CWS(rest.toUpperCase());
-    result = JSON.stringify(block);
-    return result;
-  }
 
-};
-
-addHereDocType('upper case 2', new UCHereDoc2());
-
-// ---------------------------------------------------------------------------
-tester.equal(`***
+  };
+  addHereDocType('upper case 2', new UCHereDoc2());
+  // ---------------------------------------------------------------------------
+  u.equal(`***
 select ID,Name
 from Users`, '"SELECT ID,NAME FROM USERS"');
-
-// ---------------------------------------------------------------------------
-//symbol "TAML heredoc"
-tester.equal(`---
+  // ---------------------------------------------------------------------------
+  //symbol "TAML heredoc"
+  u.equal(`---
 - abc
 - def`, '["abc","def"]');
-
-// ---------------------------------------------------------------------------
-// TAML-like block, but actually a block
-tester.equal(`===
+  // ---------------------------------------------------------------------------
+  // TAML-like block, but actually a block
+  u.equal(`===
 ---
 - abc
 - def`, '"---\\n- abc\\n- def"');
-
-// ---------------------------------------------------------------------------
-// TAML block 2
-tester.equal(`---
+  // ---------------------------------------------------------------------------
+  // TAML block 2
+  return u.equal(`---
 -
 	label: Help
 	url: /help
 -
 	label: Books
 	url: /books`, '[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]');
+})();
 
 // ---------------------------------------------------------------------------
 //symbol "HereDocReplacer - custom tester"
-HereDocReplacer = class HereDocReplacer extends UnitTester {
-  transformValue(block) {
+(() => {
+  var u;
+  u = new UnitTester();
+  u.transformValue = function(block) {
     var head, lNewParts, part, rest, result;
     [head, rest] = behead(block);
     lNewParts = (function() {
@@ -222,14 +204,9 @@ HereDocReplacer = class HereDocReplacer extends UnitTester {
     })();
     result = lNewParts.join('');
     return result;
-  }
-
-};
-
-replacer = new HereDocReplacer();
-
-// ---------------------------------------------------------------------------
-replacer.equal(`TopMenu lItems={<<<}
+  };
+  // ---------------------------------------------------------------------------
+  u.equal(`TopMenu lItems={<<<}
 	---
 	-
 		label: Help
@@ -237,9 +214,8 @@ replacer.equal(`TopMenu lItems={<<<}
 	-
 		label: Books
 		url: /books`, `TopMenu lItems={[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]}`);
-
-// ---------------------------------------------------------------------------
-replacer.equal(`<TopMenu lItems={<<<}>
+  // ---------------------------------------------------------------------------
+  return u.equal(`<TopMenu lItems={<<<}>
 	---
 	-
 		label: Help
@@ -247,5 +223,6 @@ replacer.equal(`<TopMenu lItems={<<<}>
 	-
 		label: Books
 		url: /books`, `<TopMenu lItems={[{"label":"Help","url":"/help"},{"label":"Books","url":"/books"}]}>`);
+})();
 
 //# sourceMappingURL=heredoc.test.js.map
