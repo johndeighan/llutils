@@ -17,10 +17,10 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@danielx/civet@^0.8.4":
-  version "0.8.4"
-  resolved "https://registry.npmjs.org/@danielx/civet/-/civet-0.8.4.tgz"
-  integrity sha512-PwwOJzLlFLTUbuJsYiIWetOguE+0M78DxGF6szND+xKq6p9iSPle4hUlhME1rwYq0h6XjLXJLkZ2CFUi9ZGGoA==
+"@danielx/civet@^0.8.7":
+  version "0.8.7"
+  resolved "https://registry.npmjs.org/@danielx/civet/-/civet-0.8.7.tgz"
+  integrity sha512-Myyq9ZawYOWChE9k3qsrB3tsWWdybAOhu0IsSHmNqsP+9j5xSHzRZwYbPUS3Ax5VKabRIR8+2u2rprmGxqjskg==
   dependencies:
     "@cspotcode/source-map-support" "^0.8.1"
     "@typescript/vfs" "^1.6.0"
