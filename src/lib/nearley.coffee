@@ -17,7 +17,7 @@ import {
 	isFile, fileExt, withExt, readTextFile,
 	slurp, barf, barfDebugFile, mkpath,
 	} from '@jdeighan/llutils/fs'
-import {checkJS} from '@jdeighan/llutils/exec-utils'
+import {checkJSFile} from '@jdeighan/llutils/exec-utils'
 
 # ---------------------------------------------------------------------------
 
@@ -192,7 +192,7 @@ export procNearley = (contents, hMetaData={}, filePath=undef, hOptions={}) =>
 	else
 		jsFilePath = tempFile {extension: '.js'}
 	barf jsCode, jsFilePath
-#	checkJS jsFilePath
+#	checkJSFile jsFilePath
 	return {
 		code: jsCode
 		lUses

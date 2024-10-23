@@ -11,23 +11,23 @@ Object.assign(global, lib2)
 (() =>
 	table = new TextTable('l r%.2f r%.2f')
 
-	u.equal table.hOptions.decPlaces, 2
-	u.equal table.hOptions.parseNumbers, false
-	u.equal table.numCols, 3
-	u.equal table.lColAligns, [
+	equal table.hOptions.decPlaces, 2
+	equal table.hOptions.parseNumbers, false
+	equal table.numCols, 3
+	equal table.lColAligns, [
 		'left'
 		'right'
 		'right'
 		]
-	u.equal table.lColFormats, [
+	equal table.lColFormats, [
 		undef
 		'%.2f'
 		'%.2f'
 		]
-	u.equal table.lRows, []
-	u.equal table.lColWidths, [0, 0, 0]
-	u.equal table.lColTotals, [undef, undef, undef]
-	u.equal table.lColSubTotals, [undef, undef, undef]
+	equal table.lRows, []
+	equal table.lColWidths, [0, 0, 0]
+	equal table.lColTotals, [undef, undef, undef]
+	equal table.lColSubTotals, [undef, undef, undef]
 	)()
 
 # -------------------------------------------------------------
@@ -36,15 +36,15 @@ Object.assign(global, lib2)
 	table = new TextTable('l r%.2f r%.2f')
 	table.labels(['Coffee', 'Jan', 'Feb'])
 
-	u.equal table.lRows, [
+	equal table.lRows, [
 		{
 			opcode: 'labels',
 			lRow: ['Coffee', 'Jan', 'Feb']
 			}
 		]
-	u.equal table.lColWidths, [6, 3, 3]
-	u.equal table.lColTotals, [undef, undef, undef]
-	u.equal table.lColSubTotals, [undef, undef, undef]
+	equal table.lColWidths, [6, 3, 3]
+	equal table.lColTotals, [undef, undef, undef]
+	equal table.lColSubTotals, [undef, undef, undef]
 	)()
 
 # -------------------------------------------------------------
@@ -54,7 +54,7 @@ Object.assign(global, lib2)
 	table.labels ['Coffee', 'Jan', 'Feb']
 	table.data   [undef, 30, 40]
 
-	u.equal table.lRows, [
+	equal table.lRows, [
 		{
 			opcode: 'labels'
 			lRow: ['Coffee', 'Jan', 'Feb']
@@ -64,9 +64,9 @@ Object.assign(global, lib2)
 			lRow: ['', '30.00', '40.00']
 			}
 		]
-	u.equal table.lColWidths, [6, 5, 5]
-	u.equal table.lColTotals, [undef, 30, 40]
-	u.equal table.lColSubTotals, [undef, 30, 40]
+	equal table.lColWidths, [6, 5, 5]
+	equal table.lColTotals, [undef, 30, 40]
+	equal table.lColSubTotals, [undef, 30, 40]
 	)()
 
 # -------------------------------------------------------------
@@ -77,7 +77,7 @@ Object.assign(global, lib2)
 	table.data   [undef, 30, 40]
 	table.data   [undef, 130, 40]
 
-	u.equal table.lRows, [
+	equal table.lRows, [
 		{
 			opcode: 'labels'
 			lRow: ['Coffee', 'Jan', 'Feb']
@@ -91,9 +91,9 @@ Object.assign(global, lib2)
 			lRow: ['', '130.00', '40.00']
 			}
 		]
-	u.equal table.lColWidths, [6, 6, 5]
-	u.equal table.lColTotals, [undef, 160, 80]
-	u.equal table.lColSubTotals, [undef, 160, 80]
+	equal table.lColWidths, [6, 6, 5]
+	equal table.lColTotals, [undef, 160, 80]
+	equal table.lColSubTotals, [undef, 160, 80]
 	)()
 
 # -------------------------------------------------------------
@@ -104,7 +104,7 @@ Object.assign(global, lib2)
 	table.data    [undef, 30, 40]
 	table.data    [undef, 130, 40]
 
-	u.like table.lRows, [
+	like table.lRows, [
 		{
 			opcode: 'labels'
 			lRow: ['Coffee', 'Jan', 'Feb']
@@ -118,9 +118,9 @@ Object.assign(global, lib2)
 			lRow: ['', '130.00', '40.00']
 			}
 		]
-	u.equal table.lColWidths, [6, 6, 5]
-	u.equal table.lColTotals, [undef, 160, 80]
-	u.equal table.lColSubTotals, [undef, 160, 80]
+	equal table.lColWidths, [6, 6, 5]
+	equal table.lColTotals, [undef, 160, 80]
+	equal table.lColSubTotals, [undef, 160, 80]
 	)()
 
 # -------------------------------------------------------------
@@ -133,7 +133,7 @@ Object.assign(global, lib2)
 	table.sep     '-'
 	table.subtotals()
 
-	u.equal table.lRows, [
+	equal table.lRows, [
 		{
 			opcode: 'labels'
 			lRow: ['Coffee', 'Jan', 'Feb']
@@ -155,9 +155,9 @@ Object.assign(global, lib2)
 			lRow: ['', '160.00', '80.00']
 			}
 		]
-	u.equal table.lColWidths, [6, 6, 5]
-	u.equal table.lColTotals, [undef, 160, 80]
-	u.equal table.lColSubTotals, [undef, undef, undef]
+	equal table.lColWidths, [6, 6, 5]
+	equal table.lColTotals, [undef, 160, 80]
+	equal table.lColSubTotals, [undef, undef, undef]
 	)()
 
 # -------------------------------------------------------------
@@ -172,7 +172,7 @@ Object.assign(global, lib2)
 	table.data    [undef, 10, 20]
 	table.data    [undef, 1000, 40]
 
-	u.equal table.lRows, [
+	equal table.lRows, [
 		{
 			opcode: 'labels'
 			lRow: ['Coffee', 'Jan', 'Feb']
@@ -202,9 +202,9 @@ Object.assign(global, lib2)
 			lRow: ['', '1000.00', '40.00']
 			}
 		]
-	u.equal table.lColWidths, [6, 7, 5]
-	u.equal table.lColTotals, [undef, 1170, 140]
-	u.equal table.lColSubTotals, [undef, 1010, 60]
+	equal table.lColWidths, [6, 7, 5]
+	equal table.lColTotals, [undef, 1170, 140]
+	equal table.lColSubTotals, [undef, 1010, 60]
 	)()
 
 # -------------------------------------------------------------
@@ -222,7 +222,7 @@ Object.assign(global, lib2)
 	table.fullsep '='
 	table.totals()
 
-	u.equal table.lRows, [
+	equal table.lRows, [
 		{
 			opcode: 'labels'
 			lRow: ['Coffee', 'Jan', 'Feb']
@@ -260,9 +260,9 @@ Object.assign(global, lib2)
 			lRow: ['', '1170.00', '140.00']
 			}
 		]
-	u.equal table.lColWidths, [6, 7, 6]
-	u.equal table.lColTotals, [undef, 1170, 140]
-	u.equal table.lColSubTotals, [undef, 1010, 60]
+	equal table.lColWidths, [6, 7, 6]
+	equal table.lColTotals, [undef, 1170, 140]
+	equal table.lColSubTotals, [undef, 1010, 60]
 	)()
 
 # -------------------------------------------------------------
@@ -281,7 +281,7 @@ Object.assign(global, lib2)
 	table.fullsep '='
 	table.totals()
 
-	u.equal table.lRows, [
+	equal table.lRows, [
 		{
 			opcode: 'title'
 			title: 'My Expenses'
@@ -328,9 +328,9 @@ Object.assign(global, lib2)
 			lRow: ['', '1170.00', '140.00']
 			}
 		]
-	u.equal table.lColWidths, [6, 7, 6]
-	u.equal table.lColTotals, [undef, 1170, 140]
-	u.equal table.lColSubTotals, [undef, 1010, 60]
+	equal table.lColWidths, [6, 7, 6]
+	equal table.lColTotals, [undef, 1170, 140]
+	equal table.lColSubTotals, [undef, 1010, 60]
 	)()
 
 # -------------------------------------------------------------
@@ -350,7 +350,7 @@ Object.assign(global, lib2)
 	table.totals()
 	table.close()
 
-	u.equal table.lRows, [
+	equal table.lRows, [
 		{
 			opcode: 'title'
 			title: 'My Expenses'
@@ -402,10 +402,10 @@ Object.assign(global, lib2)
 			lRow: ['', '1170.00', '140.00']
 			}
 		]
-	u.equal table.lColWidths, [6, 7, 6]
-	u.equal table.lColTotals, [undef, 1170, 140]
-	u.equal table.lColSubTotals, [undef, 1010, 60]
-	u.equal table.totalWidth, 21
+	equal table.lColWidths, [6, 7, 6]
+	equal table.lColTotals, [undef, 1170, 140]
+	equal table.lColSubTotals, [undef, 1010, 60]
+	equal table.totalWidth, 21
 	)()
 
 # -------------------------------------------------------------
@@ -426,7 +426,7 @@ Object.assign(global, lib2)
 	table.totals()
 	str = table.asString()
 
-	u.equal str, """
+	equal str, """
 		      My Expenses
 		-----------------------
 		           Jan    Feb
@@ -461,7 +461,7 @@ Object.assign(global, lib2)
 	table.totals()
 	str = table.asString('hide=1')   # --- Hide Jan column
 
-	u.equal str, """
+	equal str, """
 		  My Expenses
 		---------------
 		          Feb

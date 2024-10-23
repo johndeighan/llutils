@@ -52,7 +52,7 @@ import {
 } from '@jdeighan/llutils/fs';
 
 import {
-  checkJS
+  checkJSFile
 } from '@jdeighan/llutils/exec-utils';
 
 // ---------------------------------------------------------------------------
@@ -235,7 +235,7 @@ export var procNearley = (contents, hMetaData = {}, filePath = undef, hOptions =
   }
   barf(jsCode, jsFilePath);
   return {
-    //	checkJS jsFilePath
+    //	checkJSFile jsFilePath
     code: jsCode,
     lUses
   };

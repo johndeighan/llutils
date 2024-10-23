@@ -1,4 +1,6 @@
-  // token.test.coffee
+// token.test.coffee
+var u;
+
 import {
   BaseTracer
 } from '@jdeighan/llutils/peggy-utils';
@@ -11,6 +13,8 @@ import * as lib2 from '@jdeighan/llutils/utest';
 
 Object.assign(global, lib2);
 
+u = new UnitTester();
+
 u.transformValue = (block) => {
   return parse(block, {
     tracer: new BaseTracer()
@@ -18,37 +22,37 @@ u.transformValue = (block) => {
 };
 
 // ---------------------------------------------------------------------------
-equal("true", {
+u.equal("true", {
   type: 'boolean',
   value: true
 });
 
-equal("false", {
+u.equal("false", {
   type: 'boolean',
   value: false
 });
 
-equal("13", {
+u.equal("13", {
   type: 'integer',
   value: 13
 });
 
-equal("13.5", {
+u.equal("13.5", {
   type: 'float',
   value: 13.5
 });
 
-equal("'abc'", {
+u.equal("'abc'", {
   type: 'string',
   value: 'abc'
 });
 
-equal('"abc"', {
+u.equal('"abc"', {
   type: 'string',
   value: 'abc'
 });
 
-equal('abc', {
+u.equal('abc', {
   type: 'identifier',
   value: 'abc'
 });

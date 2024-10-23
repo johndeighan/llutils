@@ -6,6 +6,8 @@ import {
   execSync
 } from 'node:child_process';
 
+import vm from 'node:vm';
+
 import {
   promisify
 } from 'node:util';
@@ -76,11 +78,31 @@ export var npmLogLevel = () => {
 };
 
 // ---------------------------------------------------------------------------
-export var checkJS = (filePath) => {
+export var checkJS = (code, fileName = undef) => {
+  var script;
+  script = new vm.Script(code, fileName);
+  return true;
+};
+
+// ---------------------------------------------------------------------------
+export var checkJSFile = (filePath) => {
   var result;
   result = execCmd(`node -c ${filePath}`);
   assert(isEmpty(result), `ERROR: ${result}`);
   return true;
+};
+
+// ---------------------------------------------------------------------------
+// --- returns result of last statement executed
+export var execJS = (jsCode, fileName = undef) => {
+  var script;
+  vm.runInThisContext(jsCode, {
+    displayErrors: true
+  });
+  script = new vm.Script(jsCode, {
+    filename: fileName
+  });
+  return script.runInThisContext();
 };
 
 //# sourceMappingURL=exec-utils.js.map

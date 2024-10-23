@@ -6,6 +6,7 @@ import {parse} from './PLL/tree.js'
 import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
+u = new UnitTester()
 u.transformValue = (block) =>
 	return parse block, {tracer: new BaseTracer()}
 
@@ -35,7 +36,7 @@ succeeds () => """
 
 # ---------------------------------------------------------------------------
 
-equal """
+u.equal """
 	abc
 	""", """
 	---
@@ -46,7 +47,7 @@ equal """
 			ident: abc
 	"""
 
-equal """
+u.equal """
 	abc
 	def
 	""", """
@@ -61,7 +62,7 @@ equal """
 			ident: def
 	"""
 
-equal """
+u.equal """
 	abc
 		def
 	""", """
@@ -77,7 +78,7 @@ equal """
 					ident: def
 	"""
 
-equal """
+u.equal """
 	abc
 		def
 			ghi
@@ -98,7 +99,7 @@ equal """
 							ident: ghi
 	"""
 
-equal """
+u.equal """
 	abc
 			def
 	""", """
@@ -110,7 +111,7 @@ equal """
 			ident: abc def
 	"""
 
-equal """
+u.equal """
 	abc
 			def
 	ghi
@@ -126,7 +127,7 @@ equal """
 			ident: ghi
 	"""
 
-equal """
+u.equal """
 	abc
 			def
 		ghi
@@ -146,7 +147,7 @@ equal """
 # ---------------------------------------------------------------------------
 # --- blank lines should be ignored
 
-equal "\nabc", """
+u.equal "\nabc", """
 	---
 	type: tree
 	body:
@@ -155,7 +156,7 @@ equal "\nabc", """
 			ident: abc
 	"""
 
-equal "abc\n", """
+u.equal "abc\n", """
 	---
 	type: tree
 	body:
@@ -164,7 +165,7 @@ equal "abc\n", """
 			ident: abc
 	"""
 
-equal "\nabc\n", """
+u.equal "\nabc\n", """
 	---
 	type: tree
 	body:
@@ -173,7 +174,7 @@ equal "\nabc\n", """
 			ident: abc
 	"""
 
-equal """
+u.equal """
 	abc
 
 	def
@@ -189,7 +190,7 @@ equal """
 			ident: def
 	"""
 
-equal """
+u.equal """
 
 	abc
 
@@ -207,7 +208,7 @@ equal """
 			ident: def
 	"""
 
-equal """
+u.equal """
 
 	abc
 
@@ -226,7 +227,7 @@ equal """
 					ident: def
 	"""
 
-equal """
+u.equal """
 
 
 	abc
@@ -255,7 +256,7 @@ equal """
 							ident: ghi
 	"""
 
-equal """
+u.equal """
 
 	abc
 
@@ -271,7 +272,7 @@ equal """
 			ident: abc def
 	"""
 
-equal """
+u.equal """
 
 	abc
 
@@ -290,7 +291,7 @@ equal """
 			ident: ghi
 	"""
 
-equal """
+u.equal """
 
 	abc
 

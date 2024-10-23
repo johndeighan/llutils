@@ -1,6 +1,7 @@
 # exec-utils.coffee
 
 import {exec, execSync} from 'node:child_process'
+import vm from 'node:vm'
 import {promisify} from 'node:util'
 execAsync = promisify(exec)
 
@@ -64,8 +65,25 @@ export npmLogLevel = () =>
 
 # ---------------------------------------------------------------------------
 
-export checkJS = (filePath) =>
+export checkJS = (code, fileName=undef) =>
+
+	script = new vm.Script(code, fileName)
+	return true
+
+# ---------------------------------------------------------------------------
+
+export checkJSFile = (filePath) =>
 
 	result = execCmd "node -c #{filePath}"
 	assert isEmpty(result), "ERROR: #{result}"
 	return true
+
+# ---------------------------------------------------------------------------
+# --- returns result of last statement executed
+
+export execJS = (jsCode, fileName=undef) =>
+
+	vm.runInThisContext(jsCode, {displayErrors: true})
+
+	script = new vm.Script(jsCode, {filename: fileName})
+	return script.runInThisContext()

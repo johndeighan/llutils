@@ -12,6 +12,14 @@ equal execCmd('echo this'), "this\n"
 equal execCmd('echo "Hello World" | wc -w'), "2\n"
 
 # ---------------------------------------------------------------------------
+#symbol "execJS(str)"    # --- execute JavaScript
+
+equal execJS('x = 42'), 42
+equal execJS('x = "Hello World"'), "Hello World"
+fails () => checkJS("not real JS code +")
+fails () => execJS("not real JS code")
+
+# ---------------------------------------------------------------------------
 #symbol "npmLogLevel()"    # --- get NPM log level
 
 logLevel = npmLogLevel()

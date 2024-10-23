@@ -3,8 +3,9 @@
 import test from 'ava'
 
 import {
-	undef, defined, notdefined, rtrim, isEmpty, nonEmpty, OL,
-	isString, isNumber, isArray, isClass, isFunction, isRegExp, isInteger,
+	undef, defined, notdefined, rtrim, nonEmpty, OL,
+	isString, isNumber, isArray, isClass, isRegExp,
+	isFunction, isAsyncFunction, isInteger,
 	assert, croak, blockToArray, untabify,
 	} from '@jdeighan/llutils'
 import {execCmd} from '@jdeighan/llutils/exec-utils'
@@ -22,8 +23,9 @@ import {toNICE} from '@jdeighan/llutils/to-nice'
 #        falsy 1
 #        includes 2
 #        matches 2
-#        fails 1 (a function)
-#        throws 1 (a function) - check throws a specific error type
+#        fails 1 (function)
+#        throws 2 (function, error class)
+#           - check throws a specific error type
 #        succeeds 1 (a function)
 # ---------------------------------------------------------------------------
 
@@ -77,7 +79,10 @@ export class UnitTester
 		label = @getLabel(tag)
 		if defined(val)
 			try
-				val = @transformValue(val)
+				if isAsyncFunction(@transformValue)
+					val = await @transformValue(val)
+				else
+					val = @transformValue(val)
 			catch err
 				val = "ERROR: #{err.message}"
 		if defined(expected)
@@ -120,7 +125,7 @@ export class UnitTester
 	symbol: (label) ->
 
 		croak "Deprecated test 'symbol'"
-		[label] = @begin(label, undef, 'symbol')
+		[label] = await @begin(label, undef, 'symbol')
 		test label, (t) =>
 			t.is(1, 1)
 		@end()
@@ -130,7 +135,7 @@ export class UnitTester
 
 	equal: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected, 'equal')
+		[label, val, expected] = await @begin(val, expected, 'equal')
 		test label, (t) =>
 			t.deepEqual(val, expected)
 		@end()
@@ -140,7 +145,7 @@ export class UnitTester
 
 	notequal: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected, 'notequal')
+		[label, val, expected] = await @begin(val, expected, 'notequal')
 		test label, (t) =>
 			t.notDeepEqual(val, expected)
 		@end()
@@ -150,7 +155,7 @@ export class UnitTester
 
 	like: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected, 'like')
+		[label, val, expected] = await @begin(val, expected, 'like')
 		if isString(val) && isString(expected)
 			test label, (t) =>
 				t.is(@norm(val), @norm(expected))
@@ -169,7 +174,7 @@ export class UnitTester
 
 		assert isString(val), "not a string: #{OL(val)}"
 		assert isString(expected), "not a string: #{OL(expected)}"
-		[label, val, expected] = @begin(val, expected, 'samelines')
+		[label, val, expected] = await @begin(val, expected, 'samelines')
 
 		lValLines = blockToArray(val).filter((line) => return nonEmpty(line)).sort()
 		lExpLines = blockToArray(expected).filter((line) => return nonEmpty(line)).sort()
@@ -183,7 +188,7 @@ export class UnitTester
 
 	samelist: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected, 'samelist')
+		[label, val, expected] = await @begin(val, expected, 'samelist')
 		test label, (t) =>
 			t.deepEqual(val.sort(), expected.sort())
 		@end()
@@ -193,7 +198,7 @@ export class UnitTester
 
 	truthy: (bool) ->
 
-		[label] = @begin(undef, undef, 'truthy')
+		[label] = await @begin(undef, undef, 'truthy')
 		test label, (t) =>
 			t.truthy(bool)
 		@end()
@@ -203,7 +208,7 @@ export class UnitTester
 
 	falsy: (bool) ->
 
-		[label] = @begin(undef, undef, 'falsy')
+		[label] = await @begin(undef, undef, 'falsy')
 		test label, (t) =>
 			t.falsy(bool)
 		@end()
@@ -213,7 +218,7 @@ export class UnitTester
 
 	showInConsole: (value, format='nice') ->
 
-		[label] = @begin(undef, undef, 'showInConsole')
+		[label] = await @begin(undef, undef, 'showInConsole')
 		switch format.toLowerCase()
 			when 'json'
 				console.log JSON.stringify(value, null, 3)
@@ -229,7 +234,7 @@ export class UnitTester
 
 	includes: (val, expected) ->
 
-		[label, val, expected] = @begin(val, expected, 'includes')
+		[label, val, expected] = await @begin(val, expected, 'includes')
 		assert isString(val) || isArray(val), "Not a string or array: #{OL(val)}"
 		test label, (t) =>
 			t.truthy(val.includes(expected))
@@ -241,7 +246,7 @@ export class UnitTester
 	matches: (val, regexp) ->
 
 		assert isString(val), "Not a string: #{OL(val)}"
-		[label, val] = @begin(val, undef, 'matches')
+		[label, val] = await @begin(val, undef, 'matches')
 
 		debug = val.startsWith('test/file-processor')
 		if debug
@@ -267,7 +272,7 @@ export class UnitTester
 
 	fileExists: (filePath, contents=undef) ->
 
-		[label] = @begin(undef, undef, 'fileExists')
+		[label] = await @begin(undef, undef, 'fileExists')
 		test label, (t) =>
 			t.truthy(isFile(filePath))
 			if defined(contents)
@@ -279,7 +284,7 @@ export class UnitTester
 
 	fileCompiles: (filePath) ->
 
-		[label] = @begin(undef, undef, 'compiles')
+		[label] = await @begin(undef, undef, 'compiles')
 		try
 			switch ext = fileExt(filePath)
 				when '.js'
@@ -296,17 +301,30 @@ export class UnitTester
 
 	# ..........................................................
 
+	executesOK: (func) ->
+
+		if isAsyncFunction(func)
+			try
+				await func()
+				return [true, undef]
+			catch err
+				return [false, err]
+		else
+			try
+				func()
+				return [true, undef]
+			catch err
+				return [false, err]
+
+	# ..........................................................
+
 	fails: (func) ->
 
-		[label] = @begin(undef, undef, 'fails')
+		[label] = await @begin(undef, undef, 'fails')
 		assert isFunction(func), "Not a function: #{OL(func)}"
-		try
-			func()
-			ok = true
-		catch err
-			ok = false
+		[ok, err] = await @executesOK(func)
 
-		test label, (t) => t.false(ok)
+		test label, (t) => t.falsy(ok)
 		@end()
 		return
 
@@ -318,20 +336,14 @@ export class UnitTester
 		if notdefined(errClass)
 			return @fails(func)
 
-		[label] = @begin(undef, undef, 'throws')
+		[label] = await @begin(undef, undef, 'throws')
 		assert isFunction(func), "Not a function: #{OL(func)}"
 		assert isClass(errClass) || isFunction(errClass),
 			"Not a class or function: #{OL(errClass)}"
-		errObj = undef
-		try
-			func()
-			ok = true
-		catch err
-			errObj = err
-			ok = false
+		[ok, err] = await @executesOK(func)
 
 		test label, (t) =>
-			t.truthy(!ok && (errObj instanceof errClass))
+			t.truthy(!ok && (err instanceof errClass))
 		@end()
 		return
 
@@ -340,13 +352,8 @@ export class UnitTester
 	succeeds: (func) ->
 
 		assert (typeof func == 'function'), "function expected"
-		[label] = @begin(undef, undef, 'succeeds')
-		try
-			func()
-			ok = true
-		catch err
-			console.error err
-			ok = false
+		[label] = await @begin(undef, undef, 'succeeds')
+		[ok, err] = await @executesOK(func)
 
 		test label, (t) => t.truthy(ok)
 		@end()
@@ -354,7 +361,7 @@ export class UnitTester
 
 # ---------------------------------------------------------------------------
 
-export u = new UnitTester()
+u = new UnitTester()
 export symbol = (arg1) => return u.symbol(arg1)
 export equal = (arg1, arg2) => return u.equal(arg1, arg2)
 export notequal = (arg1, arg2) => return u.notequal(arg1, arg2)

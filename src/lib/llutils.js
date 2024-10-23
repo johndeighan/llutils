@@ -1,14 +1,18 @@
   // llutils.coffee
-var deepEqual, hEscNL, hEscNoNL, log_level, module,
+var hEscNL, hEscNoNL, log_level, module,
   hasProp = {}.hasOwnProperty;
 
 import YAML from 'yaml';
 
 module = (await import('deep-equal'));
 
-deepEqual = module.default;
+export var deepEqual = module.default;
 
 import pathLib from 'node:path';
+
+import {
+  islice
+} from 'itertools';
 
 export const undef = void 0;
 
@@ -44,6 +48,33 @@ export var assert = (cond, msg) => {
 export var croak = (msg) => {
   throw new Error(untabify(msg));
   return true;
+};
+
+// ---------------------------------------------------------------------------
+export var getAllConstructorNames = (obj) => {
+  var lConstructorNames, proto;
+  lConstructorNames = [];
+  proto = Object.getPrototypeOf(obj);
+  while (defined(proto)) {
+    if (hasKey(proto, 'constructor')) {
+      lConstructorNames.push(proto.constructor.name);
+    }
+    proto = Object.getPrototypeOf(proto);
+  }
+  return lConstructorNames;
+};
+
+// ---------------------------------------------------------------------------
+export var hasPrototypeNamed = (obj, name) => {
+  var proto;
+  proto = Object.getPrototypeOf(obj);
+  while (defined(proto)) {
+    if (proto.constructor && (proto.constructor.name === name)) {
+      return true;
+    }
+    proto = Object.getPrototypeOf(proto);
+  }
+  return false;
 };
 
 // ---------------------------------------------------------------------------
@@ -331,12 +362,22 @@ export var pass = () => {}; // do nothing
 
 
 // ---------------------------------------------------------------------------
-export var range = function*(n) {
-  var i;
+export var range = function*(n = 2e308, hOptions = {}) {
+  var cycle, i;
+  ({cycle} = getOptions(hOptions, {
+    cycle: false
+  }));
   i = 0;
-  while (i < n) {
+  while (true) {
     yield i;
     i += 1;
+    if (i >= n) {
+      if (cycle) {
+        i = 0;
+      } else {
+        break;
+      }
+    }
   }
 };
 
@@ -470,6 +511,21 @@ export var isArray = (x, hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
+export var isArrayOfArrays = (x) => {
+  var item, j, len1;
+  if (!isArray(x)) {
+    return false;
+  }
+  for (j = 0, len1 = x.length; j < len1; j++) {
+    item = x[j];
+    if (!isArray(item)) {
+      return false;
+    }
+  }
+  return true;
+};
+
+// ---------------------------------------------------------------------------
 export var isBoolean = (x, hOptions = {}) => {
   return (x === true) || (x === false) || (x instanceof Boolean);
 };
@@ -522,6 +578,11 @@ export var isInteger = (x, hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
+export var isScalar = (x) => {
+  return isString(x) || isNumber(x) || isBoolean(x);
+};
+
+// ---------------------------------------------------------------------------
 export var isHash = (x) => {
   var ref;
   if (notdefined(x != null ? (ref = x.constructor) != null ? ref.name : void 0 : void 0)) {
@@ -536,6 +597,26 @@ export var isFunction = (x) => {
     return false;
   }
   return !(x.toString().startsWith('class'));
+};
+
+// ---------------------------------------------------------------------------
+export var isAsyncFunction = (x) => {
+  return isFunction(x) && (x.constructor.name === 'AsyncFunction');
+};
+
+// ---------------------------------------------------------------------------
+export var isGenerator = (x) => {
+  return isFunction(x) && (hasPrototypeNamed(x, 'GeneratorFunction') || hasPrototypeNamed(x, 'AsyncGeneratorFunction'));
+};
+
+// ---------------------------------------------------------------------------
+export var isIterator = (obj) => {
+  return isFunction(obj.next);
+};
+
+// ---------------------------------------------------------------------------
+export var isIterable = (obj) => {
+  return isFunction(obj[Symbol.iterator]);
 };
 
 // ---------------------------------------------------------------------------
@@ -1284,27 +1365,156 @@ export var setsAreEqual = (a, b) => {
 };
 
 // ---------------------------------------------------------------------------
-export var allCombos = function(lArrayOfArrays) {
-  var item, j, k, lResults, lSubArray, len1, len2, ref, ref1;
-  if (lArrayOfArrays.length === 0) {
-    return [];
+export var toIterator = (obj, hOptions = {}) => {
+  var dbg, debug, ident;
+  ({debug, ident} = getOptions(hOptions, {
+    debug: false,
+    ident: ''
+  }));
+  dbg = (str) => {
+    if (debug) {
+      return LOG(str);
+    }
+  };
+  if (isFunction(obj[Symbol.iterator])) {
+    dbg(`Item ${ident} has Symbol.iterator`);
+    return obj[Symbol.iterator]();
+  } else if (isFunction(obj.next)) {
+    dbg(`Item ${ident} has next()`);
+    return obj;
+  } else {
+    dbg(`Item ${ident} is a scalar`);
+    return [obj][Symbol.iterator]();
   }
-  if (lArrayOfArrays.length === 1) {
-    return lArrayOfArrays[0].map((x) => {
-      return [x];
-    });
+};
+
+// ---------------------------------------------------------------------------
+export var yieldMax = function*(item, max = undef) {
+  var done, iter, numYielded, value;
+  assert(defined(max), "yieldMax() needs a number");
+  iter = toIterator(item);
+  numYielded = 0;
+  while (numYielded < max) {
+    ({done, value} = iter.next());
+    if (done) {
+      return;
+    }
+    yield value;
+    numYielded += 1;
   }
-  lResults = [];
-  ref = lArrayOfArrays[0];
-  for (j = 0, len1 = ref.length; j < len1; j++) {
-    item = ref[j];
-    ref1 = allCombos(lArrayOfArrays.slice(1));
+};
+
+// ---------------------------------------------------------------------------
+export var arrayCombos = function*(lArrayOfArrays) {
+  var item, j, k, len1, len2, ref, ref1, ref2, subarray;
+  assert(isArrayOfArrays(lArrayOfArrays), `Bad array of arrays: ${OL(lArrayOfArrays)}`);
+  if (lArrayOfArrays.length === 0) { // yield nothing, i.e. there are no combinations
+    return;
+  } else if (lArrayOfArrays.length === 1) {
+    ref = lArrayOfArrays[0];
+    for (j = 0, len1 = ref.length; j < len1; j++) {
+      subarray = ref[j];
+      yield [subarray];
+    }
+  } else {
+    ref1 = lArrayOfArrays[0];
     for (k = 0, len2 = ref1.length; k < len2; k++) {
-      lSubArray = ref1[k];
-      lResults.push([item, ...lSubArray]);
+      item = ref1[k];
+      ref2 = arrayCombos(lArrayOfArrays.slice(1));
+      for (subarray of ref2) {
+        yield [item, ...subarray];
+      }
     }
   }
-  return lResults;
+};
+
+// ---------------------------------------------------------------------------
+export var combos = function*(lItems, hOptions = {}) {
+  debugger;
+  var dbg, debug, done, i, iter, j, lDone, lIterators, lValues, len1, n, numDone, ref, value;
+  ({debug} = getOptions(hOptions, {
+    debug: false
+  }));
+  dbg = (str) => {
+    if (debug) {
+      return LOG(str);
+    }
+  };
+  n = lItems.length;
+  dbg(`n = ${n}`);
+  if (n === 0) { // nothing to yield
+    return;
+  }
+  
+  // --- convert items into iterators
+  lIterators = lItems.map((obj, i) => {
+    return toIterator(obj, {
+      debug,
+      ident: i
+    });
+  });
+  if (n === 1) {
+    dbg("Only 1 item, yielding individual subitems");
+    iter = lIterators[0];
+    ({done, value} = iter.next());
+    while (!done) {
+      yield [value];
+      ({done, value} = iter.next());
+    }
+    return;
+  }
+  // --- build array of values to yield by getting
+  //     the first value from each enumerable object
+  //     If any enumerable is empty, we're done
+  lValues = [];
+  lDone = [];
+  for (i = j = 0, len1 = lIterators.length; j < len1; i = ++j) {
+    iter = lIterators[i];
+    assert(isIterable(iter), `item ${i} not an iterable`);
+    ({value, done} = iter.next());
+    if (done) { // nothing to yield
+      return;
+    }
+    lValues.push([value]);
+    lDone.push(false);
+  }
+  dbg(`yield from initial array: ${OL(lValues)}`);
+  yield lValues.map((x) => {
+    return x[0];
+  });
+  numDone = 0;
+  dbg("Initially, numDone = 0");
+  ref = range(n, 'cycle');
+  for (i of ref) {
+    dbg(`i = ${i}, numDone = ${numDone}`);
+    // --- Repeatedly cycle through iterables
+    // --- Each time:
+    //        If iterable i is done, continue
+    //        Get next value from iterable i
+    //        If next.done
+    //           set lDone[i] = true
+    //           numDone += 1
+    //           continue loop
+    //        else
+    //           get next value for iterable i
+    //           yield combinations of this value and
+    //                 all possible values of other arrays
+    if (lDone[i]) {
+      dbg(`Iterable ${i} is already done, continuing...`);
+      continue;
+    }
+    ({value, done} = lIterators[i].next());
+    if (done) {
+      dbg("Iterator[i] is now done, continuing...");
+      numDone += 1;
+      if (numDone === n) {
+        return;
+      }
+      continue;
+    }
+    yield* arrayCombos(lValues.toSpliced(i, 1, [value]));
+    lValues[i].push(value);
+  }
 };
 
 // ---------------------------------------------------------------------------

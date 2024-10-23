@@ -1,7 +1,9 @@
 // llutils.test.coffee
-var Dummy, NewClass, b, c, f, g, h, hAST, hAST2, hash, i, l, n, o, p, r, s, str;
+var hAST, hAST2, hash, l, str;
 
-import eq from 'deep-equal';
+import {
+  islice
+} from 'itertools';
 
 import * as lib from '@jdeighan/llutils';
 
@@ -18,14 +20,14 @@ equal(undef, void 0);
 notequal(undef, 23);
 
 // ---------------------------------------------------------------------------
-//symbol "eq()"   # --- deep equality
-truthy(eq('abc', 'abc'));
+//symbol "deepEqual()"   # --- deep equality
+truthy(deepEqual('abc', 'abc'));
 
-truthy(eq(13, 13));
+truthy(deepEqual(13, 13));
 
-truthy(eq(['a', 'b'], ['a', 'b']));
+truthy(deepEqual(['a', 'b'], ['a', 'b']));
 
-truthy(eq({
+truthy(deepEqual({
   a: 1,
   b: 2
 }, {
@@ -33,11 +35,11 @@ truthy(eq({
   a: 1
 }));
 
-falsy(eq('abc', ['abc']));
+falsy(deepEqual('abc', ['abc']));
 
-falsy(eq(['a', 'b'], ['b', 'a']));
+falsy(deepEqual(['a', 'b'], ['b', 'a']));
 
-falsy(eq({
+falsy(deepEqual({
   a: 1,
   b: 2
 }, {
@@ -65,6 +67,10 @@ succeeds(() => {
 // ---------------------------------------------------------------------------
 //symbol "range(n)"   # --- build iterable of ints
 equal(Array.from(range(10)), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+equal(Array.from(islice(range(), 5)), [0, 1, 2, 3, 4]);
+
+equal(Array.from(islice(range(3, 'cycle'), 7)), [0, 1, 2, 0, 1, 2, 0]);
 
 // ---------------------------------------------------------------------------
 //symbol "inRange(i, n)"   # --- test that (i >= 0) && (i < n)
@@ -109,215 +115,207 @@ fails(() => {
 });
 
 // ---------------------------------------------------------------------------
-// --- define some objects for later testing
-s = 'abc';
-
-b = true;
-
-n = 3.14159;
-
-i = 42;
-
-l = [1, 2];
-
-h = {
-  a: 1,
-  b: 2
-};
-
-f = function(x) {
-  return 2 * x;
-};
-
-r = /^a*$/;
-
-c = Dummy = class Dummy {
-  constructor(name = 'my name') {
-    this.name = name;
-    this.key = 'nothing';
-  }
-
-};
-
-o = new c();
-
-p = new Promise((resolve, reject) => {
-  return 42;
-});
-
-g = function*() {
-  yield 'a';
-  yield 'b';
-  yield 'c';
-};
-
-// ---------------------------------------------------------------------------
-//symbol "defined(obj)"    # --- equal a value defined
-truthy(defined(s));
-
-truthy(defined(i));
-
-truthy(defined(n));
-
-truthy(defined(l));
-
-truthy(defined(h));
-
-truthy(defined(c));
-
-truthy(defined(o));
-
-falsy(defined(undef));
-
-falsy(defined(null));
-
-// ---------------------------------------------------------------------------
-//symbol "notdefined(obj)"    # --- equal a value not defined
-truthy(notdefined(undef));
-
-truthy(notdefined(null));
-
-falsy(notdefined(s));
-
-falsy(notdefined(i));
-
-falsy(notdefined(n));
-
-falsy(notdefined([1, 2]));
-
-falsy(notdefined({
-  a: 1,
-  b: 2
-}));
-
-falsy(notdefined(c));
-
-falsy(notdefined(o));
-
-// ---------------------------------------------------------------------------
-//symbol "words(str...)"    # --- extract words from 1 or more strings
-equal(words(), []);
-
-equal(words(' ab cd', 'ef gh '), ['ab', 'cd', 'ef', 'gh']);
-
-// ---------------------------------------------------------------------------
-//symbol "isString(obj)"    # --- test if obj equal a string
-truthy(isString('abc'));
-
-truthy(isString('abc', {
-  nonempty: true
-}));
-
-falsy(isString(undef));
-
-falsy(isString(['abc']));
-
-falsy(isString('', {
-  nonempty: true
-}));
-
-// ---------------------------------------------------------------------------
-//symbol "isBoolean(obj)"    # --- test if obj equal a boolean
-truthy(isBoolean(true));
-
-truthy(isBoolean(false));
-
-truthy(isBoolean(new Boolean(true)));
-
-falsy(isBoolean(s));
-
-// ---------------------------------------------------------------------------
-//symbol "isNumber(obj)"    # --- test if obj equal a number
-truthy(isNumber(i));
-
-truthy(isNumber(n));
-
-falsy(isNumber('abc'));
-
-falsy(isNumber(undef));
-
-falsy(isNumber(['abc']));
-
-// ---------------------------------------------------------------------------
-//symbol "isInteger(obj)"    # --- test if obj equal n integer
-truthy(isInteger(i));
-
-falsy(isInteger(n));
-
-falsy(isInteger('abc'));
-
-falsy(isInteger(undef));
-
-falsy(isInteger(['abc']));
-
-// ---------------------------------------------------------------------------
-//symbol "isArray(obj)"    # --- test if obj equal an array
-truthy(isArray(['abc']));
-
-truthy(isArray(['abc'], 'nonempty'));
-
-truthy(isArray(['abc', 'def'], 'allStrings'));
-
-falsy(isArray('abc'));
-
-falsy(isArray(undef));
-
-falsy(isArray([], {
-  nonempty: true
-}));
-
-falsy(isArray([], 'nonempty'));
-
-falsy(isArray(['abc', []], {
-  allStrings: true
-}));
-
-falsy(isArray(['abc', []], 'allStrings'));
-
-// ---------------------------------------------------------------------------
-//symbol "isHash(obj)"    # --- test if obj equal a hash
-truthy(isHash({
-  a: 1,
-  b: 2
-}));
-
-falsy(isHash('abc'));
-
-falsy(isHash(undef));
-
-falsy(isHash(o));
-
-// ---------------------------------------------------------------------------
-//symbol "isFunction(obj)"    # --- test if obj equal a function
-truthy(isFunction(function() {
-  return 'abc';
-}));
-
-falsy(isFunction(s));
-
-// ---------------------------------------------------------------------------
-//symbol "isRegExp(obj)"    # --- test if obj equal a regular expression
-truthy(isRegExp(/^abc$/));
-
-falsy(isRegExp(s));
-
-// ---------------------------------------------------------------------------
-//symbol "isClass(obj)"    # --- test if obj equal a class
-truthy(isClass(NewClass = class NewClass {}));
-
-falsy(isClass(s));
-
-// ---------------------------------------------------------------------------
-//symbol "isPromise(obj)"    # --- test if obj equal a promise
-truthy(isPromise(p));
-
-falsy(isPromise(s));
-
-// ---------------------------------------------------------------------------
-//symbol "isClassInstance(obj)"    # --- test if obj equal a class instance
-truthy(isClassInstance(o));
-
-falsy(isClassInstance(s));
+// --- define some objects
+(() => {
+  var Dummy, NewClass, b, c, f, g, h, i, l, n, o, p, r, s;
+  s = 'abc';
+  b = true;
+  n = 3.14159;
+  i = 42;
+  l = [1, 2];
+  h = {
+    a: 1,
+    b: 2
+  };
+  f = function(x) {
+    return 2 * x;
+  };
+  r = /^a*$/;
+  c = Dummy = class Dummy {
+    constructor(name = 'my name') {
+      this.name = name;
+      this.key = 'nothing';
+    }
+
+  };
+  o = new c();
+  p = new Promise((resolve, reject) => {
+    return 42;
+  });
+  g = function*() {
+    yield 'a';
+    yield 'b';
+    yield 'c';
+  };
+  // ---------------------------------------------------------------------------
+  //symbol "defined(obj)"    # --- equal a value defined
+  truthy(defined(s));
+  truthy(defined(i));
+  truthy(defined(n));
+  truthy(defined(l));
+  truthy(defined(h));
+  truthy(defined(c));
+  truthy(defined(o));
+  falsy(defined(undef));
+  falsy(defined(null));
+  // ---------------------------------------------------------------------------
+  //symbol "notdefined(obj)"    # --- equal a value not defined
+  truthy(notdefined(undef));
+  truthy(notdefined(null));
+  falsy(notdefined(s));
+  falsy(notdefined(i));
+  falsy(notdefined(n));
+  falsy(notdefined([1, 2]));
+  falsy(notdefined({
+    a: 1,
+    b: 2
+  }));
+  falsy(notdefined(c));
+  falsy(notdefined(o));
+  // ---------------------------------------------------------------------------
+  //symbol "words(str...)"    # --- extract words from 1 or more strings
+  equal(words(), []);
+  equal(words(' ab cd', 'ef gh '), ['ab', 'cd', 'ef', 'gh']);
+  // ---------------------------------------------------------------------------
+  //symbol "isString(obj)"    # --- test if obj equal a string
+  truthy(isString('abc'));
+  truthy(isString('abc', {
+    nonempty: true
+  }));
+  falsy(isString(undef));
+  falsy(isString(['abc']));
+  falsy(isString('', {
+    nonempty: true
+  }));
+  // ---------------------------------------------------------------------------
+  //symbol "isBoolean(obj)"    # --- test if obj equal a boolean
+  truthy(isBoolean(true));
+  truthy(isBoolean(false));
+  truthy(isBoolean(new Boolean(true)));
+  falsy(isBoolean(s));
+  // ---------------------------------------------------------------------------
+  //symbol "isNumber(obj)"    # --- test if obj equal a number
+  truthy(isNumber(i));
+  truthy(isNumber(n));
+  falsy(isNumber('abc'));
+  falsy(isNumber(undef));
+  falsy(isNumber(['abc']));
+  // ---------------------------------------------------------------------------
+  //symbol "isScalar(obj)"    # --- string | number | boolean
+  truthy(isScalar('abc'));
+  truthy(isScalar(42));
+  truthy(isScalar(3.14159));
+  truthy(isScalar('abc'));
+  falsy(isScalar(undef));
+  falsy(isScalar(null));
+  falsy(isScalar(['a']));
+  falsy(isScalar({
+    a: 1
+  }));
+  // ---------------------------------------------------------------------------
+  //symbol "isInteger(obj)"    # --- test if obj equal n integer
+  truthy(isInteger(i));
+  falsy(isInteger(n));
+  falsy(isInteger('abc'));
+  falsy(isInteger(undef));
+  falsy(isInteger(['abc']));
+  // ---------------------------------------------------------------------------
+  //symbol "isArray(obj)"    # --- test if obj equal an array
+  truthy(isArray(['abc']));
+  truthy(isArray(['abc'], 'nonempty'));
+  truthy(isArray(['abc', 'def'], 'allStrings'));
+  falsy(isArray('abc'));
+  falsy(isArray(undef));
+  falsy(isArray([], {
+    nonempty: true
+  }));
+  falsy(isArray([], 'nonempty'));
+  falsy(isArray(['abc', []], {
+    allStrings: true
+  }));
+  falsy(isArray(['abc', []], 'allStrings'));
+  // ---------------------------------------------------------------------------
+  //symbol "isHash(obj)"    # --- test if obj equal a hash
+  truthy(isHash({
+    a: 1,
+    b: 2
+  }));
+  falsy(isHash('abc'));
+  falsy(isHash(undef));
+  falsy(isHash(o));
+  // ---------------------------------------------------------------------------
+  //symbol "isFunction(obj)"    # --- test if obj equal a function
+  truthy(isFunction(function() {
+    return 'abc';
+  }));
+  falsy(isFunction(s));
+  // ---------------------------------------------------------------------------
+  //symbol "isGenerator(obj)"
+  //symbol "isIterable(obj)"
+  (() => {
+    var func, iter;
+    func = function*(x) {
+      i = 0;
+      yield i;
+      return i += 1;
+    };
+    truthy(isGenerator(func));
+    iter = func();
+    return truthy(isIterable(iter));
+  })();
+  // ---------------------------------------------------------------------------
+  //symbol "isRegExp(obj)"    # --- test if obj equal a regular expression
+  truthy(isRegExp(/^abc$/));
+  falsy(isRegExp(s));
+  // ---------------------------------------------------------------------------
+  //symbol "isClass(obj)"    # --- test if obj equal a class
+  truthy(isClass(NewClass = class NewClass {}));
+  falsy(isClass(s));
+  // ---------------------------------------------------------------------------
+  //symbol "isPromise(obj)"    # --- test if obj equal a promise
+  truthy(isPromise(p));
+  falsy(isPromise(s));
+  // ---------------------------------------------------------------------------
+  //symbol "isClassInstance(obj)"    # --- test if obj equal a class instance
+  truthy(isClassInstance(o));
+  falsy(isClassInstance(s));
+  // ---------------------------------------------------------------------------
+  //symbol "isEmpty(obj)"
+  truthy(isEmpty(undef));
+  truthy(isEmpty(null));
+  truthy(isEmpty(''));
+  truthy(isEmpty('   '));
+  truthy(isEmpty([]));
+  truthy(isEmpty({}));
+  falsy(isEmpty(s));
+  falsy(isEmpty(i));
+  falsy(isEmpty(0)); // zero equal not empty!!!
+  falsy(isEmpty(n));
+  falsy(isEmpty(l));
+  falsy(isEmpty(h));
+  // ---------------------------------------------------------------------------
+  //symbol "nonEmpty(obj)"
+  truthy(nonEmpty(s));
+  truthy(nonEmpty(i));
+  truthy(nonEmpty(0)); // zero equal not empty!!!
+  truthy(nonEmpty(n));
+  truthy(nonEmpty(l));
+  truthy(nonEmpty(h));
+  falsy(nonEmpty(undef));
+  falsy(nonEmpty(null));
+  falsy(nonEmpty(''));
+  falsy(nonEmpty('   '));
+  falsy(nonEmpty([]));
+  falsy(nonEmpty({}));
+  // ---------------------------------------------------------------------------
+  //symbol "gen2array(generator)"
+  equal(gen2array(g), ['a', 'b', 'c']);
+  // ---------------------------------------------------------------------------
+  //symbol "gen2block(generator)"
+  return equal(gen2block(g), `a
+b
+c`);
+})();
 
 // ---------------------------------------------------------------------------
 //symbol "escapeStr(str)"
@@ -413,58 +411,6 @@ equal(OLS([
     b: 2
   }
 ]), '[1,2],{"a":1,"b":2}');
-
-// ---------------------------------------------------------------------------
-//symbol "isEmpty(obj)"
-truthy(isEmpty(undef));
-
-truthy(isEmpty(null));
-
-truthy(isEmpty(''));
-
-truthy(isEmpty('   '));
-
-truthy(isEmpty([]));
-
-truthy(isEmpty({}));
-
-falsy(isEmpty(s));
-
-falsy(isEmpty(i));
-
-falsy(isEmpty(0)); // zero equal not empty!!!
-
-falsy(isEmpty(n));
-
-falsy(isEmpty(l));
-
-falsy(isEmpty(h));
-
-// ---------------------------------------------------------------------------
-//symbol "nonEmpty(obj)"
-truthy(nonEmpty(s));
-
-truthy(nonEmpty(i));
-
-truthy(nonEmpty(0)); // zero equal not empty!!!
-
-truthy(nonEmpty(n));
-
-truthy(nonEmpty(l));
-
-truthy(nonEmpty(h));
-
-falsy(nonEmpty(undef));
-
-falsy(nonEmpty(null));
-
-falsy(nonEmpty(''));
-
-falsy(nonEmpty('   '));
-
-falsy(nonEmpty([]));
-
-falsy(nonEmpty({}));
 
 // ---------------------------------------------------------------------------
 //symbol "chomp(str)"    # --- remove trailing \r and/or \n
@@ -655,16 +601,6 @@ str = `abc
     ghi`;
 
 equal(tabify(str), "abc\n\tdef\n\t\tghi");
-
-// ---------------------------------------------------------------------------
-//symbol "gen2array(generator)"
-equal(gen2array(g), ['a', 'b', 'c']);
-
-// ---------------------------------------------------------------------------
-//symbol "gen2block(generator)"
-equal(gen2block(g), `a
-b
-c`);
 
 // ---------------------------------------------------------------------------
 //symbol "spaces(n)"    # --- create a string of n spaces
@@ -969,6 +905,7 @@ equal(matchPos("(miss()ing", 5), 6);
 (() => {
   var splitter;
   splitter = (str) => {
+    var i;
     i = str.indexOf('DO');
     if (i === -1) {
       return [str.trim() || undef, str.length];
@@ -1011,23 +948,130 @@ falsy(setsAreEqual(new Set([1, 2, 3]), new Set([1, 2, 3, 4])));
 equal(tla('low-level-build'), 'llb');
 
 // ---------------------------------------------------------------------------
-//symbol allCombos(lArrayOfArrays)
-equal(allCombos([['a', 'b'], [1, 2]]), [['a', 1], ['a', 2], ['b', 1], ['b', 2]]);
+//symbol arrayCombos(lArrayOfArrays)
+(() => {
+  var u;
+  u = new UnitTester();
+  u.transformValue = function(val) {
+    assert(isArrayOfArrays(val), `Bad array ${OL(val)}`);
+    return Array.from(arrayCombos(val));
+  };
+  u.equal([], []);
+  u.equal([['a']], [['a']]);
+  u.equal([[42]], [[42]]);
+  u.equal([[]], []);
+  u.equal([[], []], []);
+  u.equal([['a'], []], []);
+  u.equal([[], [1]], []);
+  u.equal([['a', 'b'], [1, 2]], [['a', 1], ['a', 2], ['b', 1], ['b', 2]]);
+  u.equal([], []);
+  u.equal([['a']], [['a']]);
+  u.equal([['a'], []], []);
+  u.equal([[], ['b']], []);
+  u.equal([['a'], ['b']], [['a', 'b']]);
+  u.equal([[['a']], ['b']], [[['a'], 'b']]);
+  u.equal([[['a', 1]], ['b']], [[['a', 1], 'b']]);
+  return u.equal([[['a', 1]], [['b']]], [[['a', 1], ['b']]]);
+})();
 
-equal(allCombos([]), []);
+// ---------------------------------------------------------------------------
+//symbol yieldMax(item, max)
+(() => {
+  var gen, igen;
+  equal(Array.from(yieldMax([1, 2, 3, 4, 5], 3)), [1, 2, 3]);
+  gen = function*() {
+    yield 1;
+    yield 2;
+    yield 3;
+  };
+  equal(Array.from(yieldMax(gen(), 2)), [1, 2]);
+  equal(Array.from(yieldMax([0, 1, 2, 3, 4, 5], 3)), [0, 1, 2]);
+  igen = function*() {
+    var i, results;
+    i = 0;
+    results = [];
+    while (true) {
+      yield i;
+      results.push(i += 1);
+    }
+    return results;
+  };
+  return equal(Array.from(yieldMax(igen(), 3)), [0, 1, 2]);
+})();
 
-equal(allCombos([['a']]), [['a']]);
+// ---------------------------------------------------------------------------
+//symbol combos(lItems)
+(() => {
+  var emptygen, gen, igen, u;
+  // --- NOTE: max returned values is 10
+  u = new UnitTester();
+  u.transformValue = function(val) {
+    assert(isArray(val), `Bad array ${OL(val)}`);
+    return Array.from(yieldMax(combos(val), 10));
+  };
+  u.equal([], []);
+  u.equal([[1, 2, 3]], [[1], [2], [3]]);
+  u.equal([
+    (function() {
+      var results = [];
+      for (var j = 1; j <= 25; j++){ results.push(j); }
+      return results;
+    }).apply(this)
+  ], [[1], [2], [3], [4], [5], [6], [7], [8], [9], [10]]);
+  u.equal([
+    (function() {
+      var results = [];
+      for (var j = 1; j <= 25; j++){ results.push(j); }
+      return results;
+    }).apply(this)
+  ], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((x) => {
+    return [x];
+  }));
+  // --- Test passing in scalar, iterator
 
-equal(allCombos([['a'], []]), []);
+  // --- If any items are empty, no results
+  emptygen = function*() {
+    return;
+    return (yield 1); // necessary to make this a generator!
+  };
+  u.equal([[1, 2, 3], []], []);
+  u.equal([[], [1, 2, 3]], []);
+  u.equal(['', ['a', 'b']], []);
+  u.equal([emptygen(), ['a', 'b']], []);
+  // --- If not all items are empty
+  u.equal(['abc'], [
+    ['a'],
+    ['b'],
+    ['c'] // --- OOPS, strings are iterable
+  ]);
+  u.equal([['abc']], [['abc']]);
+  u.equal([42], [[42]]);
+  gen = function*() {
+    yield 5;
+    yield 10;
+    return (yield 15);
+  };
+  u.equal([gen()], [[5], [10], [15]]);
+  u.equal([['a', 'b'], [1, 2]], [['a', 1], ['b', 1], ['a', 2], ['b', 2]]);
+  // --- Use infinite iterators
+  igen = function*() {
+    var i, results;
+    i = 0;
+    results = [];
+    while (true) {
+      yield i;
+      results.push(i += 1);
+    }
+    return results;
+  };
+  // --- pass in a pair of iterators
+  u.equal([igen(), igen()], [[0, 0], [1, 0], [0, 1], [1, 1], [2, 0], [2, 1], [0, 2], [1, 2], [2, 2], [3, 0]]);
+  // --- pass in 3 iterators
+  return u.equal([igen(), igen(), igen()], [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0, 0, 1], [0, 1, 1], [1, 0, 1], [1, 1, 1], [2, 0, 0], [2, 0, 1]]);
+})();
 
-equal(allCombos([[], ['b']]), []);
-
-equal(allCombos([['a'], ['b']]), [['a', 'b']]);
-
-equal(allCombos([[['a']], ['b']]), [[['a'], 'b']]);
-
-equal(allCombos([[['a', 1]], ['b']]), [[['a', 1], 'b']]);
-
-equal(allCombos([[['a', 1]], [['b']]]), [[['a', 1], ['b']]]);
+// ---------------------------------------------------------------------------
+// test islice
+equal(Array.from(islice(range(10), 3)), [0, 1, 2]);
 
 //# sourceMappingURL=llutils.test.js.map

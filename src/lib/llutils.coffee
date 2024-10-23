@@ -2,8 +2,9 @@
 
 import YAML from 'yaml'
 module = await import('deep-equal')
-deepEqual = module.default
+export deepEqual = module.default
 import pathLib from 'node:path'
+import {islice} from 'itertools'
 
 `export const undef = void 0`
 
@@ -39,6 +40,29 @@ export croak = (msg) =>
 
 	throw new Error(untabify(msg))
 	return true
+
+# ---------------------------------------------------------------------------
+
+export getAllConstructorNames = (obj) =>
+
+	lConstructorNames = []
+	proto = Object.getPrototypeOf(obj)
+	while defined(proto)
+		if hasKey(proto, 'constructor')
+			lConstructorNames.push proto.constructor.name
+		proto = Object.getPrototypeOf(proto)
+	return lConstructorNames
+
+# ---------------------------------------------------------------------------
+
+export hasPrototypeNamed = (obj, name) =>
+
+	proto = Object.getPrototypeOf(obj)
+	while defined(proto)
+		if proto.constructor && (proto.constructor.name == name)
+			return true
+		proto = Object.getPrototypeOf(proto)
+	return false
 
 # ---------------------------------------------------------------------------
 #    tabify - convert leading spaces to TAB characters
@@ -282,12 +306,20 @@ export pass = () =>    # do nothing
 
 # ---------------------------------------------------------------------------
 
-export range = (n) ->
+export range = (n=Infinity, hOptions={}) ->
 
+	{cycle} = getOptions hOptions, {
+		cycle: false
+		}
 	i = 0
-	while (i < n)
+	loop
 		yield i
 		i += 1
+		if (i >= n)
+			if cycle
+				i = 0
+			else
+				break
 	return
 
 # ---------------------------------------------------------------------------
@@ -398,6 +430,17 @@ export isArray = (x, hOptions={}) =>
 
 # ---------------------------------------------------------------------------
 
+export isArrayOfArrays = (x) =>
+
+	if ! isArray(x)
+		return false
+	for item in x
+		if ! isArray(item)
+			return false
+	return true
+
+# ---------------------------------------------------------------------------
+
 export isBoolean = (x, hOptions={}) =>
 
 	return (x == true) || (x == false) || (x instanceof Boolean)
@@ -444,6 +487,12 @@ export isInteger = (x, hOptions={}) =>
 
 # ---------------------------------------------------------------------------
 
+export isScalar = (x) =>
+
+	return isString(x) || isNumber(x) || isBoolean(x)
+
+# ---------------------------------------------------------------------------
+
 export isHash = (x) =>
 
 	if notdefined(x?.constructor?.name)
@@ -457,6 +506,32 @@ export isFunction = (x) =>
 	if (typeof x != 'function') && !(x instanceof Function)
 		return false
 	return !(x.toString().startsWith('class'))
+
+# ---------------------------------------------------------------------------
+
+export isAsyncFunction = (x) =>
+
+	return isFunction(x) && (x.constructor.name == 'AsyncFunction')
+
+# ---------------------------------------------------------------------------
+
+export isGenerator = (x) =>
+
+	return isFunction(x) \
+		&& (hasPrototypeNamed(x, 'GeneratorFunction') \
+			|| hasPrototypeNamed(x, 'AsyncGeneratorFunction'))
+
+# ---------------------------------------------------------------------------
+
+export isIterator = (obj) =>
+
+	return isFunction(obj.next)
+
+# ---------------------------------------------------------------------------
+
+export isIterable = (obj) =>
+
+	return isFunction obj[Symbol.iterator]
 
 # ---------------------------------------------------------------------------
 
@@ -1157,17 +1232,139 @@ export setsAreEqual = (a, b) =>
 
 # ---------------------------------------------------------------------------
 
-export allCombos = (lArrayOfArrays) ->
+export toIterator = (obj, hOptions={}) =>
 
+	{debug, ident} = getOptions hOptions, {
+		debug: false
+		ident: ''
+		}
+	dbg = (str) => if debug then LOG(str)
+
+	if isFunction(obj[Symbol.iterator])
+		dbg "Item #{ident} has Symbol.iterator"
+		return obj[Symbol.iterator]()
+	else if isFunction(obj.next)
+		dbg "Item #{ident} has next()"
+		return obj
+	else
+		dbg "Item #{ident} is a scalar"
+		return [obj][Symbol.iterator]()
+
+# ---------------------------------------------------------------------------
+
+export yieldMax = (item, max=undef) ->
+
+	assert defined(max), "yieldMax() needs a number"
+	iter = toIterator(item)
+	numYielded = 0
+	while (numYielded < max)
+		{done, value} = iter.next()
+		if done
+			return
+		yield value
+		numYielded += 1
+	return
+
+# ---------------------------------------------------------------------------
+
+export arrayCombos = (lArrayOfArrays) ->
+
+	assert isArrayOfArrays(lArrayOfArrays),
+		"Bad array of arrays: #{OL(lArrayOfArrays)}"
 	if (lArrayOfArrays.length == 0)
-		return []
-	if (lArrayOfArrays.length == 1)
-		return lArrayOfArrays[0].map((x) => [x])
-	lResults = []
-	for item in lArrayOfArrays[0]
-		for lSubArray in allCombos(lArrayOfArrays.slice(1))
-			lResults.push [item, lSubArray...]
-	return lResults
+		return      # yield nothing, i.e. there are no combinations
+	else if (lArrayOfArrays.length == 1)
+		for subarray in lArrayOfArrays[0]
+			yield [subarray]
+	else
+		for item in lArrayOfArrays[0]
+			for subarray from arrayCombos(lArrayOfArrays.slice(1))
+				yield [item, subarray...]
+	return
+
+# ---------------------------------------------------------------------------
+
+export combos = (lItems, hOptions={}) ->
+
+	debugger
+	{debug} = getOptions hOptions, {
+		debug: false
+		}
+
+	dbg = (str) => if debug then LOG(str)
+
+	n = lItems.length
+	dbg "n = #{n}"
+
+	if (n == 0)
+		return    # nothing to yield
+
+	# --- convert items into iterators
+	lIterators = lItems.map (obj, i) =>
+			toIterator(obj, {debug, ident: i})
+
+	if (n == 1)
+		dbg "Only 1 item, yielding individual subitems"
+		iter = lIterators[0]
+		{done, value} = iter.next()
+		while !done
+			yield [value]
+			{done, value} = iter.next()
+		return
+
+	# --- build array of values to yield by getting
+	#     the first value from each enumerable object
+	#     If any enumerable is empty, we're done
+	lValues = []
+	lDone = []
+	for iter,i in lIterators
+		assert isIterable(iter), "item #{i} not an iterable"
+		{value, done} = iter.next()
+		if done
+			return     # nothing to yield
+		lValues.push [value]
+		lDone.push false
+
+	dbg "yield from initial array: #{OL(lValues)}"
+	yield lValues.map((x) => x[0])
+
+	numDone = 0
+	dbg "Initially, numDone = 0"
+	for i from range(n, 'cycle')
+		dbg "i = #{i}, numDone = #{numDone}"
+
+		# --- Repeatedly cycle through iterables
+		# --- Each time:
+		#        If iterable i is done, continue
+		#        Get next value from iterable i
+		#        If next.done
+		#           set lDone[i] = true
+		#           numDone += 1
+		#           continue loop
+		#        else
+		#           get next value for iterable i
+		#           yield combinations of this value and
+		#                 all possible values of other arrays
+
+		if lDone[i]
+			dbg "Iterable #{i} is already done, continuing..."
+			continue
+
+		{value, done} = lIterators[i].next()
+		if done
+			dbg "Iterator[i] is now done, continuing..."
+			numDone += 1
+			if (numDone == n)
+				return
+			continue
+
+		# --- Splice in a singular array containing new value
+		#     This allows us to use the arrayCombos function
+		#     Save original array at i so it can be restored
+		#        with the new value added
+		yield from arrayCombos lValues.toSpliced(i, 1, [value])
+		lValues[i].push value
+	return
 
 # ---------------------------------------------------------------------------
 # --- ASYNC !

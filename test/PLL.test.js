@@ -1,4 +1,6 @@
-  // PLL.test.coffee
+// PLL.test.coffee
+var u;
+
 import {
   undef,
   fromTAML
@@ -15,6 +17,8 @@ import {
 import * as lib2 from '@jdeighan/llutils/utest';
 
 Object.assign(global, lib2);
+
+u = new UnitTester();
 
 u.transformValue = (block) => {
   return parse(block, {
@@ -47,14 +51,14 @@ succeeds(() => {
 });
 
 // ---------------------------------------------------------------------------
-equal(`abc`, `---
+u.equal(`abc`, `---
 type: tree
 body:
 	-
 		type: stmt
 		ident: abc`);
 
-equal(`abc
+u.equal(`abc
 def`, `---
 type: tree
 body:
@@ -65,7 +69,7 @@ body:
 		type: stmt
 		ident: def`);
 
-equal(`abc
+u.equal(`abc
 	def`, `---
 type: tree
 body:
@@ -77,7 +81,7 @@ body:
 				type: stmt
 				ident: def`);
 
-equal(`abc
+u.equal(`abc
 	def
 		ghi`, `---
 type: tree
@@ -94,7 +98,7 @@ body:
 						type: stmt
 						ident: ghi`);
 
-equal(`abc
+u.equal(`abc
 		def`, `---
 type: tree
 body:
@@ -102,7 +106,7 @@ body:
 		type: stmt
 		ident: abc def`);
 
-equal(`abc
+u.equal(`abc
 		def
 ghi`, `---
 type: tree
@@ -114,7 +118,7 @@ body:
 		type: stmt
 		ident: ghi`);
 
-equal(`abc
+u.equal(`abc
 		def
 	ghi`, `---
 type: tree
@@ -129,28 +133,28 @@ body:
 
 // ---------------------------------------------------------------------------
 // --- blank lines should be ignored
-equal("\nabc", `---
+u.equal("\nabc", `---
 type: tree
 body:
 	-
 		type: stmt
 		ident: abc`);
 
-equal("abc\n", `---
+u.equal("abc\n", `---
 type: tree
 body:
 	-
 		type: stmt
 		ident: abc`);
 
-equal("\nabc\n", `---
+u.equal("\nabc\n", `---
 type: tree
 body:
 	-
 		type: stmt
 		ident: abc`);
 
-equal(`abc
+u.equal(`abc
 
 def`, `---
 type: tree
@@ -162,7 +166,7 @@ body:
 		type: stmt
 		ident: def`);
 
-equal(`
+u.equal(`
 abc
 
 def
@@ -176,7 +180,7 @@ body:
 		type: stmt
 		ident: def`);
 
-equal(`
+u.equal(`
 abc
 
 	def
@@ -191,7 +195,7 @@ body:
 				type: stmt
 				ident: def`);
 
-equal(`
+u.equal(`
 
 abc
 
@@ -216,7 +220,7 @@ body:
 						type: stmt
 						ident: ghi`);
 
-equal(`
+u.equal(`
 abc
 
 
@@ -228,7 +232,7 @@ body:
 		type: stmt
 		ident: abc def`);
 
-equal(`
+u.equal(`
 abc
 
 		def
@@ -243,7 +247,7 @@ body:
 		type: stmt
 		ident: ghi`);
 
-equal(`
+u.equal(`
 abc
 
 		def
