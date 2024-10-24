@@ -368,7 +368,7 @@ export var UnitTester = class UnitTester {
   // ..........................................................
   async fails(func) {
     var err, label, ok;
-    [label] = (await this.begin(undef, undef, 'fails'));
+    [label, func] = (await this.begin(func, undef, 'fails'));
     assert(isFunction(func), `Not a function: ${OL(func)}`);
     [ok, err] = (await this.executesOK(func));
     test(label, (t) => {
@@ -384,7 +384,7 @@ export var UnitTester = class UnitTester {
     if (notdefined(errClass)) {
       return this.fails(func);
     }
-    [label] = (await this.begin(undef, undef, 'throws'));
+    [label, func] = (await this.begin(func, undef, 'throws'));
     assert(isFunction(func), `Not a function: ${OL(func)}`);
     assert(isClass(errClass) || isFunction(errClass), `Not a class or function: ${OL(errClass)}`);
     [ok, err] = (await this.executesOK(func));
@@ -397,8 +397,8 @@ export var UnitTester = class UnitTester {
   // ..........................................................
   async succeeds(func) {
     var err, label, ok;
-    assert(typeof func === 'function', "function expected");
-    [label] = (await this.begin(undef, undef, 'succeeds'));
+    [label, func] = (await this.begin(func, undef, 'succeeds'));
+    assert(isFunction(func), `Not a function: ${OL(func)}`);
     [ok, err] = (await this.executesOK(func));
     test(label, (t) => {
       return t.truthy(ok);

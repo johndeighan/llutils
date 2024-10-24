@@ -27,6 +27,10 @@ import {
   isEmpty
 } from '@jdeighan/llutils';
 
+import {
+  slurp
+} from '@jdeighan/llutils/fs';
+
 // ---------------------------------------------------------------------------
 export var execCmd = (cmdLine, hOptions = {}) => {
   var result;
@@ -78,31 +82,37 @@ export var npmLogLevel = () => {
 };
 
 // ---------------------------------------------------------------------------
-export var checkJS = (code, fileName = undef) => {
-  var script;
-  script = new vm.Script(code, fileName);
-  return true;
+export var getScriptObj = (jsCode, hOptions = {}) => {
+  return new vm.Script(jsCode, hOptions);
 };
 
 // ---------------------------------------------------------------------------
-export var checkJSFile = (filePath) => {
-  var result;
-  result = execCmd(`node -c ${filePath}`);
-  assert(isEmpty(result), `ERROR: ${result}`);
-  return true;
+export var checkJS = (jsCode, hOptions = {}) => {
+  var err, script;
+  try {
+    script = getScriptObj(jsCode, hOptions);
+    return true;
+  } catch (error) {
+    err = error;
+    return false;
+  }
+};
+
+// ---------------------------------------------------------------------------
+export var checkJSFile = (filePath, hOptions = {}) => {
+  assert(isFile(filePath), `No such file: ${OL(filePath)}`);
+  return checkJS(slurp(filePath), hOptions);
 };
 
 // ---------------------------------------------------------------------------
 // --- returns result of last statement executed
-export var execJS = (jsCode, fileName = undef) => {
-  var script;
-  vm.runInThisContext(jsCode, {
+export var execJS = (jsCode, hOptions = {}) => {
+  var result, script;
+  script = getScriptObj(jsCode, hOptions);
+  result = script.runInNewContext({}, {
     displayErrors: true
   });
-  script = new vm.Script(jsCode, {
-    filename: fileName
-  });
-  return script.runInThisContext();
+  return result;
 };
 
 //# sourceMappingURL=exec-utils.js.map

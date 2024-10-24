@@ -17,6 +17,8 @@ export procCielo = (code, hMetaData={}, filePath=undef) ->
 	return procCoffee coffeeCode, hMetaData, filePath
 
 # ---------------------------------------------------------------------------
+# --- End file on __END__
+#     Replace HEREDOCs
 
 export cieloPreProcess = (code, hMetaData={}, filePath=undef) =>
 

@@ -33,6 +33,8 @@ export var procCielo = function(code, hMetaData = {}, filePath = undef) {
 };
 
 // ---------------------------------------------------------------------------
+// --- End file on __END__
+//     Replace HEREDOCs
 export var cieloPreProcess = (code, hMetaData = {}, filePath = undef) => {
   var debug, lLines, level, src, str;
   ({debug} = getOptions(hMetaData, {

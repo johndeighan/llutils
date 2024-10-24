@@ -8,20 +8,79 @@ Object.assign(global, lib2)
 # ---------------------------------------------------------------------------
 #symbol "execCivet(str)"    # --- execute civet code
 
-equal await execCivet('x = 42'), 42
-equal await execCivet('x = "Hello World"'), "Hello World"
-fails () => await execCivet("not real JS code +")
+# equal await execCivet('let x = 42; x'), 42
+# equal await execCivet('let x = "Hello World"; x'), "Hello World"
+# fails () => await execCivet("not real JS code +")
 
 # ---------------------------------------------------------------------------
 
-(() =>
-	u = new UnitTester()
-	u.transformValue = (str) ->
-		result = await execCivet(str)
-		return result
+u = new UnitTester()
+u.transformValue = (str) ->
+	try
+		return await execCivet(str)
+	catch err
+		return () => croak("Bad code: #{OL(str)}")
 
-	u.equal """
-		x = 42
-		2 * x
-		""", 84
-	)()
+# ---------------------------------------------------------------------------
+
+u.fails """
+	# --- must declare variables
+	x = 42
+	2 * x
+	"""
+
+u.fails """
+	# --- can't redefine variables in same scope
+	let x = 42
+	2 * x
+	let x = 13
+	"""
+
+u.equal """
+	let x = 42
+	2 * x
+	""", 84
+
+u.equal """
+	const x = 42
+	2 * x
+	""", 84
+
+u.equal """
+	var x = 42
+	2 * x
+	""", 84
+
+u.equal """
+	# --- comment ok here
+	let x = 42   # --- comment ok here
+	2 * x        #     comment ok here
+	""", 84
+
+u.equal """
+	let x = 42
+	x
+	__END__
+	2 * x
+	""", 42
+
+# --- multi-line strings are delimited by \n with no trailing \n
+
+u.equal """
+	let str = '''
+		line 1
+		line 2
+		'''
+
+	str.length
+	""", 13
+
+# --- HEREDOC syntax
+
+u.equal """
+	let str = <<<
+		line 1
+		line 2
+
+	str.length
+	""", 13

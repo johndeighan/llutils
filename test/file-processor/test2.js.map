@@ -1,13 +1,13 @@
 {
   "version": 3,
-  "file": "",
-  "sourceRoot": "",
+  "file": "test2.js",
+  "sourceRoot": "..\\..\\",
   "sources": [
-    "test/file-processor/test2.coffee"
+    "test\\file-processor\\test2.coffee"
   ],
   "names": [],
   "mappings": "AAAc;AAEd,OAAO,CAAC,GAAR,CAAY,uBAAZ",
   "sourcesContent": [
-    "# test2.coffee\n\nconsole.log \"testing a second time\""
+    "# test2.coffee\n\nconsole.log \"testing a second time\"\n"
   ]
 }

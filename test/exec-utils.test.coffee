@@ -16,7 +16,7 @@ equal execCmd('echo "Hello World" | wc -w'), "2\n"
 
 equal execJS('x = 42'), 42
 equal execJS('x = "Hello World"'), "Hello World"
-fails () => checkJS("not real JS code +")
+falsy checkJS("not real JS code +")
 fails () => execJS("not real JS code")
 
 # ---------------------------------------------------------------------------

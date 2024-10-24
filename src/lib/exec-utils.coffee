@@ -9,6 +9,7 @@ import {
 	undef, defined, notdefined, getOptions, chomp,
 	assert, croak, OL, stripCR, isEmpty,
 	} from '@jdeighan/llutils'
+import {slurp} from '@jdeighan/llutils/fs'
 
 # ---------------------------------------------------------------------------
 
@@ -65,25 +66,34 @@ export npmLogLevel = () =>
 
 # ---------------------------------------------------------------------------
 
-export checkJS = (code, fileName=undef) =>
+export getScriptObj = (jsCode, hOptions={}) =>
 
-	script = new vm.Script(code, fileName)
-	return true
+	return new vm.Script(jsCode, hOptions)
 
 # ---------------------------------------------------------------------------
 
-export checkJSFile = (filePath) =>
+export checkJS = (jsCode, hOptions={}) =>
 
-	result = execCmd "node -c #{filePath}"
-	assert isEmpty(result), "ERROR: #{result}"
-	return true
+	try
+		script = getScriptObj(jsCode, hOptions)
+		return true
+	catch err
+		return false
+
+# ---------------------------------------------------------------------------
+
+export checkJSFile = (filePath, hOptions={}) =>
+
+	assert isFile(filePath), "No such file: #{OL(filePath)}"
+	return checkJS(slurp(filePath), hOptions)
 
 # ---------------------------------------------------------------------------
 # --- returns result of last statement executed
 
-export execJS = (jsCode, fileName=undef) =>
+export execJS = (jsCode, hOptions={}) =>
 
-	vm.runInThisContext(jsCode, {displayErrors: true})
-
-	script = new vm.Script(jsCode, {filename: fileName})
-	return script.runInThisContext()
+	script = getScriptObj(jsCode, hOptions)
+	result = script.runInNewContext({}, {
+		displayErrors: true
+		})
+	return result

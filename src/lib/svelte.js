@@ -1,6 +1,6 @@
   // svelte.coffee
 import {
-  compile as compileSvelte
+  compile
 } from 'svelte/compiler';
 
 import {
@@ -38,7 +38,7 @@ export var procSvelte = (code, hMetaData = {}, filePath = undef) => {
     str = `<svelte:options customElement=${OL(customElement)}/>`;
     code = str + "\n" + code;
   }
-  hResult = compileSvelte(code, hSvelteOptions);
+  hResult = compile(code, hSvelteOptions);
   return {
     code: hResult.js.code,
     sourceMap: undef,

@@ -320,7 +320,7 @@ export class UnitTester
 
 	fails: (func) ->
 
-		[label] = await @begin(undef, undef, 'fails')
+		[label, func] = await @begin(func, undef, 'fails')
 		assert isFunction(func), "Not a function: #{OL(func)}"
 		[ok, err] = await @executesOK(func)
 
@@ -336,7 +336,7 @@ export class UnitTester
 		if notdefined(errClass)
 			return @fails(func)
 
-		[label] = await @begin(undef, undef, 'throws')
+		[label, func] = await @begin(func, undef, 'throws')
 		assert isFunction(func), "Not a function: #{OL(func)}"
 		assert isClass(errClass) || isFunction(errClass),
 			"Not a class or function: #{OL(errClass)}"
@@ -351,8 +351,8 @@ export class UnitTester
 
 	succeeds: (func) ->
 
-		assert (typeof func == 'function'), "function expected"
-		[label] = await @begin(undef, undef, 'succeeds')
+		[label, func] = await @begin(func, undef, 'succeeds')
+		assert isFunction(func), "Not a function: #{OL(func)}"
 		[ok, err] = await @executesOK(func)
 
 		test label, (t) => t.truthy(ok)

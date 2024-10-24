@@ -1,55 +1,70 @@
 # civet.coffee
 
-import {compile} from "@danielx/civet"
+import {findConfig, loadConfig} from "@danielx/civet/config"
+import {parse, compile} from "@danielx/civet"
 
 import {
-	undef, defined, notdefined, getOptions,
-	assert, croak,
+	undef, defined, notdefined, getOptions, OL, ML, LOG,
+	assert, croak, isString, isEmpty, nonEmpty,
 	} from '@jdeighan/llutils'
 import {checkJS, execJS} from '@jdeighan/llutils/exec-utils'
+import {cieloPreProcess} from '@jdeighan/llutils/cielo'
 
 # ---------------------------------------------------------------------------
 # --- ASYNC!
 
-export procCivet = (code, hMetaData={}, filePath=undef) ->
+export procCivet = (contents, hMetaData={}, filePath=undef, hOptions={}) ->
 
-	jsCode = await compile code, {
-		js: true
-		parseOptions: {
-			tab: 3
-			implicitReturns: false
-			autoConst: false
-			autoLet: false
-			autoVar: false
-			coffeeBooleans: false
-			coffeeClasses: true
-			coffeeComment: true
-			coffeeDiv: true
-			coffeeDo: false
-			coffeeEq: true
-			coffeeForLoops: false
-			coffeeInterpolation: true
-			coffeeOf: false
-			coffeePrototype: true
-			}
+	assert isString(contents), "Not a string: #{OL(contents)}"
+	assert nonEmpty(contents), "Empty contents: #{OL(contents)}"
+	{debug, preprocess, strict} = getOptions hOptions, {
+		debug: false
+		preprocess: cieloPreProcess
+		strict: true
 		}
+
+	if defined(preprocess)
+		code = preprocess contents, {hOptions..., hMetaData...}, filePath
+	else
+		code = contents
+	if strict
+		code = "'use strict'\n#{code}"
+	configPath = await findConfig(process.cwd())
+	hConfig = await loadConfig(configPath)
+	jsCode = await compile code, {hConfig..., js: true}
 	return jsCode
 
 # ---------------------------------------------------------------------------
 # --- ASYNC!
 
-export execCivet = (code, hMetaData={}, filePath=undef) ->
+croakJS = (code, err, id) =>
+	croak "procCivet() failed #{id}:\n#{ML(code)}\n(#{err.message})"
+
+export execCivet = (code, hMetaData={}, filePath=undef, hOptions={}) ->
 
 	debugger
+	{debug} = getOptions hOptions, {
+		debug: false
+		}
+
 	try
 		jsCode = await procCivet(code, hMetaData, filePath)
 	catch err
-		croak "Bad civet code: #{code}"
+		croakJS code, err, 1
 
-	if (jsCode == 'invalid(javascript)') || ! checkJS(jsCode)
-		croak "Bad JS Code: #{jsCode}"
+	if debug
+		LOG "JS Code"
+		LOG ML(jsCode)
+
+	if (jsCode == 'invalid(javascript)')
+		croakJS code, err, 2
+	else if ! checkJS(jsCode)
+		croakJS code, err, 3
 
 	try
-		return execJS(jsCode)
+		result = execJS(jsCode)
+		if debug
+			LOG "RESULT: #{OL(result)}"
+		return result
 	catch err
-		throw new Error("Bad JS: #{jsCode}")
+		croakJS code, err, 4

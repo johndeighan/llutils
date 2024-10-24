@@ -21,9 +21,7 @@ equal(execJS('x = 42'), 42);
 
 equal(execJS('x = "Hello World"'), "Hello World");
 
-fails(() => {
-  return checkJS("not real JS code +");
-});
+falsy(checkJS("not real JS code +"));
 
 fails(() => {
   return execJS("not real JS code");
