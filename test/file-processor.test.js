@@ -38,7 +38,7 @@ deleteFilesMatching("./test/file-processor/**/*.js");
 
 deleteFilesMatching("./test/file-processor/**/*.map");
 
-hResult = procFiles("./test/file-processor/**/*", '!echo');
+hResult = (await procFiles("./test/file-processor/**/*", '!echo'));
 
 //# ADD TESTS ##
 equal(2 + 2, 4);

@@ -1,126 +1,111 @@
 # cielo.test.coffee
 
-import {
-	undef, defined, isString, OL,
-	assert, croak,
-	} from '@jdeighan/llutils'
-import {slurp} from '@jdeighan/llutils/fs'
-import {TextBlockList} from '@jdeighan/llutils/text-block'
-import {procCoffee} from '@jdeighan/llutils/coffee'
 import * as lib from '@jdeighan/llutils/cielo'
 Object.assign(global, lib)
 import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
-#    - Handles HEREDOC syntax
-#    - ends file upon seeing '__END__'
+
+u = new UnitTester()
+u.transformValue = (str) ->
+	return await execCielo(str)
+u.transformFunction = (str) ->
+	return () => await execCielo(str)
+
 # ---------------------------------------------------------------------------
-#symbol "cieloPreProcess(code)"
 
-(() =>
-	t = new UnitTester()
-	t.transformValue = (str) =>
-		assert isString(str), "Not a string: #{OL(str)}"
-		return cieloPreProcess(str)
+u.equal """
+	globalThis.x = 42
+	""", {x: 42}
 
-	bsl = "\\"
+u.equal """
+	globalThis.x = "Hello World"
+	x
+	""", {x: "Hello World"}
 
-	t.equal """
-		import {undef} from '@jdeighan/llutils'
+u.fails "not real JS code ++"
 
-		equal fromTAML(<<<), <<<
-			a: 1
-			b: 2
+u.fails """
+	# --- must declare variables
+	x = 42
+	"""
 
-			---
-			a: 1
-			b: 2
+u.fails """
+	# --- can't redefine variables in same scope
+	let x = 42
+	let x = 13
+	"""
 
-		console.log 'DONE'
-		""", """
-		import {undef} from '@jdeighan/llutils'
+u.equal """
+	let x = 42
+	globalThis.y = 2 * x
+	""", {y: 84}
 
-		equal fromTAML("a: 1#{bsl}nb: 2"), {"a":1,"b":2}
-		console.log 'DONE'
-		"""
+u.equal """
+	const x = 42
+	globalThis.y = 2 * x
+	""", {y: 84}
 
-	t.equal """
-		import {undef} from '@jdeighan/llutils'
+# --- Variables declared with 'var' at the top level
+#     will be treated as global variables!!!
 
-		equal fromTAML(<<<), <<<
-			a: 1
-			b: 2
+u.equal """
+	var x = 42
+	globalThis.y = 2 * x
+	""", {x: 42, y: 84}
 
-			---
-			a: 1
-			b: 2
+u.equal """
+	# --- comment ok here
+	let x = 42   # --- comment ok here
+	globalThis.y = 2 * x        #     comment ok here
+	""", {y: 84}
 
-		__END__
-		console.log 'DONE'
-		""", """
-		import {undef} from '@jdeighan/llutils'
+u.equal """
+	let x = 42
+	globalThis.y = x
+	__END__
+	globalThis.y = 2 * x
+	""", {y: 42}
 
-		equal fromTAML("a: 1#{bsl}nb: 2"), {"a":1,"b":2}
-		"""
+# --- multi-line strings are delimited by \n with no trailing \n
 
-	# ---------------------------------------------------------------------------
-
-	filePath = "test/cielo/test.cielo"
-	code = slurp filePath
-
-	truthy isString(code)
-
-	blocks = new TextBlockList()
-	blocks.addBlock filePath, code
-
-	preprocCode = cieloPreProcess code
-
-	blocks.addBlock 'PreProcessed', preprocCode
-	js = procCoffee(preprocCode).code
-	blocks.addBlock 'JavaScript', js
-
-	equal blocks.asString('format=box'), '''
-		┌────────  test/cielo/test.cielo  ─────────┐
-		│ import {undef} from '@jdeighan/llutils'  │
-		│                                          │
-		│ hAST = <<<                               │
-		│    ---                                   │
-		│    type: program                         │
-		│    name: John                            │
-		│                                          │
-		│ equal extract(hAST, """                  │
-		│    type="program"                        │
-		│    """), {name: 'John'}                  │
-		│                                          │
-		│ __END__                                  │
-		│                                          │
-		│ any old garbage can be here              │
-		│                                          │
-		├─────────────  PreProcessed  ─────────────┤
-		│ import {undef} from '@jdeighan/llutils'  │
-		│                                          │
-		│ hAST = {"type":"program","name":"John"}  │
-		│ equal extract(hAST, """                  │
-		│    type="program"                        │
-		│    """), {name: 'John'}                  │
-		│                                          │
-		├──────────────  JavaScript  ──────────────┤
-		│ var hAST;                                │
-		│                                          │
-		│ import {                                 │
-		│   undef                                  │
-		│ } from '@jdeighan/llutils';              │
-		│                                          │
-		│ hAST = {                                 │
-		│   "type": "program",                     │
-		│   "name": "John"                         │
-		│ };                                       │
-		│                                          │
-		│ equal(extract(hAST, `type="program"`), { │
-		│   name: 'John'                           │
-		│ });                                      │
-		└──────────────────────────────────────────┘
+u.equal """
+	let str = '''
+		line 1
+		line 2
 		'''
 
-	)()
+	globalThis.len = str.length
+	""", {len: 13}
+
+# --- HEREDOC syntax
+
+u.equal """
+	let str = <<<
+		line 1
+		line 2
+
+	globalThis.len = str.length
+	""", {len: 13}
+
+# --- HEREDOC for objects
+
+u.equal """
+	globalThis.x = <<<
+		---
+		a: 1
+		b: 2
+
+	globalThis.y = 42
+	""", {x: {a:1, b:2}, y: 42}
+
+# --- Empty line HEREDOC terminator
+#     not needed at end of file
+
+u.equal """
+	globalThis.x = <<<
+		---
+		a: 1
+		b: 2
+	""", {x: {a:1, b:2}}

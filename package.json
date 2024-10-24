@@ -19,7 +19,6 @@
 		"./lldot": "./src/lib/lldot.js",
 		"./coffee": "./src/lib/coffee.js",
 		"./cielo": "./src/lib/cielo.js",
-		"./civet": "./src/lib/civet.js",
 		"./svelte": "./src/lib/svelte.js",
 		"./fetcher": "./src/lib/fetcher.js",
 		"./section": "./src/lib/section.js",

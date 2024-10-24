@@ -23,6 +23,7 @@ import {
   assert,
   croak,
   OL,
+  LOG,
   stripCR,
   isEmpty
 } from '@jdeighan/llutils';
@@ -105,14 +106,17 @@ export var checkJSFile = (filePath, hOptions = {}) => {
 };
 
 // ---------------------------------------------------------------------------
-// --- returns result of last statement executed
-export var execJS = (jsCode, hOptions = {}) => {
-  var result, script;
-  script = getScriptObj(jsCode, hOptions);
-  result = script.runInNewContext({}, {
+// --- hContext is the global object
+//     JS code can set keys via, e.g. "globalThis.key = <value>;"
+//     these values will appear in hContext
+export var execJS = (jsCode, hContext = {}, filename = undef) => {
+  var hOptions, script;
+  hOptions = {filename};
+  script = getScriptObj(`'use strict';\n${jsCode}`, hOptions);
+  script.runInNewContext(hContext, {
     displayErrors: true
   });
-  return result;
+  return hContext;
 };
 
 //# sourceMappingURL=exec-utils.js.map

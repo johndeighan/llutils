@@ -7,7 +7,7 @@ execAsync = promisify(exec)
 
 import {
 	undef, defined, notdefined, getOptions, chomp,
-	assert, croak, OL, stripCR, isEmpty,
+	assert, croak, OL, LOG, stripCR, isEmpty,
 	} from '@jdeighan/llutils'
 import {slurp} from '@jdeighan/llutils/fs'
 
@@ -88,12 +88,15 @@ export checkJSFile = (filePath, hOptions={}) =>
 	return checkJS(slurp(filePath), hOptions)
 
 # ---------------------------------------------------------------------------
-# --- returns result of last statement executed
+# --- hContext is the global object
+#     JS code can set keys via, e.g. "globalThis.key = <value>;"
+#     these values will appear in hContext
 
-export execJS = (jsCode, hOptions={}) =>
+export execJS = (jsCode, hContext={}, filename=undef) =>
 
-	script = getScriptObj(jsCode, hOptions)
-	result = script.runInNewContext({}, {
+	hOptions = {filename}
+	script = getScriptObj("'use strict';\n#{jsCode}", hOptions)
+	script.runInNewContext(hContext, {
 		displayErrors: true
 		})
-	return result
+	return hContext

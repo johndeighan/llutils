@@ -16,7 +16,7 @@ Object.assign(global, lib2)
 deleteFilesMatching "./test/file-processor/**/*.js"
 deleteFilesMatching "./test/file-processor/**/*.map"
 
-hResult = procFiles "./test/file-processor/**/*", '!echo'
+hResult = await procFiles "./test/file-processor/**/*", '!echo'
 
 ## ADD TESTS ##
 

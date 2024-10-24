@@ -17,9 +17,13 @@ equal(execCmd('echo "Hello World" | wc -w'), "2\n");
 
 // ---------------------------------------------------------------------------
 //symbol "execJS(str)"    # --- execute JavaScript
-equal(execJS('x = 42'), 42);
+like(execJS('globalThis.x = 42'), {
+  x: 42
+});
 
-equal(execJS('x = "Hello World"'), "Hello World");
+like(execJS('globalThis.x = "Hello World"'), {
+  x: "Hello World"
+});
 
 falsy(checkJS("not real JS code +"));
 
@@ -32,7 +36,5 @@ fails(() => {
 logLevel = npmLogLevel();
 
 truthy((logLevel === 'silent') || (logLevel === 'warn'));
-
-// ---------------------------------------------------------------------------
 
 //# sourceMappingURL=exec-utils.test.js.map

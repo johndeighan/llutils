@@ -68,7 +68,7 @@ export procFiles = (pattern="./{*.*,**/*.*}", hOptions={}) =>
 		return ! newerDestFileExists(filePath, destFile)
 
 	for {relPath} from allFilesMatching(pattern, {fileFilter})
-		{processed, lUses} = procOneFile relPath, hOptions
+		{processed, lUses} = await procOneFile relPath, hOptions
 		lProcessed.push relPath
 		if nonEmpty(lUses)
 			hUses[relPath] = lUses
@@ -87,6 +87,7 @@ export procFiles = (pattern="./{*.*,**/*.*}", hOptions={}) =>
 #              code
 #              sourceMap (optional)
 #              lUses - an array, possibly empty
+#     strFunc may be ASYNC!!!
 # ---------------------------------------------------------------------------
 
 export procOneFile = (filePath, hOptions={}) =>
@@ -120,15 +121,15 @@ export procOneFile = (filePath, hOptions={}) =>
 			}
 
 	if isFunction(fileFunc)
-		hResult = fileFunc filePath, hOptions
+		hResult = await fileFunc filePath, hOptions
+		assert isHash(hResult), "result not a hash (1): #{OL(hResult)}"
 	else
 		# --- get file contents, including meta data
 		{hMetaData, contents} = readTextFile(filePath, 'eager')
 		assert isString(contents), "contents not a string: #{OL(contents)}"
 		assert nonEmpty(contents), "empty contents: #{OL(contents)}"
-		hResult = strFunc contents, hMetaData, relPath, hOptions
-
-	assert isHash(hResult), "result not a hash: #{OL(hResult)}"
+		hResult = await strFunc contents, hMetaData, relPath, hOptions
+		assert isHash(hResult), "result not a hash (2): #{OL(hResult)}"
 	{code, sourceMap, hOtherFiles, lUses} = hResult
 
 	# --- Write out main output file

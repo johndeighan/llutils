@@ -30,7 +30,8 @@ fileExists "#{root}/test.js", """
 
 fileExists "#{root}/testme.js", """
 	// testme.cielo
-	console.log("testing");
+
+	console.log("testing")
 	"""
 
 fileExists "#{root}/lang.js"

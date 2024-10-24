@@ -67,7 +67,7 @@ export var removeOutFile = (filePath) => {
 // --- processes all files with file ext in hConfig
 //     unprocessed, but matching files are
 //        checked for files they use
-export var procFiles = (pattern = "./{*.*,**/*.*}", hOptions = {}) => {
+export var procFiles = async(pattern = "./{*.*,**/*.*}", hOptions = {}) => {
   var contents, debug, fileFilter, force, hMetaData, hUses, lProcessed, lUses, processed, ref, relPath, x;
   ({debug, force} = getOptions(hOptions, {
     debug: false,
@@ -103,7 +103,7 @@ export var procFiles = (pattern = "./{*.*,**/*.*}", hOptions = {}) => {
   ref = allFilesMatching(pattern, {fileFilter});
   for (x of ref) {
     ({relPath} = x);
-    ({processed, lUses} = procOneFile(relPath, hOptions));
+    ({processed, lUses} = (await procOneFile(relPath, hOptions)));
     lProcessed.push(relPath);
     if (nonEmpty(lUses)) {
       hUses[relPath] = lUses;
@@ -121,8 +121,9 @@ export var procFiles = (pattern = "./{*.*,**/*.*}", hOptions = {}) => {
 //              code
 //              sourceMap (optional)
 //              lUses - an array, possibly empty
+//     strFunc may be ASYNC!!!
 // ---------------------------------------------------------------------------
-export var procOneFile = (filePath, hOptions = {}) => {
+export var procOneFile = async(filePath, hOptions = {}) => {
   var code, contents, debug, echo, ext, fileFunc, hMetaData, hOtherFiles, hResult, i, lUses, len, logOnly, outExt, ref, relPath, sourceMap, strFunc;
   assert(isFile(filePath), `No such file: ${OL(filePath)}`);
   ({strFunc, fileFunc, outExt} = hConfig[fileExt(filePath)]);
@@ -150,15 +151,16 @@ export var procOneFile = (filePath, hOptions = {}) => {
     };
   }
   if (isFunction(fileFunc)) {
-    hResult = fileFunc(filePath, hOptions);
+    hResult = (await fileFunc(filePath, hOptions));
+    assert(isHash(hResult), `result not a hash (1): ${OL(hResult)}`);
   } else {
     // --- get file contents, including meta data
     ({hMetaData, contents} = readTextFile(filePath, 'eager'));
     assert(isString(contents), `contents not a string: ${OL(contents)}`);
     assert(nonEmpty(contents), `empty contents: ${OL(contents)}`);
-    hResult = strFunc(contents, hMetaData, relPath, hOptions);
+    hResult = (await strFunc(contents, hMetaData, relPath, hOptions));
+    assert(isHash(hResult), `result not a hash (2): ${OL(hResult)}`);
   }
-  assert(isHash(hResult), `result not a hash: ${OL(hResult)}`);
   ({code, sourceMap, hOtherFiles, lUses} = hResult);
   // --- Write out main output file
   assert(isString(code), `code not a string: ${OL(code)}`);

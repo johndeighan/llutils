@@ -37,7 +37,8 @@ fileExists(`${root}/test.js`, `// test.coffee
 console.log("testing");`);
 
 fileExists(`${root}/testme.js`, `// testme.cielo
-console.log("testing");`);
+
+console.log("testing")`);
 
 fileExists(`${root}/lang.js`);
 

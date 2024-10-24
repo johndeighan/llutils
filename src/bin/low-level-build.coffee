@@ -65,7 +65,7 @@ if quiet
 # Process all files
 
 pattern = "#{root}/{*.*,**/*.*}"
-{lProcessed, hUses} = procFiles(pattern, {force, debug})
+{lProcessed, hUses} = await procFiles(pattern, {force, debug})
 
 for filePath in keys(hUses)
 	for usedFile in hUses[filePath]
@@ -123,7 +123,7 @@ if nonEmpty(hBin)
 
 if watch
 	console.log "watching for file changes..."
-	glob = "**/*.{coffee,peggy,cielo,svelte}"
+	glob = "**/*.{coffee,peggy,svelte}"
 	hOptions = {
 		persistent: true
 		ignoreInitial: true
