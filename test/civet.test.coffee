@@ -6,22 +6,26 @@ import * as lib2 from '@jdeighan/llutils/utest'
 Object.assign(global, lib2)
 
 # ---------------------------------------------------------------------------
-#symbol "execCivet(str)"    # --- execute civet code
-
-# equal await execCivet('let x = 42; x'), 42
-# equal await execCivet('let x = "Hello World"; x'), "Hello World"
-# fails () => await execCivet("not real JS code +")
-
-# ---------------------------------------------------------------------------
 
 u = new UnitTester()
 u.transformValue = (str) ->
-	try
-		return await execCivet(str)
-	catch err
-		return () => croak("Bad code: #{OL(str)}")
+	return await execCivet(str)
+u.transformFunction = (str) ->
+	return () => await execCivet(str)
 
 # ---------------------------------------------------------------------------
+
+u.equal """
+	let x = 42
+	42
+	""", 42
+
+u.equal """
+	let x = "Hello World"
+	x
+	""", "Hello World"
+
+u.fails "not real JS code ++"
 
 u.fails """
 	# --- must declare variables

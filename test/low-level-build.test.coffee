@@ -15,6 +15,7 @@ root = "./test/low-level-build"
 deleteFilesMatching "#{root}/**/*.js"
 bin = "./src/bin/low-level-build.js"
 str = execCmd "node #{bin} -root=#{root}"
+
 matches str, """
 	1 *.cielo file compiled
 	3 *.coffee files compiled
@@ -33,7 +34,7 @@ fileExists "#{root}/testme.js", """
 	"""
 
 fileExists "#{root}/lang.js"
-fileCompiles "#{root}/lang.js"
+compiles "#{root}/lang.js"
 
 fileExists "#{root}/card.js"
-fileCompiles "#{root}/card.js"
+compiles "#{root}/card.js"

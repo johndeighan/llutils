@@ -41,10 +41,10 @@ console.log("testing");`);
 
 fileExists(`${root}/lang.js`);
 
-fileCompiles(`${root}/lang.js`);
+compiles(`${root}/lang.js`);
 
 fileExists(`${root}/card.js`);
 
-fileCompiles(`${root}/card.js`);
+compiles(`${root}/card.js`);
 
 //# sourceMappingURL=low-level-build.test.js.map

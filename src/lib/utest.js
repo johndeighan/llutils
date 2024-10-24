@@ -96,38 +96,16 @@ export var UnitTester = class UnitTester {
     return expected;
   }
 
+  transformFunction(func) {
+    return func;
+  }
+
   // ........................................................................
-  async begin(val = undef, expected = undef, tag = undef) {
-    var err, label;
-    if (tag === 'symbol') {
-      return [`===== ${val} =====`];
-    }
+  begin() {
     if (this.depth === 0) {
       this.beforeEachTest();
     }
     this.depth += 1;
-    label = this.getLabel(tag);
-    if (defined(val)) {
-      try {
-        if (isAsyncFunction(this.transformValue)) {
-          val = (await this.transformValue(val));
-        } else {
-          val = this.transformValue(val);
-        }
-      } catch (error) {
-        err = error;
-        val = `ERROR: ${err.message}`;
-      }
-    }
-    if (defined(expected)) {
-      try {
-        expected = this.transformExpected(expected);
-      } catch (error) {
-        err = error;
-        expected = `ERROR: ${err.message}`;
-      }
-    }
-    return [label, val, expected];
   }
 
   // ........................................................................
@@ -150,116 +128,110 @@ export var UnitTester = class UnitTester {
   }
 
   // ..........................................................
+  //                  TESTS
   // ..........................................................
-  async symbol(label) {
-    croak("Deprecated test 'symbol'");
-    [label] = (await this.begin(label, undef, 'symbol'));
-    test(label, (t) => {
-      return t.is(1, 1);
-    });
-    this.end();
-  }
-
-  // ..........................................................
-  async equal(val, expected) {
-    var label;
-    [label, val, expected] = (await this.begin(val, expected, 'equal'));
-    test(label, (t) => {
+  equal(val, expected) {
+    this.begin();
+    test(this.getLabel('equal'), async(t) => {
+      val = (await this.transformValue(val));
+      expected = (await this.transformExpected(expected));
       return t.deepEqual(val, expected);
     });
     this.end();
   }
 
   // ..........................................................
-  async notequal(val, expected) {
-    var label;
-    [label, val, expected] = (await this.begin(val, expected, 'notequal'));
-    test(label, (t) => {
+  notequal(val, expected) {
+    this.begin();
+    test(this.getLabel('notequal'), async(t) => {
+      val = (await this.transformValue(val));
+      expected = (await this.transformExpected(expected));
       return t.notDeepEqual(val, expected);
     });
     this.end();
   }
 
   // ..........................................................
-  async like(val, expected) {
-    var label;
-    [label, val, expected] = (await this.begin(val, expected, 'like'));
-    if (isString(val) && isString(expected)) {
-      test(label, (t) => {
+  like(val, expected) {
+    this.begin();
+    test(this.getLabel('like'), async(t) => {
+      val = (await this.transformValue(val));
+      expected = (await this.transformExpected(expected));
+      if (isString(val) && isString(expected)) {
         return t.is(this.norm(val), this.norm(expected));
-      });
-    } else if (isNumber(val) && isNumber(expected)) {
-      test(label, (t) => {
+      } else if (isNumber(val) && isNumber(expected)) {
         return t.truthy(Math.abs(val - expected) < 0.0001);
-      });
-    } else {
-      test(label, (t) => {
+      } else {
         return t.like(val, expected);
-      });
-    }
+      }
+    });
     this.end();
   }
 
   // ..........................................................
-  async samelines(val, expected) {
-    var lExpLines, lValLines, label;
-    assert(isString(val), `not a string: ${OL(val)}`);
-    assert(isString(expected), `not a string: ${OL(expected)}`);
-    [label, val, expected] = (await this.begin(val, expected, 'samelines'));
-    lValLines = blockToArray(val).filter((line) => {
-      return nonEmpty(line);
-    }).sort();
-    lExpLines = blockToArray(expected).filter((line) => {
-      return nonEmpty(line);
-    }).sort();
-    test(label, (t) => {
+  samelines(val, expected) {
+    this.begin();
+    test(this.getLabel('samelines'), async(t) => {
+      var lExpLines, lValLines;
+      val = (await this.transformValue(val));
+      expected = (await this.transformExpected(expected));
+      assert(isString(val), `not a string: ${OL(val)}`);
+      assert(isString(expected), `not a string: ${OL(expected)}`);
+      lValLines = blockToArray(val).filter((line) => {
+        return nonEmpty(line);
+      }).sort();
+      lExpLines = blockToArray(expected).filter((line) => {
+        return nonEmpty(line);
+      }).sort();
       return t.deepEqual(lValLines, lExpLines);
     });
     this.end();
   }
 
   // ..........................................................
-  async samelist(val, expected) {
-    var label;
-    [label, val, expected] = (await this.begin(val, expected, 'samelist'));
-    test(label, (t) => {
+  samelist(val, expected) {
+    this.begin();
+    test(this.getLabel('samelist'), async(t) => {
+      val = (await this.transformValue(val));
+      expected = (await this.transformExpected(expected));
+      assert(isArray(val), `not an array: ${OL(val)}`);
+      assert(isArray(expected), `not an array: ${OL(expected)}`);
       return t.deepEqual(val.sort(), expected.sort());
     });
     this.end();
   }
 
   // ..........................................................
-  async truthy(bool) {
-    var label;
-    [label] = (await this.begin(undef, undef, 'truthy'));
-    test(label, (t) => {
-      return t.truthy(bool);
+  truthy(val) {
+    this.begin();
+    test(this.getLabel('truthy'), async(t) => {
+      val = (await this.transformValue(val));
+      return t.truthy(val);
     });
     this.end();
   }
 
   // ..........................................................
-  async falsy(bool) {
-    var label;
-    [label] = (await this.begin(undef, undef, 'falsy'));
-    test(label, (t) => {
-      return t.falsy(bool);
+  falsy(val) {
+    this.begin();
+    test(this.getLabel('falsy'), async(t) => {
+      val = (await this.transformValue(val));
+      return t.falsy(val);
     });
     this.end();
   }
 
   // ..........................................................
-  async showInConsole(value, format = 'nice') {
-    var label;
-    [label] = (await this.begin(undef, undef, 'showInConsole'));
-    switch (format.toLowerCase()) {
-      case 'json':
-        console.log(JSON.stringify(value, null, 3));
-        break;
-      default:
-        console.log(untabify(toNICE(value)));
-    }
-    test(label, (t) => {
+  showInConsole(value, format = 'nice') {
+    this.begin();
+    test(this.getLabel('showInConsole'), (t) => {
+      switch (format.toLowerCase()) {
+        case 'json':
+          console.log(JSON.stringify(value, null, 3));
+          break;
+        default:
+          console.log(untabify(toNICE(value)));
+      }
       return t.truthy(true);
     });
     this.end();
@@ -267,50 +239,43 @@ export var UnitTester = class UnitTester {
 
   // ..........................................................
   // --- NOTE: both strings and arrays have an includes() method
-  async includes(val, expected) {
-    var label;
-    [label, val, expected] = (await this.begin(val, expected, 'includes'));
-    assert(isString(val) || isArray(val), `Not a string or array: ${OL(val)}`);
-    test(label, (t) => {
+  includes(val, expected) {
+    this.begin();
+    test(this.getLabel('includes'), async(t) => {
+      val = (await this.transformValue(val));
+      expected = (await this.transformExpected(expected));
+      assert(isString(val) || isArray(val), `Not a string or array: ${OL(val)}`);
       return t.truthy(val.includes(expected));
     });
     this.end();
   }
 
   // ..........................................................
-  async matches(val, regexp) {
-    var debug, label, pos;
-    assert(isString(val), `Not a string: ${OL(val)}`);
-    [label, val] = (await this.begin(val, undef, 'matches'));
-    debug = val.startsWith('test/file-processor');
-    if (debug) {
-      console.log("IN match()");
-    }
-    // --- if regexp is a string, that string must exist within val
-    if (isString(regexp)) {
-      pos = val.indexOf(regexp);
-      if (pos === -1) {
-        console.log('-'.repeat(40));
-        console.log(val);
-        console.log('-'.repeat(40));
-      }
-      test(label, (t) => {
+  matches(val, pattern) {
+    this.begin();
+    //		debug = val.startsWith('test/file-processor')
+    //		if debug
+    //			console.log "IN match()"
+    test(this.getLabel('matches'), async(t) => {
+      var pos;
+      val = (await this.transformValue(val));
+      assert(isString(val), `Not a string: ${OL(val)}`);
+      // --- if pattern is a string, that string must exist within val
+      if (isString(pattern)) {
+        pos = val.indexOf(pattern);
         return t.truthy(pos >= 0);
-      });
-    } else {
-      assert(isRegExp(regexp), `Not a string or regexp: ${OL(regexp)}`);
-      test(label, (t) => {
-        return t.truthy(defined(val.match(regexp)));
-      });
-    }
+      } else {
+        assert(isRegExp(pattern), `Not a string or regexp: ${OL(pattern)}`);
+        return t.truthy(defined(val.match(pattern)));
+      }
+    });
     this.end();
   }
 
   // ..........................................................
-  async fileExists(filePath, contents = undef) {
-    var label;
-    [label] = (await this.begin(undef, undef, 'fileExists'));
-    test(label, (t) => {
+  fileExists(filePath, contents = undef) {
+    this.begin();
+    test(this.getLabel('fileExists'), (t) => {
       t.truthy(isFile(filePath));
       if (defined(contents)) {
         return t.is(slurp(filePath).trim(), contents.trim());
@@ -320,58 +285,37 @@ export var UnitTester = class UnitTester {
   }
 
   // ..........................................................
-  async fileCompiles(filePath) {
-    var err, ext, label, ok;
-    [label] = (await this.begin(undef, undef, 'compiles'));
-    try {
-      switch (ext = fileExt(filePath)) {
-        case '.js':
-          execCmd(`node -c ${filePath}`);
-          break;
-        default:
-          croak(`Unsupported file type: ${ext}`);
+  compiles(filePath) {
+    this.begin();
+    test(this.getLabel('compiles'), (t) => {
+      var err, ext, ok;
+      try {
+        switch (ext = fileExt(filePath)) {
+          case '.js':
+            execCmd(`node -c ${filePath}`);
+            break;
+          default:
+            croak(`Unsupported file type: ${ext}`);
+        }
+        ok = true;
+      } catch (error) {
+        err = error;
+        console.log(err);
+        ok = false;
       }
-      ok = true;
-    } catch (error) {
-      err = error;
-      console.log(err);
-      ok = false;
-    }
-    test(label, (t) => {
       return t.truthy(ok);
     });
     this.end();
   }
 
   // ..........................................................
-  async executesOK(func) {
-    var err;
-    if (isAsyncFunction(func)) {
-      try {
-        await func();
-        return [true, undef];
-      } catch (error) {
-        err = error;
-        return [false, err];
-      }
-    } else {
-      try {
-        func();
-        return [true, undef];
-      } catch (error) {
-        err = error;
-        return [false, err];
-      }
-    }
-  }
-
-  // ..........................................................
-  async fails(func) {
-    var err, label, ok;
-    [label, func] = (await this.begin(func, undef, 'fails'));
-    assert(isFunction(func), `Not a function: ${OL(func)}`);
-    [ok, err] = (await this.executesOK(func));
-    test(label, (t) => {
+  fails(func) {
+    this.begin();
+    test(this.getLabel('fails'), async(t) => {
+      var err, ok;
+      func = (await this.transformFunction(func));
+      assert(isFunction(func), `Not a function: ${OL(func)}`);
+      [ok, err] = (await this.executesOK(func));
       return t.falsy(ok);
     });
     this.end();
@@ -379,41 +323,59 @@ export var UnitTester = class UnitTester {
 
   // ..........................................................
   // --- with errClass == undef, same as fails()
-  async throws(func, errClass = undef) {
-    var err, label, ok;
-    if (notdefined(errClass)) {
-      return this.fails(func);
-    }
-    [label, func] = (await this.begin(func, undef, 'throws'));
-    assert(isFunction(func), `Not a function: ${OL(func)}`);
-    assert(isClass(errClass) || isFunction(errClass), `Not a class or function: ${OL(errClass)}`);
-    [ok, err] = (await this.executesOK(func));
-    test(label, (t) => {
+  throws(func, errClass = undef) {
+    this.begin();
+    test(this.getLabel('throws'), async(t) => {
+      var err, ok;
+      func = (await this.transformFunction(func));
+      assert(defined(errClass), "Missing error class");
+      assert(isFunction(func), `Not a function: ${OL(func)}`);
+      assert(isClass(errClass) || isFunction(errClass), `Not a class or function: ${OL(errClass)}`);
+      [ok, err] = (await this.executesOK(func));
       return t.truthy(!ok && (err instanceof errClass));
     });
     this.end();
   }
 
   // ..........................................................
-  async succeeds(func) {
-    var err, label, ok;
-    [label, func] = (await this.begin(func, undef, 'succeeds'));
-    assert(isFunction(func), `Not a function: ${OL(func)}`);
-    [ok, err] = (await this.executesOK(func));
-    test(label, (t) => {
+  succeeds(func) {
+    this.begin();
+    test(this.getLabel('succeeds'), async(t) => {
+      var err, ok;
+      func = (await this.transformFunction(func));
+      assert(isFunction(func), `Not a function: ${OL(func)}`);
+      [ok, err] = (await this.executesOK(func));
       return t.truthy(ok);
     });
     this.end();
   }
 
+  // ..........................................................
+  //           END TESTS
+  // ..........................................................
+  async executesOK(func) {
+    var err;
+    try {
+      //		if isAsyncFunction(func)
+      await func();
+      return [true, undef];
+    } catch (error) {
+      err = error;
+      return [false, err];
+    }
+  }
+
 };
+
+//		else
+//			try
+//				func()
+//				return [true, undef]
+//			catch err
+//				return [false, err]
 
 // ---------------------------------------------------------------------------
 u = new UnitTester();
-
-export var symbol = (arg1) => {
-  return u.symbol(arg1);
-};
 
 export var equal = (arg1, arg2) => {
   return u.equal(arg1, arg2);
@@ -467,8 +429,8 @@ export var fileExists = (filePath, contents) => {
   return u.fileExists(filePath, contents);
 };
 
-export var fileCompiles = (filePath) => {
-  return u.fileCompiles(filePath);
+export var compiles = (filePath) => {
+  return u.compiles(filePath);
 };
 
 //# sourceMappingURL=utest.js.map
